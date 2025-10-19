@@ -10,6 +10,13 @@ resizeCanvas();
 
 const tileSize = 60;
 
+
+const GRAVITY = 0.65;     
+const JUMP_FORCE = -18;      
+
+const MAX_JUMP_PX = (Math.abs(JUMP_FORCE) ** 2) / (2 * GRAVITY);
+const GAP_TILES = Math.max(2, Math.floor(MAX_JUMP_PX / tileSize) - 0);
+
 function generateMap() {
   const rows = Math.max(1, Math.floor(canvas.height / tileSize));
   const cols = Math.max(1, Math.floor(canvas.width / tileSize));
@@ -22,8 +29,8 @@ function generateMap() {
 
   const platforms = [{ row: FLOOR_ROW, colStart: 0, colEnd: cols - 1 }];
 
-  const MIN_VERTICAL_GAP = 2;
-  const MAX_VERTICAL_GAP = 3;
+  const MIN_VERTICAL_GAP = GAP_TILES;
+  const MAX_VERTICAL_GAP = GAP_TILES;
   const TOP_MARGIN = 2;
 
   const desiredLayers = 3 + Math.floor(Math.random() * 3);
@@ -136,7 +143,7 @@ const player = {
   vy: 0,
   speed: 0.75,
   maxSpeed: 4.2,
-  jumpForce: -18,
+  jumpForce: JUMP_FORCE,
   onGround: true,
   coyoteFrames: 0,
   jumpBufferFrames: 0,
@@ -210,7 +217,7 @@ function updatePlayer() {
 
   player.vx = Math.max(Math.min(player.vx, player.maxSpeed), -player.maxSpeed);
 
-  player.vy += 0.65; // gravity
+  player.vy += GRAVITY; 
   if (player.vy > 14) player.vy = 14;
 
   let nextX = player.x + player.vx;

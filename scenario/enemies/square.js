@@ -554,9 +554,9 @@ export class SquareEnemy {
             }
         }
 
-        const dropTarget = this.getDropTarget(node);
-        if (dropTarget) {
-            result.push(dropTarget);
+        const dropTargets = this.getDropTargets(node);
+        if (dropTargets.length) {
+            result.push(...dropTargets);
         }
 
         const jumpTargets = this.getJumpTargets(node);
@@ -565,16 +565,36 @@ export class SquareEnemy {
         return result;
     }
 
-    getDropTarget(node) {
-        for (let row = node.row + 1; row < this.mapRows - 1; row += 1) {
-            if (this.isSolidCell(row, node.col)) {
-                return null;
+    getDropTargets(node) {
+        const targets = [];
+        const directions = [-1, 1];
+
+        for (const direction of directions) {
+            const edgeCol = node.col + direction;
+            if (!this.isWithinBounds(node.row, edgeCol)) {
+                continue;
             }
-            if (this.isWalkable(row, node.col)) {
-                return { row, col: node.col };
+
+            if (this.isWalkable(node.row, edgeCol)) {
+                continue;
+            }
+
+            if (this.isSolidCell(node.row, edgeCol)) {
+                continue;
+            }
+
+            for (let row = node.row + 1; row < this.mapRows; row += 1) {
+                if (this.isSolidCell(row, edgeCol)) {
+                    const landingRow = row - 1;
+                    if (landingRow > node.row && this.isWalkable(landingRow, edgeCol)) {
+                        targets.push({ row: landingRow, col: edgeCol });
+                    }
+                    break;
+                }
             }
         }
-        return null;
+
+        return targets;
     }
 
     getJumpTargets(node) {

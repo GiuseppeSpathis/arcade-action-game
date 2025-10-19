@@ -2,38 +2,106 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 const tileSize = 60;
-const map = [
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-];
 
-// add floating platforms
-map[6][10] = 1;
-map[6][11] = 1;
-map[6][12] = 1;
-map[3][4] = 1;
-map[3][5] = 1;
-map[3][6] = 1;
+function generateMap() {
+  const rows = Math.floor(canvas.height / tileSize);
+  const cols = Math.floor(canvas.width / tileSize);
+  const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+  const platforms = [];
+
+  const totalPlatforms = Math.floor(Math.random() * 3) + 4; // 4-6 platforms
+  const minVerticalGap = 2;
+  const maxVerticalGap = 2;
+  const maxHorizontalGap = 3;
+
+  const startRow = Math.max(1, rows - 2);
+  const startCol = Math.floor(Math.random() * cols);
+  grid[startRow][startCol] = 1;
+  platforms.push({ row: startRow, col: startCol });
+
+  let attempts = 0;
+  const maxAttempts = 600;
+
+  const canPlace = (candidateRow, candidateCol) => {
+    if (grid[candidateRow][candidateCol] === 1) return false;
+
+    const verticalSpacingOk = platforms.every((platform) => {
+      if (platform.col !== candidateCol) return true;
+      return Math.abs(platform.row - candidateRow) >= minVerticalGap;
+    });
+
+    if (!verticalSpacingOk) {
+      return false;
+    }
+
+    const reachable = platforms.some((platform) => {
+      const verticalDistance = Math.abs(platform.row - candidateRow);
+      const horizontalDistance = Math.abs(platform.col - candidateCol);
+      if (verticalDistance === 0 && horizontalDistance === 0) return false;
+      if (verticalDistance > maxVerticalGap || horizontalDistance > maxHorizontalGap) return false;
+      if (verticalDistance === maxVerticalGap && horizontalDistance > 2) return false;
+      return true;
+    });
+
+    return reachable;
+  };
+
+  while (platforms.length < totalPlatforms && attempts < maxAttempts) {
+    attempts += 1;
+
+    const base = platforms[Math.floor(Math.random() * platforms.length)];
+    const verticalChoice = Math.random();
+
+    let candidateRow = base.row;
+    if (verticalChoice < 0.65) {
+      const gap = minVerticalGap + Math.floor(Math.random() * (maxVerticalGap - minVerticalGap + 1));
+      candidateRow = Math.max(1, base.row - gap);
+    } else if (verticalChoice > 0.9 && base.row + minVerticalGap < rows - 1) {
+      const gap = minVerticalGap + Math.floor(Math.random() * (maxVerticalGap - minVerticalGap + 1));
+      candidateRow = Math.min(rows - 2, base.row + gap);
+    }
+
+    const horizontalOffset = Math.floor(Math.random() * (maxHorizontalGap * 2 + 1)) - maxHorizontalGap;
+    let candidateCol = base.col + horizontalOffset;
+    candidateCol = Math.max(0, Math.min(cols - 1, candidateCol));
+
+    if ((candidateRow === base.row && candidateCol === base.col) || !canPlace(candidateRow, candidateCol)) {
+      continue;
+    }
+
+    grid[candidateRow][candidateCol] = 1;
+    platforms.push({ row: candidateRow, col: candidateCol });
+  }
+
+  if (platforms.length < totalPlatforms) {
+    for (let row = 1; row < rows - 1 && platforms.length < totalPlatforms; row += 1) {
+      for (let col = 0; col < cols && platforms.length < totalPlatforms; col += 1) {
+        if (!canPlace(row, col)) continue;
+        grid[row][col] = 1;
+        platforms.push({ row, col });
+      }
+    }
+  }
+
+  return { grid, platforms };
+}
+
+const mapData = generateMap();
+const map = mapData.grid;
+const spawnPlatformIndex = Math.floor(Math.random() * mapData.platforms.length);
+const spawnPlatform = mapData.platforms[spawnPlatformIndex] || mapData.platforms[0];
 
 const player = {
   width: 34,
   height: 48,
-  x: tileSize * 1.5,
-  y: canvas.height - tileSize * 2 - 48,
+  x: spawnPlatform.col * tileSize + (tileSize - 34) / 2,
+  y: spawnPlatform.row * tileSize - 48 - 0.01,
   vx: 0,
   vy: 0,
   speed: 0.75,
   maxSpeed: 4.2,
-  jumpForce: -12,
-  onGround: false
+  jumpForce: -14,
+  onGround: true
 };
 
 const pressedKeys = new Set();
@@ -109,6 +177,11 @@ function updatePlayer() {
 
   player.x = Math.max(0, Math.min(nextX, canvas.width - player.width));
   player.y = Math.min(nextY, canvas.height - player.height);
+
+  if (player.y >= canvas.height - player.height - 0.01) {
+    player.onGround = true;
+    player.vy = 0;
+  }
 }
 
 function drawBackground() {

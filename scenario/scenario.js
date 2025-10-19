@@ -139,6 +139,7 @@ async function initializeGame() {
     const mapData = generateMap(canvas, constants);
     const playerController = new PlayerController(constants, mapData, canvas);
 
+
     const pressedKeys = new Set();
     const preventDefaultKeys = createKeySet(
         constants.INPUT.PREVENT_DEFAULT_KEYS
@@ -148,7 +149,7 @@ async function initializeGame() {
     const exitDestination = constants.INPUT.EXIT_DESTINATION;
 
     let lastFrameTime = performance.now();
-    let lastSpawnTimestamp = lastFrameTime;
+    let lastSpawnTimestamp = -Infinity;
     let lastPlayerShot = 0;
     let lastDamageAt = -Infinity;
     let playerLives = constants.PLAYER.MAX_LIVES;
@@ -463,7 +464,6 @@ async function initializeGame() {
 
     requestAnimationFrame((timestamp) => {
         lastFrameTime = timestamp;
-        lastSpawnTimestamp = timestamp;
         gameLoop(timestamp);
     });
 

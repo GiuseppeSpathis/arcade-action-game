@@ -26,7 +26,15 @@
     "EYE_SIZE": 6,
     "BODY_COLOR": "#111111",
     "EYE_COLOR": "#ffffff",
-    "SPAWN_HORIZONTAL_DIVISOR": 2
+    "SPAWN_HORIZONTAL_DIVISOR": 2,
+    "MAX_LIVES": 3,
+    "INVINCIBILITY_WINDOW_MS": 1000
+  },
+  "PLAYER_BULLET": {
+    "SPEED": 560,
+    "RADIUS": 6,
+    "COLOR": "#ffe27a",
+    "COOLDOWN_MS": 250
   },
   "MAP": {
     "TOP_MARGIN": 2,
@@ -70,6 +78,7 @@
       "ArrowLeft",
       "ArrowRight",
       "ArrowUp",
+      "ArrowDown",
       "Space",
       "KeyA",
       "KeyD",
@@ -77,18 +86,45 @@
     ],
     "JUMP_KEYS": [
       "Space",
-      "ArrowUp",
       "KeyW"
     ],
     "MOVE_LEFT_KEYS": [
-      "ArrowLeft",
       "KeyA"
     ],
     "MOVE_RIGHT_KEYS": [
-      "ArrowRight",
       "KeyD"
+    ],
+    "SHOOT_KEYS": [
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight"
     ],
     "EXIT_KEY": "Escape",
     "EXIT_DESTINATION": "../menu/menu.html"
+  },
+  "ENEMIES": {
+    "SPAWN_INTERVAL_MS": 10000,
+    "GROUP_SIZE": {
+      "MIN": 2,
+      "MAX": 3
+    },
+    "SPAWN_DESCENT_SPEED": 120,
+    "TRIANGLE": {
+      "WIDTH": 48,
+      "HEIGHT": 48,
+      "COLOR": "#f06b6b",
+      "MOVE_SPEED": 140,
+      "VERTICAL_ADJUST_SPEED": 110,
+      "FIRE_COOLDOWN_MS": 1800,
+      "BULLET_SPEED": 420,
+      "BULLET_COLOR": "#ff9f43",
+      "BULLET_RADIUS": 6
+    },
+    "SQUARE": {
+      "SIZE": 40,
+      "COLOR": "#5d9bff",
+      "SPEED": 180
+    }
   }
 }

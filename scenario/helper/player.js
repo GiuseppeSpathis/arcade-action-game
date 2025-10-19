@@ -253,4 +253,20 @@ export class PlayerController {
             this.constants.PLAYER.EYE_SIZE
         );
     }
+
+    getBounds() {
+        return {
+            x: this.state.x,
+            y: this.state.y,
+            width: this.state.width,
+            height: this.state.height,
+        };
+    }
+
+    getCenter() {
+        return {
+            x: this.state.x + this.state.width / 2,
+            y: this.state.y + this.state.height / 2,
+        };
+    }
 }

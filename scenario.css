@@ -1,0 +1,66 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: url('https://images.unsplash.com/photo-1618005198919-d3d4b5a92eee?auto=format&fit=crop&w=1600&q=80')
+      center/cover fixed,
+    linear-gradient(#6fb7ff, #1f2545);
+  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  color: #fff;
+}
+
+.game-wrapper {
+  position: relative;
+  max-width: 960px;
+  width: 100%;
+  padding: 1.5rem;
+  background: rgba(10, 16, 33, 0.7);
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 24px 45px rgba(0, 0, 0, 0.6);
+}
+
+.hud {
+  position: absolute;
+  top: 0.5rem;
+  left: 1.5rem;
+  z-index: 2;
+}
+
+.lives .heart {
+  display: inline-block;
+  font-size: 1.4rem;
+  color: #ff5d73;
+  margin-right: 0.2rem;
+  text-shadow: 0 0 6px rgba(255, 93, 115, 0.7);
+}
+
+.game-area {
+  position: relative;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: linear-gradient(#9ce5ff, #6fb7ff);
+}
+
+@media (max-width: 768px) {
+  .game-wrapper {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .hud {
+    left: 1rem;
+  }
+}

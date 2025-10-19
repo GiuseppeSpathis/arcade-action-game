@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Arcade - Scenario</title>
+    <link rel="stylesheet" href="scenario.css" />
+  </head>
+  <body>
+    <div class="game-wrapper">
+      <header class="hud">
+        <div class="lives" aria-label="Vite">
+          <span class="heart" aria-hidden="true">❤</span>
+          <span class="heart" aria-hidden="true">❤</span>
+          <span class="heart" aria-hidden="true">❤</span>
+        </div>
+      </header>
+      <main class="game-area">
+        <canvas id="gameCanvas" width="960" height="540" aria-label="Scenario di gioco"></canvas>
+      </main>
+    </div>
+    <script src="scenario.js"></script>
+  </body>
+</html>

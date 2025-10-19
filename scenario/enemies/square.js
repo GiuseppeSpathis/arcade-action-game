@@ -54,6 +54,28 @@ export class SquareEnemy {
             duration: constants.ENEMIES.DEATH_ANIMATION_DURATION_MS ?? 320,
             fragments: [],
         };
+
+        this.mapRows = this.map?.length ?? 0;
+        this.mapCols = this.mapRows > 0 ? this.map[0].length : 0;
+        this.pathPoints = [];
+        this.currentWaypointIndex = 0;
+        this.lastPathUpdate = 0;
+        this.lastTargetNodeKey = null;
+        this.pathUpdateIntervalMs = 180;
+        this.maxJumpTiles = Math.max(
+            1,
+            Math.ceil(
+                (Math.abs(this.constants.JUMP_FORCE) **
+                    (this.fullConstants.GENERAL?.SQUARE_EXPONENT ?? 2)) /
+                    Math.max(
+                        1,
+                        (this.fullConstants.GENERAL?.GRAVITY_DIVISOR ?? 2) *
+                            this.fullConstants.GRAVITY
+                    ) /
+                    this.tileSize
+            )
+        );
+        this.maxJumpHorizontalTiles = Math.max(1, Math.ceil(this.maxJumpTiles / 2));
     }
 
     getNow(externalTimestamp) {
@@ -81,14 +103,23 @@ export class SquareEnemy {
 
         const now = this.getNow(timestamp);
 
-        const playerCenterX = playerBounds.x + playerBounds.width / 2;
         const enemyCenterX = this.state.x + this.state.width / 2;
-        const horizontalDirection =
-            playerCenterX > enemyCenterX + 4
-                ? 1
-                : playerCenterX < enemyCenterX - 4
-                ? -1
-                : 0;
+        let horizontalDirection = 0;
+
+        const waypoint = this.getCurrentWaypoint(playerBounds, now);
+        if (waypoint) {
+            const targetCenterX = waypoint.x;
+            const horizontalDelta = targetCenterX - enemyCenterX;
+            if (Math.abs(horizontalDelta) > 2) {
+                horizontalDirection = horizontalDelta > 0 ? 1 : -1;
+            }
+        } else {
+            const playerCenterX = playerBounds.x + playerBounds.width / 2;
+            const horizontalDelta = playerCenterX - enemyCenterX;
+            if (Math.abs(horizontalDelta) > 4) {
+                horizontalDirection = horizontalDelta > 0 ? 1 : -1;
+            }
+        }
 
         if (horizontalDirection !== 0) {
             this.state.vx +=
@@ -106,7 +137,7 @@ export class SquareEnemy {
         if (
             this.state.onGround &&
             now - this.lastJumpAt >= this.constants.JUMP_COOLDOWN_MS &&
-            this.shouldAttemptJump(horizontalDirection, playerBounds)
+            this.shouldAttemptJump(horizontalDirection, playerBounds, waypoint)
         ) {
             this.performJump(now);
         }
@@ -241,9 +272,23 @@ export class SquareEnemy {
         this.lastJumpAt = timestamp;
     }
 
-    shouldAttemptJump(direction, playerBounds) {
+    shouldAttemptJump(direction, playerBounds, waypoint) {
+        const playerHigher =
+            playerBounds.y + playerBounds.height <
+            this.state.y + this.state.height - this.tileSize * 0.5;
+        const targetAbove =
+            waypoint &&
+            waypoint.y <
+                this.state.y + this.state.height + this.collisionOffset -
+                    this.tileSize * 0.5;
+
         if (direction === 0) {
-            return false;
+            if (!playerHigher && !targetAbove) {
+                return false;
+            }
+            const headX = this.state.x + this.state.width / 2;
+            const headY = this.state.y - this.tileSize * 0.1;
+            return !this.isSolidAt(headX, headY);
         }
 
         const frontX =
@@ -257,11 +302,311 @@ export class SquareEnemy {
         const obstacleAhead =
             this.isSolidAt(frontX, midY) || this.isSolidAt(frontX, footY - 1);
         const gapAhead = !this.isSolidAt(frontX, gapCheckY);
-        const playerHigher =
-            playerBounds.y + playerBounds.height <
-            this.state.y + this.state.height - this.tileSize * 0.5;
 
-        return obstacleAhead || gapAhead || playerHigher;
+        return obstacleAhead || gapAhead || playerHigher || targetAbove;
+    }
+
+    getCurrentWaypoint(playerBounds, timestamp) {
+        if (!this.map || !this.mapRows || !this.mapCols) {
+            return null;
+        }
+
+        const targetNode = this.getNodeForBounds(playerBounds);
+        const targetKey = targetNode ? this.nodeKey(targetNode) : null;
+
+        const needRecalc =
+            !this.pathPoints.length ||
+            this.currentWaypointIndex >= this.pathPoints.length ||
+            !targetKey ||
+            this.lastTargetNodeKey !== targetKey ||
+            timestamp - this.lastPathUpdate > this.pathUpdateIntervalMs;
+
+        if (needRecalc) {
+            this.recalculatePath(targetNode, timestamp);
+        }
+
+        if (!this.pathPoints.length || this.currentWaypointIndex >= this.pathPoints.length) {
+            return null;
+        }
+
+        const waypoint = this.pathPoints[this.currentWaypointIndex];
+        const enemyCenterX = this.state.x + this.state.width / 2;
+        const enemyFeetY = this.state.y + this.state.height + this.collisionOffset;
+
+        if (
+            Math.abs(enemyCenterX - waypoint.x) < Math.max(4, this.state.width * 0.35) &&
+            Math.abs(enemyFeetY - waypoint.y) < this.tileSize * 1.1
+        ) {
+            this.currentWaypointIndex += 1;
+            if (this.currentWaypointIndex >= this.pathPoints.length) {
+                return null;
+            }
+            return this.pathPoints[this.currentWaypointIndex];
+        }
+
+        return waypoint;
+    }
+
+    recalculatePath(targetNode, timestamp) {
+        this.lastPathUpdate = timestamp;
+        if (!targetNode) {
+            this.pathPoints = [];
+            this.currentWaypointIndex = 0;
+            this.lastTargetNodeKey = null;
+            return;
+        }
+
+        const startNode = this.getNodeForEnemy();
+        if (!startNode) {
+            this.pathPoints = [];
+            this.currentWaypointIndex = 0;
+            this.lastTargetNodeKey = this.nodeKey(targetNode);
+            return;
+        }
+
+        const pathNodes = this.findPath(startNode, targetNode);
+        if (!pathNodes || pathNodes.length < 2) {
+            this.pathPoints = [];
+            this.currentWaypointIndex = 0;
+            this.lastTargetNodeKey = this.nodeKey(targetNode);
+            return;
+        }
+
+        this.pathPoints = pathNodes.slice(1).map((node) => this.nodeToWorld(node));
+        this.currentWaypointIndex = 0;
+        this.lastTargetNodeKey = this.nodeKey(targetNode);
+    }
+
+    getNodeForEnemy() {
+        const centerX = this.state.x + this.state.width / 2;
+        const feetY = this.state.y + this.state.height + this.collisionOffset;
+        return this.getNodeAtWorldPosition(centerX, feetY);
+    }
+
+    getNodeForBounds(bounds) {
+        if (!bounds) {
+            return null;
+        }
+        const centerX = bounds.x + bounds.width / 2;
+        const feetY = bounds.y + bounds.height;
+        return this.getNodeAtWorldPosition(centerX, feetY);
+    }
+
+    getNodeAtWorldPosition(centerX, feetY) {
+        if (!this.map || !this.mapRows || !this.mapCols) {
+            return null;
+        }
+
+        const col = Math.floor(centerX / this.tileSize);
+        let row = Math.floor((feetY - this.mapOffsetY) / this.tileSize) - 1;
+        if (row < 0) {
+            row = 0;
+        }
+
+        if (!this.isWithinBounds(row, col)) {
+            return null;
+        }
+
+        const direct = this.findNearestWalkable(row, col, this.mapRows);
+        if (!direct) {
+            return null;
+        }
+        return direct;
+    }
+
+    nodeToWorld(node) {
+        const centerX = node.col * this.tileSize + this.tileSize / 2;
+        const feetY =
+            this.mapOffsetY + (node.row + 1) * this.tileSize - this.collisionOffset;
+        return { x: centerX, y: feetY };
+    }
+
+    nodeKey(node) {
+        return `${node.row}:${node.col}`;
+    }
+
+    isWithinBounds(row, col) {
+        if (col < 0 || col >= this.mapCols) {
+            return false;
+        }
+        if (row < 0 || row >= this.mapRows - 1) {
+            return false;
+        }
+        return true;
+    }
+
+    isSolidCell(row, col) {
+        if (col < 0 || col >= this.mapCols) {
+            return true;
+        }
+        if (row < 0) {
+            return false;
+        }
+        if (row >= this.mapRows) {
+            return true;
+        }
+        return this.map[row][col] === this.fullConstants.MAP.SOLID_TILE_VALUE;
+    }
+
+    isWalkable(row, col) {
+        if (!this.isWithinBounds(row, col)) {
+            return false;
+        }
+        if (this.isSolidCell(row, col)) {
+            return false;
+        }
+        return this.isSolidCell(row + 1, col);
+    }
+
+    findNearestWalkable(startRow, col, maxSearch = 4) {
+        let depth = 0;
+        for (let row = startRow; row < this.mapRows - 1 && depth <= maxSearch; row += 1) {
+            if (this.isWalkable(row, col)) {
+                return { row, col };
+            }
+            if (this.isSolidCell(row, col)) {
+                break;
+            }
+            depth += 1;
+        }
+        depth = 0;
+        for (let row = startRow - 1; row >= 0 && depth <= maxSearch; row -= 1) {
+            if (this.isWalkable(row, col)) {
+                return { row, col };
+            }
+            if (this.isSolidCell(row, col)) {
+                break;
+            }
+            depth += 1;
+        }
+        return null;
+    }
+
+    findPath(startNode, targetNode) {
+        const startKey = this.nodeKey(startNode);
+        const targetKey = this.nodeKey(targetNode);
+
+        if (startKey === targetKey) {
+            return [startNode];
+        }
+
+        const queue = [startNode];
+        const visited = new Map();
+        visited.set(startKey, null);
+
+        while (queue.length > 0) {
+            const current = queue.shift();
+            const currentKey = this.nodeKey(current);
+            if (currentKey === targetKey) {
+                return this.reconstructPath(visited, currentKey, startKey, targetNode);
+            }
+
+            const neighbors = this.getNeighbors(current);
+            for (const neighbor of neighbors) {
+                const neighborKey = this.nodeKey(neighbor);
+                if (visited.has(neighborKey)) {
+                    continue;
+                }
+                visited.set(neighborKey, currentKey);
+                queue.push(neighbor);
+            }
+        }
+
+        return null;
+    }
+
+    reconstructPath(visited, targetKey, startKey, targetNode) {
+        const path = [targetNode];
+        let currentKey = visited.get(targetKey);
+        let safety = 0;
+        while (currentKey && currentKey !== startKey && safety < this.mapRows * this.mapCols) {
+            const [row, col] = currentKey.split(":").map((value) => Number(value));
+            path.push({ row, col });
+            currentKey = visited.get(currentKey);
+            safety += 1;
+        }
+        if (startKey) {
+            const [row, col] = startKey.split(":").map((value) => Number(value));
+            path.push({ row, col });
+        }
+        return path.reverse();
+    }
+
+    getNeighbors(node) {
+        const result = [];
+        const horizontal = [-1, 1];
+        for (const offset of horizontal) {
+            const neighborCol = node.col + offset;
+            if (this.isWalkable(node.row, neighborCol)) {
+                result.push({ row: node.row, col: neighborCol });
+            }
+        }
+
+        const dropTarget = this.getDropTarget(node);
+        if (dropTarget) {
+            result.push(dropTarget);
+        }
+
+        const jumpTargets = this.getJumpTargets(node);
+        result.push(...jumpTargets);
+
+        return result;
+    }
+
+    getDropTarget(node) {
+        for (let row = node.row + 1; row < this.mapRows - 1; row += 1) {
+            if (this.isSolidCell(row, node.col)) {
+                return null;
+            }
+            if (this.isWalkable(row, node.col)) {
+                return { row, col: node.col };
+            }
+        }
+        return null;
+    }
+
+    getJumpTargets(node) {
+        const targets = [];
+        for (let vertical = 1; vertical <= this.maxJumpTiles; vertical += 1) {
+            const targetRow = node.row - vertical;
+            if (targetRow < 0) {
+                break;
+            }
+            for (
+                let horizontal = -this.maxJumpHorizontalTiles;
+                horizontal <= this.maxJumpHorizontalTiles;
+                horizontal += 1
+            ) {
+                const targetCol = node.col + horizontal;
+                if (!this.isWalkable(targetRow, targetCol)) {
+                    continue;
+                }
+                if (Math.abs(horizontal) > vertical + 1) {
+                    continue;
+                }
+                if (!this.isJumpPathClear(node, { row: targetRow, col: targetCol })) {
+                    continue;
+                }
+                targets.push({ row: targetRow, col: targetCol });
+            }
+        }
+        return targets;
+    }
+
+    isJumpPathClear(from, to) {
+        const rowMin = Math.min(from.row, to.row);
+        const rowMax = Math.max(from.row, to.row);
+        const colMin = Math.min(from.col, to.col);
+        const colMax = Math.max(from.col, to.col);
+
+        for (let row = rowMin; row <= rowMax; row += 1) {
+            for (let col = colMin; col <= colMax; col += 1) {
+                if (this.isSolidCell(row, col)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     isSolidAt(x, y) {

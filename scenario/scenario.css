@@ -101,7 +101,7 @@ body {
 .game-over-button {
   position: absolute;
   left: 50%;
-  top: 52%;
+  bottom: 27%;
   transform: translate(-50%, -50%);
   padding: 0.9rem 1.8rem;
   font-size: 0.95rem;

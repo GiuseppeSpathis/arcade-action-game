@@ -118,7 +118,7 @@ function drawGameOverOverlay() {
     ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
     ctx.font = `normal ${Math.floor(fontSize * 0.4)}px 'Press Start 2P', 'Courier New', monospace`;
     ctx.fillText(
-        "Premi il pulsante per tornare al menu",
+        "Press the button to return to the menu",
         canvas.width / 2,
         canvas.height / 2 + fontSize
     );

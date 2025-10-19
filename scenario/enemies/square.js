@@ -4,17 +4,17 @@ export class SquareEnemy {
     constructor(constants, canvas, mapData) {
         this.constants = constants.ENEMIES.SQUARE;
         this.fullConstants = constants;
-        this.map = mapData.grid;
+        this.map = mapData?.grid;
         this.tileSize = constants.TILE_SIZE;
-        this.mapOffsetY = mapData.verticalOffset;
+        this.mapOffsetY = mapData?.verticalOffset;
         this.size = this.constants.SIZE;
         this.collisionOffset = constants.PLAYER.COLLISION_OFFSET;
 
-        const platforms = mapData.platforms.length > 0 ? mapData.platforms : [
+        const platforms = mapData?.platforms.length > 0 ? mapData?.platforms : [
             {
-                row: mapData.floorRow,
+                row: mapData?.floorRow,
                 colStart: 0,
-                colEnd: mapData.cols - 1,
+                colEnd: mapData?.cols - 1,
             },
         ];
         const chosenPlatform =

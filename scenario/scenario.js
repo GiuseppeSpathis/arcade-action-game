@@ -14,104 +14,94 @@ function generateMap() {
   const rows = Math.floor(canvas.height / tileSize);
   const cols = Math.floor(canvas.width / tileSize);
   const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
-  const platforms = [];
 
-  const totalPlatforms = Math.floor(Math.random() * 3) + 4; // 4-6 platforms
-  const minVerticalGap = 2;
-  const maxVerticalGap = 2;
-  const maxHorizontalGap = 3;
+  const FLOOR_ROW = rows - 1;
+  for (let c = 0; c < cols; c += 1) grid[FLOOR_ROW][c] = 1;
 
-  const startRow = Math.max(1, rows - 2);
-  const startCol = Math.floor(Math.random() * cols);
-  grid[startRow][startCol] = 1;
-  platforms.push({ row: startRow, col: startCol });
+  const platforms = [{ row: FLOOR_ROW, colStart: 0, colEnd: cols - 1 }];
+
+  const maxVerticalGap = 2;    
+  const maxHorizontalGap = 3;   
+  const totalSegments = Math.min(10, Math.max(5, Math.floor(cols / 6)));
 
   let attempts = 0;
-  const maxAttempts = 600;
+  const maxAttempts = 800;
 
-  const canPlace = (candidateRow, candidateCol) => {
-    if (grid[candidateRow][candidateCol] === 1) return false;
+  function segmentIsReachable(r, cStart, cEnd) {
+    for (const seg of platforms) {
+      const vDist = Math.abs(seg.row - r);
+      if (vDist > maxVerticalGap) continue;
 
-    const verticalSpacingOk = platforms.every((platform) => {
-      if (platform.col !== candidateCol) return true;
-      return Math.abs(platform.row - candidateRow) >= minVerticalGap;
-    });
-
-    if (!verticalSpacingOk) {
-      return false;
+      const overlap =
+        !(cEnd < seg.colStart - maxHorizontalGap ||
+          cStart > seg.colEnd + maxHorizontalGap);
+      if (overlap) return true;
     }
+    return false;
+  }
 
-    const reachable = platforms.some((platform) => {
-      const verticalDistance = Math.abs(platform.row - candidateRow);
-      const horizontalDistance = Math.abs(platform.col - candidateCol);
-      if (verticalDistance === 0 && horizontalDistance === 0) return false;
-      if (verticalDistance > maxVerticalGap || horizontalDistance > maxHorizontalGap) return false;
-      if (verticalDistance === maxVerticalGap && horizontalDistance > 2) return false;
-      return true;
-    });
-
-    return reachable;
-  };
-
-  while (platforms.length < totalPlatforms && attempts < maxAttempts) {
+  while (platforms.length < totalSegments && attempts < maxAttempts) {
     attempts += 1;
 
-    const base = platforms[Math.floor(Math.random() * platforms.length)];
-    const verticalChoice = Math.random();
+    const r =
+      FLOOR_ROW - (2 + Math.floor(Math.random() * Math.min(6, FLOOR_ROW - 1)));
 
-    let candidateRow = base.row;
-    if (verticalChoice < 0.65) {
-      const gap = minVerticalGap + Math.floor(Math.random() * (maxVerticalGap - minVerticalGap + 1));
-      candidateRow = Math.max(1, base.row - gap);
-    } else if (verticalChoice > 0.9 && base.row + minVerticalGap < rows - 1) {
-      const gap = minVerticalGap + Math.floor(Math.random() * (maxVerticalGap - minVerticalGap + 1));
-      candidateRow = Math.min(rows - 2, base.row + gap);
-    }
+    const segLen = Math.max(3, Math.min(12, Math.floor(cols / 8) + Math.floor(Math.random() * 6)));
 
-    const horizontalOffset = Math.floor(Math.random() * (maxHorizontalGap * 2 + 1)) - maxHorizontalGap;
-    let candidateCol = base.col + horizontalOffset;
-    candidateCol = Math.max(0, Math.min(cols - 1, candidateCol));
+    let cStart = Math.floor(Math.random() * (cols - segLen));
+    let cEnd = cStart + segLen - 1;
 
-    if ((candidateRow === base.row && candidateCol === base.col) || !canPlace(candidateRow, candidateCol)) {
-      continue;
-    }
+    if (!segmentIsReachable(r, cStart, cEnd)) continue;
 
-    grid[candidateRow][candidateCol] = 1;
-    platforms.push({ row: candidateRow, col: candidateCol });
+    const clash = platforms.some(
+      (s) => s.row === r && !(cEnd < s.colStart - 1 || cStart > s.colEnd + 1)
+    );
+    if (clash) continue;
+
+    for (let c = cStart; c <= cEnd; c += 1) grid[r][c] = 1;
+    platforms.push({ row: r, colStart: cStart, colEnd: cEnd });
   }
 
-  if (platforms.length < totalPlatforms) {
-    for (let row = 1; row < rows - 1 && platforms.length < totalPlatforms; row += 1) {
-      for (let col = 0; col < cols && platforms.length < totalPlatforms; col += 1) {
-        if (!canPlace(row, col)) continue;
-        grid[row][col] = 1;
-        platforms.push({ row, col });
-      }
-    }
-  }
-
-  return { grid, platforms };
+  return { grid, platforms, floorRow: FLOOR_ROW, cols };
 }
 
 const mapData = generateMap();
 const map = mapData.grid;
-const spawnPlatformIndex = Math.floor(Math.random() * mapData.platforms.length);
-const spawnPlatform = mapData.platforms[spawnPlatformIndex] || mapData.platforms[0];
+const spawnCol = Math.floor(mapData.cols / 2);
+const spawnRow = mapData.floorRow;
 
 const player = {
   width: 34,
   height: 48,
-  x: spawnPlatform.col * tileSize + (tileSize - 34) / 2,
-  y: spawnPlatform.row * tileSize - 48 - 0.01,
+  x: spawnCol * tileSize + (tileSize - 34) / 2,
+  y: spawnRow * tileSize - 48 - 0.01,
   vx: 0,
   vy: 0,
   speed: 0.75,
   maxSpeed: 4.2,
   jumpForce: -14,
-  onGround: true
+  onGround: true,
 };
 
 const pressedKeys = new Set();
+
+const JUMP_KEYS = new Set(['Space', 'ArrowUp', 'KeyW']);
+
+function tryJump() {
+  if (!player.onGround) return;
+  player.vy = player.jumpForce;
+  player.onGround = false;
+
+  const impulse = player.maxSpeed * 0.6; 
+  if (pressedKeys.has('ArrowLeft') || pressedKeys.has('KeyA')) {
+    player.vx = Math.min(player.vx, 0);   
+    player.vx = Math.max(player.vx, -impulse);
+  } else if (pressedKeys.has('ArrowRight') || pressedKeys.has('KeyD')) {
+    player.vx = Math.max(player.vx, 0);
+    player.vx = Math.min(player.vx, impulse);
+  }
+}
+
 
 function isSolidTile(row, col) {
   if (row < 0 || row >= map.length) return false;
@@ -265,14 +255,19 @@ function gameLoop() {
 }
 
 document.addEventListener('keydown', (event) => {
+  if (['ArrowLeft','ArrowRight','ArrowUp','Space','KeyA','KeyD','KeyW'].includes(event.code)) {
+    event.preventDefault();
+  }
+
   pressedKeys.add(event.code);
+
   if (event.code === 'Escape') {
     window.location.href = '../menu/menu.html';
     return;
   }
-  if ((event.code === 'Space' || event.code === 'ArrowUp') && player.onGround) {
-    player.vy = player.jumpForce;
-    player.onGround = false;
+
+  if (JUMP_KEYS.has(event.code)) {
+    tryJump(); 
   }
 });
 

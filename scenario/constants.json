@@ -124,7 +124,13 @@
     "SQUARE": {
       "SIZE": 40,
       "COLOR": "#5d9bff",
-      "SPEED": 180
+      "MOVE_ACCELERATION": 0.65,
+      "MAX_SPEED": 3.4,
+      "DECELERATION_FACTOR": 0.8,
+      "MIN_SPEED_THRESHOLD": 0.04,
+      "JUMP_FORCE": -16,
+      "MAX_FALL_SPEED": 14,
+      "JUMP_COOLDOWN_MS": 900
     }
   }
 }

@@ -98,6 +98,36 @@ body {
   overflow: hidden;
 }
 
+.game-over-button {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  padding: 0.9rem 1.8rem;
+  font-size: 0.95rem;
+  background: rgba(93, 155, 255, 0.9);
+  color: #0a1021;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  z-index: 4;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.game-over-button:hover,
+.game-over-button:focus {
+  transform: translate(-50%, -50%) scale(1.04);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.45);
+  outline: none;
+}
+
+.game-over-button[hidden] {
+  display: none;
+}
+
 canvas {
   display: block;
   width: 100%;

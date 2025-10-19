@@ -1,8 +1,13 @@
+import { setupAudioToggle } from "../helper/audioController.js";
 import { generateMap } from "./helper/map.js";
 import { PlayerController } from "./helper/player.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+const audioElement = document.getElementById("bg_music");
+const toggleButton = document.getElementById("musicToggle");
+setupAudioToggle({ audioElement, toggleButton });
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;

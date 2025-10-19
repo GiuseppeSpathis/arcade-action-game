@@ -7,14 +7,21 @@
     <link rel="stylesheet" href="menu.css" />
   </head>
   <body>
+    <button
+      id="musicToggle"
+      class="audio-toggle-button"
+      type="button"
+      aria-label="Disattiva l'audio"
+      aria-pressed="false"
+    ></button>
     <div class="menu-panel">
       <h1>Retro Arcade</h1>
       <button id="playButton" class="play-button">Play</button>
     </div>
-    <script src="menu.js"></script>
     <audio id="bg_music" class="audio" autoplay controls loop style="display: none;">
     <source src="../assets/musics/menu.mp3" type="audio/mp3" />
         Your browser does not support the audio element.
     </audio>
+    <script type="module" src="menu.js"></script>
   </body>
 </html>

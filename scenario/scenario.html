@@ -8,6 +8,13 @@
   </head>
   <body>
     <div class="game-wrapper">
+      <button
+        id="musicToggle"
+        class="audio-toggle-button"
+        type="button"
+        aria-label="Disattiva l'audio"
+        aria-pressed="false"
+      ></button>
       <header class="hud">
         <div class="lives" aria-label="Vite">
           <span class="heart" aria-hidden="true">❤</span>
@@ -19,10 +26,10 @@
         <canvas id="gameCanvas" aria-label="Scenario di gioco"></canvas>
       </main>
     </div>
-    <script type="module" src="scenario.js"></script>
     <audio id="bg_music" class="audio" autoplay controls loop style="display: none;">
     <source src="../assets/musics/scenario.mp3" type="audio/mp3" />
         Your browser does not support the audio element.
     </audio>
+    <script type="module" src="scenario.js"></script>
   </body>
 </html>

@@ -133,7 +133,7 @@
       "MAX_SPEED": 3.4,
       "DECELERATION_FACTOR": 0.8,
       "MIN_SPEED_THRESHOLD": 0.04,
-      "JUMP_FORCE": -16,
+      "JUMP_FORCE": -19,
       "MAX_FALL_SPEED": 14,
       "JUMP_COOLDOWN_MS": 900
     }

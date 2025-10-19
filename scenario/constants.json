@@ -63,74 +63,7 @@
     "HIGHLIGHT_COLOR": "rgba(255, 255, 255, 0.15)"
   },
   "BACKGROUND": {
-    "SKY_COLOR": "#9ce5ff",
-    "MOUNTAINS": [
-      {
-        "COLOR": "#5ca1c4",
-        "POINTS": [
-          {
-            "X": -100,
-            "Y_OFFSET": 0
-          },
-          {
-            "X": 200,
-            "Y_OFFSET": 180
-          },
-          {
-            "X": 500,
-            "Y_OFFSET": 0
-          }
-        ]
-      },
-      {
-        "COLOR": "#4a8fb8",
-        "POINTS": [
-          {
-            "X": 300,
-            "Y_OFFSET": 0
-          },
-          {
-            "X": 650,
-            "Y_OFFSET": 140
-          },
-          {
-            "X": 980,
-            "Y_OFFSET": 0
-          }
-        ]
-      }
-    ],
-    "CLOUD_COLOR": "rgba(255, 255, 255, 0.85)",
-    "CLOUDS": [
-      {
-        "CENTER_X": 140,
-        "CENTER_Y": 120
-      },
-      {
-        "CENTER_X": 520,
-        "CENTER_Y": 80
-      }
-    ],
-    "CLOUD_SHAPES": [
-      {
-        "OFFSET_X": 0,
-        "OFFSET_Y": 0,
-        "RADIUS_X": 55,
-        "RADIUS_Y": 24
-      },
-      {
-        "OFFSET_X": 40,
-        "OFFSET_Y": 5,
-        "RADIUS_X": 45,
-        "RADIUS_Y": 20
-      },
-      {
-        "OFFSET_X": -40,
-        "OFFSET_Y": 5,
-        "RADIUS_X": 45,
-        "RADIUS_Y": 20
-      }
-    ]
+    "BACKGROUND_IMAGE_SRC": "../assets/images/backgroundScenario.png"
   },
   "INPUT": {
     "PREVENT_DEFAULT_KEYS": [

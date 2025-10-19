@@ -17,14 +17,16 @@ body {
 
 .game-wrapper {
   position: relative;
-  max-width: 960px;
-  width: 100%;
-  padding: 1.5rem;
+  width: 100vw;
+  height: 100vh;
   background: rgba(10, 16, 33, 0.7);
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  box-shadow: 0 24px 45px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
 }
+
 
 .hud {
   position: absolute;
@@ -49,10 +51,12 @@ body {
 canvas {
   display: block;
   width: 100%;
-  border-radius: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.15);
+  height: 100%;
+  border: none;
+  border-radius: 0;
   background: linear-gradient(#9ce5ff, #6fb7ff);
 }
+
 
 @media (max-width: 768px) {
   .game-wrapper {

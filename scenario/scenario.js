@@ -1,6 +1,13 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas(); 
+
 const tileSize = 60;
 
 function generateMap() {
@@ -260,7 +267,7 @@ function gameLoop() {
 document.addEventListener('keydown', (event) => {
   pressedKeys.add(event.code);
   if (event.code === 'Escape') {
-    window.location.href = 'menu.html';
+    window.location.href = '../menu/menu.html';
     return;
   }
   if ((event.code === 'Space' || event.code === 'ArrowUp') && player.onGround) {

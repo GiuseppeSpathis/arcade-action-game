@@ -12,6 +12,9 @@ const heartsElements = Array.from(document.querySelectorAll(".heart"));
 const audioElement = document.getElementById("bg_music");
 const toggleButton = document.getElementById("musicToggle");
 const returnMenuButton = document.getElementById("returnMenuButton");
+const sfxGameOver = document.getElementById("sfx_gameover");
+if (sfxGameOver) sfxGameOver.volume = 0.9;
+
 setupAudioToggle({ audioElement, toggleButton });
 
 function resizeCanvas() {
@@ -180,16 +183,40 @@ async function initializeGame() {
     }
 
     function triggerGameOver() {
-        if (isGameOver) {
-            return;
-        }
+        if (isGameOver) return;
         isGameOver = true;
         pressedKeys.clear();
+
+        if (audioElement) {
+            const startVol = audioElement.volume ?? 0.35;
+            const duration = 500; 
+            const step = 40;
+            let elapsed = 0;
+            const id = setInterval(() => {
+            elapsed += step;
+            const t = Math.min(1, elapsed / duration);
+            audioElement.volume = startVol * (1 - t);
+            if (t >= 1) {
+                clearInterval(id);
+                audioElement.pause();
+                audioElement.volume = startVol; 
+            }
+            }, step);
+        }
+
+        if (sfxGameOver) {
+            try {
+            sfxGameOver.currentTime = 0;
+            sfxGameOver.play().catch(() => {});
+            } catch {}
+        }
+
         if (returnMenuButton) {
             returnMenuButton.hidden = false;
             returnMenuButton.focus({ preventScroll: true });
         }
     }
+
 
     function spawnEnemyGroup() {
         const { MIN, MAX } = constants.ENEMIES.GROUP_SIZE;

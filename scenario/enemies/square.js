@@ -48,6 +48,22 @@ export class SquareEnemy {
         this.active = true;
         this.isSpawning = false;
         this.lastJumpAt = -Infinity;
+        this.deathAnimation = {
+            active: false,
+            startedAt: 0,
+            duration: constants.ENEMIES.DEATH_ANIMATION_DURATION_MS ?? 320,
+            fragments: [],
+        };
+    }
+
+    getNow(externalTimestamp) {
+        if (typeof externalTimestamp === "number") {
+            return externalTimestamp;
+        }
+        if (typeof performance !== "undefined" && performance.now) {
+            return performance.now();
+        }
+        return Date.now();
     }
 
     update(deltaTime, playerBounds, timestamp, canvas) {
@@ -55,7 +71,15 @@ export class SquareEnemy {
             return;
         }
 
-        const now = typeof timestamp === "number" ? timestamp : performance.now();
+        if (this.deathAnimation.active) {
+            const now = this.getNow(timestamp);
+            if (now - this.deathAnimation.startedAt >= this.deathAnimation.duration) {
+                this.active = false;
+            }
+            return;
+        }
+
+        const now = this.getNow(timestamp);
 
         const playerCenterX = playerBounds.x + playerBounds.width / 2;
         const enemyCenterX = this.state.x + this.state.width / 2;
@@ -250,6 +274,31 @@ export class SquareEnemy {
         if (!this.active) {
             return;
         }
+        const now = this.getNow();
+        const isDying = this.deathAnimation.active;
+        const progress = isDying
+            ? Math.min(
+                  1,
+                  Math.max(
+                      0,
+                      (now - this.deathAnimation.startedAt) /
+                          this.deathAnimation.duration
+                  )
+              )
+            : 0;
+        const centerX = this.state.x + this.state.width / 2;
+        const centerY = this.state.y + this.state.height / 2;
+
+        ctx.save();
+        if (isDying) {
+            const scale = 1 + progress * 0.35;
+            ctx.globalAlpha = Math.max(0.05, 1 - progress);
+            ctx.translate(centerX, centerY);
+            ctx.scale(scale, scale);
+            ctx.translate(-centerX, -centerY);
+            ctx.shadowColor = `rgba(255, 255, 255, ${0.5 * (1 - progress)})`;
+            ctx.shadowBlur = 15 + 26 * (1 - progress);
+        }
         ctx.fillStyle = this.constants.COLOR;
         ctx.fillRect(
             this.state.x,
@@ -257,6 +306,59 @@ export class SquareEnemy {
             this.state.width,
             this.state.height
         );
+        ctx.restore();
+
+        if (isDying) {
+            if (!this.deathAnimation.fragments.length) {
+                this.deathAnimation.fragments = Array.from(
+                    { length: 8 },
+                    () => ({
+                        offsetX: (Math.random() - 0.5) * this.state.width,
+                        offsetY: (Math.random() - 0.5) * this.state.height,
+                        size:
+                            Math.max(4, this.state.width * (0.1 + Math.random() * 0.15)),
+                        angle: Math.random() * Math.PI * 2,
+                    })
+                );
+            }
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, 0.55 * (1 - progress));
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * (1 - progress)})`;
+            ctx.lineWidth = 2 + progress * 4;
+            ctx.strokeRect(
+                this.state.x - 4 - progress * 8,
+                this.state.y - 4 - progress * 8,
+                this.state.width + 8 + progress * 16,
+                this.state.height + 8 + progress * 16
+            );
+            ctx.restore();
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, 0.65 * (1 - progress));
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.55 * (1 - progress)})`;
+            this.deathAnimation.fragments.forEach((fragment) => {
+                const travel = progress * 24;
+                const x =
+                    centerX +
+                    fragment.offsetX * (1 + progress * 0.3) +
+                    Math.cos(fragment.angle) * travel;
+                const y =
+                    centerY +
+                    fragment.offsetY * (1 + progress * 0.3) +
+                    Math.sin(fragment.angle) * travel;
+                const size = fragment.size * (1 - progress * 0.6);
+                if (size <= 0) {
+                    return;
+                }
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(fragment.angle * 0.5);
+                ctx.fillRect(-size / 2, -size / 2, size, size);
+                ctx.restore();
+            });
+            ctx.restore();
+        }
     }
 
     getBounds() {
@@ -269,6 +371,15 @@ export class SquareEnemy {
     }
 
     takeHit() {
-        this.active = false;
+        if (this.deathAnimation.active) {
+            return;
+        }
+        this.deathAnimation.active = true;
+        this.deathAnimation.startedAt = this.getNow();
+        this.deathAnimation.fragments = [];
+    }
+
+    isDying() {
+        return this.deathAnimation.active;
     }
 }

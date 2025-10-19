@@ -31,6 +31,24 @@ export class PlayerController {
             coyoteFrames: 0,
             jumpBufferFrames: 0,
         };
+
+        this.damageEffect = {
+            startAt: -Infinity,
+            endAt: -Infinity,
+            splats: [],
+        };
+        this.damageEffectDuration =
+            this.constants.PLAYER.DAMAGE_FLASH_DURATION_MS ?? 450;
+    }
+
+    getNow(externalTimestamp) {
+        if (typeof externalTimestamp === "number") {
+            return externalTimestamp;
+        }
+        if (typeof performance !== "undefined" && performance.now) {
+            return performance.now();
+        }
+        return Date.now();
     }
 
     queueJump() {
@@ -234,6 +252,27 @@ export class PlayerController {
         }
     }
 
+    triggerDamageFeedback(timestamp) {
+        const now = this.getNow(timestamp);
+        this.damageEffect.startAt = now;
+        this.damageEffect.endAt = now + this.damageEffectDuration;
+        this.damageEffect.splats = Array.from({ length: 6 }, () => ({
+            offsetX:
+                (Math.random() - 0.5) *
+                this.state.width *
+                (0.6 + Math.random() * 0.6),
+            offsetY:
+                (Math.random() - 0.5) *
+                this.state.height *
+                (0.3 + Math.random() * 0.7),
+            radius: 2.5 + Math.random() * 6.5,
+        }));
+    }
+
+    isDamageEffectActive() {
+        return this.getNow() < this.damageEffect.endAt;
+    }
+
     draw(ctx) {
         ctx.fillStyle = this.constants.PLAYER.BODY_COLOR;
         ctx.fillRect(
@@ -252,6 +291,78 @@ export class PlayerController {
             this.constants.PLAYER.EYE_SIZE,
             this.constants.PLAYER.EYE_SIZE
         );
+
+        const now = this.getNow();
+        const effectActive = now < this.damageEffect.endAt;
+        if (!effectActive) {
+            return;
+        }
+
+        const elapsed = now - this.damageEffect.startAt;
+        const clampedElapsed = Math.min(
+            Math.max(elapsed, 0),
+            this.damageEffectDuration
+        );
+        const progress = clampedElapsed / this.damageEffectDuration;
+        const pulse = 0.4 + Math.sin(progress * Math.PI * 3) * 0.35;
+
+        ctx.save();
+        ctx.globalAlpha = 0.6 + pulse * 0.35;
+        ctx.fillStyle =
+            this.constants.PLAYER.DAMAGE_FLASH_COLOR ||
+            "rgba(255, 241, 118, 0.75)";
+        ctx.fillRect(
+            this.state.x - 2,
+            this.state.y - 2,
+            this.state.width + 4,
+            this.state.height + 4
+        );
+        ctx.restore();
+
+        ctx.save();
+        ctx.lineWidth = 2.5 + (1 - progress) * 3.5;
+        ctx.strokeStyle =
+            this.constants.PLAYER.DAMAGE_OUTLINE_COLOR ||
+            "rgba(255, 82, 82, 0.9)";
+        ctx.shadowColor = "rgba(255, 72, 72, 0.7)";
+        ctx.shadowBlur = 14 + 18 * (1 - progress);
+        ctx.strokeRect(
+            this.state.x - 3,
+            this.state.y - 3,
+            this.state.width + 6,
+            this.state.height + 6
+        );
+        ctx.restore();
+
+        const splatColor =
+            this.constants.PLAYER.DAMAGE_SPLAT_COLOR ||
+            "rgba(255, 94, 94, 0.8)";
+        const baseX = this.state.x + this.state.width / 2;
+        const baseY = this.state.y + this.state.height / 2;
+        const splatAlpha = Math.max(0, 1 - progress * 1.15);
+        this.damageEffect.splats.forEach((splat, index) => {
+            const wobble = Math.sin(progress * Math.PI * (2 + index)) * 3;
+            const radius = Math.max(
+                0,
+                splat.radius * (1 - progress * 0.7) + wobble * 0.05
+            );
+            if (radius <= 0) {
+                return;
+            }
+            ctx.save();
+            ctx.globalAlpha = splatAlpha;
+            ctx.fillStyle = splatColor;
+            ctx.beginPath();
+            ctx.arc(
+                baseX + splat.offsetX * (1 - progress * 0.35),
+                baseY + splat.offsetY * (1 - progress * 0.45),
+                radius,
+                0,
+                Math.PI * 2
+            );
+            ctx.fill();
+            ctx.restore();
+        });
     }
 
     getBounds() {

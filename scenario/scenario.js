@@ -1,5 +1,5 @@
 import { setupAudioToggle } from "../helper/audioController.js";
-import { generateMap } from "./helper/map.js";
+import { generateMap, isSolidTile } from "./helper/map.js";
 import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
 import { TriangleEnemy } from "./enemies/triangle.js";
@@ -11,6 +11,7 @@ const heartsElements = Array.from(document.querySelectorAll(".heart"));
 
 const audioElement = document.getElementById("bg_music");
 const toggleButton = document.getElementById("musicToggle");
+const returnMenuButton = document.getElementById("returnMenuButton");
 setupAudioToggle({ audioElement, toggleButton });
 
 function resizeCanvas() {
@@ -115,6 +116,12 @@ function drawGameOverOverlay() {
     const fontSize = Math.max(24, Math.min(canvas.width, canvas.height) * 0.06);
     ctx.font = `bold ${fontSize}px 'Press Start 2P', 'Courier New', monospace`;
     ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+    ctx.font = `normal ${Math.floor(fontSize * 0.4)}px 'Press Start 2P', 'Courier New', monospace`;
+    ctx.fillText(
+        "Premi il pulsante per tornare al menu",
+        canvas.width / 2,
+        canvas.height / 2 + fontSize
+    );
     ctx.restore();
 }
 
@@ -141,8 +148,6 @@ async function initializeGame() {
     let lastDamageAt = -Infinity;
     let playerLives = constants.PLAYER.MAX_LIVES;
     let isGameOver = false;
-    let redirectHandle;
-
     let enemies = [];
     let playerBullets = [];
     let enemyBullets = [];
@@ -180,9 +185,10 @@ async function initializeGame() {
         }
         isGameOver = true;
         pressedKeys.clear();
-        redirectHandle = window.setTimeout(() => {
-            window.location.href = exitDestination;
-        }, 2500);
+        if (returnMenuButton) {
+            returnMenuButton.hidden = false;
+            returnMenuButton.focus({ preventScroll: true });
+        }
     }
 
     function spawnEnemyGroup() {
@@ -194,7 +200,7 @@ async function initializeGame() {
             spawned.push(new TriangleEnemy(constants, canvas));
         }
         if (totalEnemies >= 2) {
-            spawned.push(new SquareEnemy(constants, canvas));
+            spawned.push(new SquareEnemy(constants, canvas, mapData));
         }
         while (spawned.length < totalEnemies) {
             const enemyClass = Math.random() > 0.5 ? TriangleEnemy : SquareEnemy;
@@ -273,14 +279,38 @@ async function initializeGame() {
                     enemyBullets.push(bullet);
                 }
             } else {
-                enemy.update(deltaTime, playerBounds, canvas);
+                enemy.update(deltaTime, playerBounds, timestamp, canvas);
             }
         });
         enemies = enemies.filter((enemy) => enemy.active);
     }
 
+    function bulletHitsTiles(bullet) {
+        if (!bullet.active) {
+            return false;
+        }
+        const samplePoints = [
+            { x: bullet.position.x, y: bullet.position.y },
+            { x: bullet.position.x + bullet.radius, y: bullet.position.y },
+            { x: bullet.position.x - bullet.radius, y: bullet.position.y },
+            { x: bullet.position.x, y: bullet.position.y + bullet.radius },
+            { x: bullet.position.x, y: bullet.position.y - bullet.radius },
+        ];
+
+        return samplePoints.some(({ x, y }) => {
+            const row = Math.floor((y - mapData.verticalOffset) / constants.TILE_SIZE);
+            const col = Math.floor(x / constants.TILE_SIZE);
+            return isSolidTile(mapData.grid, row, col, constants);
+        });
+    }
+
     function updatePlayerBullets(deltaTime) {
         playerBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
+        playerBullets.forEach((bullet) => {
+            if (bulletHitsTiles(bullet)) {
+                bullet.active = false;
+            }
+        });
         playerBullets.forEach((bullet) => {
             if (!bullet.active) {
                 return;
@@ -302,6 +332,11 @@ async function initializeGame() {
 
     function updateEnemyBullets(deltaTime, timestamp, playerBounds) {
         enemyBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
+        enemyBullets.forEach((bullet) => {
+            if (bulletHitsTiles(bullet)) {
+                bullet.active = false;
+            }
+        });
         enemyBullets.forEach((bullet) => {
             if (!bullet.active) {
                 return;
@@ -390,11 +425,12 @@ async function initializeGame() {
         gameLoop(timestamp);
     });
 
-    window.addEventListener("beforeunload", () => {
-        if (redirectHandle) {
-            window.clearTimeout(redirectHandle);
-        }
-    });
+    if (returnMenuButton) {
+        returnMenuButton.hidden = true;
+        returnMenuButton.addEventListener("click", () => {
+            window.location.href = exitDestination;
+        });
+    }
 }
 
 initializeGame().catch((error) => {

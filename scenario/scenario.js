@@ -14,6 +14,8 @@ const toggleButton = document.getElementById("musicToggle");
 const returnMenuButton = document.getElementById("returnMenuButton");
 const sfxGameOver = document.getElementById("sfx_gameover");
 if (sfxGameOver) sfxGameOver.volume = 0.9;
+const sfxHit = document.getElementById("sfx_hit");
+if (sfxHit) sfxHit.volume = 0.75;
 
 setupAudioToggle({ audioElement, toggleButton });
 
@@ -175,8 +177,15 @@ async function initializeGame() {
             return;
         }
         lastDamageAt = timestamp;
+        playerController.triggerDamageFeedback(timestamp);
         playerLives = Math.max(0, playerLives - 1);
         updateLivesDisplay(playerLives);
+        if (sfxHit) {
+            try {
+                sfxHit.currentTime = 0;
+                sfxHit.play().catch(() => {});
+            } catch {}
+        }
         if (playerLives <= 0) {
             triggerGameOver();
         }
@@ -346,6 +355,9 @@ async function initializeGame() {
                 if (!enemy.active) {
                     continue;
                 }
+                if (typeof enemy.isDying === "function" && enemy.isDying()) {
+                    continue;
+                }
                 if (bullet.intersectsRect(enemy.getBounds())) {
                     bullet.active = false;
                     enemy.takeHit();
@@ -382,6 +394,9 @@ async function initializeGame() {
                 return;
             }
             if (enemy.isSpawning) {
+                return;
+            }
+            if (typeof enemy.isDying === "function" && enemy.isDying()) {
                 return;
             }
             if (rectanglesIntersect(enemy.getBounds(), playerBounds)) {

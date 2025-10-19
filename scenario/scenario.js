@@ -11,64 +11,118 @@ resizeCanvas();
 const tileSize = 60;
 
 function generateMap() {
-  const rows = Math.floor(canvas.height / tileSize);
-  const cols = Math.floor(canvas.width / tileSize);
+  const rows = Math.max(1, Math.floor(canvas.height / tileSize));
+  const cols = Math.max(1, Math.floor(canvas.width / tileSize));
   const grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+  const verticalOffset = Math.max(0, canvas.height - rows * tileSize);
 
   const FLOOR_ROW = rows - 1;
   for (let c = 0; c < cols; c += 1) grid[FLOOR_ROW][c] = 1;
 
   const platforms = [{ row: FLOOR_ROW, colStart: 0, colEnd: cols - 1 }];
 
-  const maxVerticalGap = 2;    
-  const maxHorizontalGap = 3;   
-  const totalSegments = Math.min(10, Math.max(5, Math.floor(cols / 6)));
+  const MIN_VERTICAL_GAP = 2;
+  const MAX_VERTICAL_GAP = 3;
+  const TOP_MARGIN = 2;
 
-  let attempts = 0;
-  const maxAttempts = 800;
+  const desiredLayers = 3 + Math.floor(Math.random() * 3);
+  const maxLayersPossible = Math.max(
+    1,
+    Math.floor((FLOOR_ROW - TOP_MARGIN) / MIN_VERTICAL_GAP) + 1
+  );
+  const targetLayers = Math.min(desiredLayers, maxLayersPossible);
 
-  function segmentIsReachable(r, cStart, cEnd) {
-    for (const seg of platforms) {
-      const vDist = Math.abs(seg.row - r);
-      if (vDist > maxVerticalGap) continue;
+  const layerRows = [FLOOR_ROW];
+  let lastRow = FLOOR_ROW;
 
-      const overlap =
-        !(cEnd < seg.colStart - maxHorizontalGap ||
-          cStart > seg.colEnd + maxHorizontalGap);
-      if (overlap) return true;
+  while (layerRows.length < targetLayers) {
+    const remaining = targetLayers - layerRows.length;
+    let maxGap = lastRow - (TOP_MARGIN + (remaining - 1) * MIN_VERTICAL_GAP);
+    if (maxGap < MIN_VERTICAL_GAP) {
+      maxGap = MIN_VERTICAL_GAP;
     }
-    return false;
+    maxGap = Math.min(maxGap, MAX_VERTICAL_GAP);
+
+    if (maxGap < MIN_VERTICAL_GAP) {
+      break;
+    }
+
+    const gap = MIN_VERTICAL_GAP + Math.floor(Math.random() * (maxGap - MIN_VERTICAL_GAP + 1));
+    let nextRow = lastRow - gap;
+
+    if (nextRow < TOP_MARGIN) {
+      nextRow = TOP_MARGIN;
+    }
+
+    if (lastRow - nextRow < MIN_VERTICAL_GAP) {
+      nextRow = lastRow - MIN_VERTICAL_GAP;
+    }
+
+    if (nextRow < TOP_MARGIN) {
+      break;
+    }
+
+    layerRows.push(nextRow);
+    lastRow = nextRow;
   }
 
-  while (platforms.length < totalSegments && attempts < maxAttempts) {
-    attempts += 1;
+  for (let i = 1; i < layerRows.length; i += 1) {
+    const row = layerRows[i];
+    const segments = [];
 
-    const r =
-      FLOOR_ROW - (2 + Math.floor(Math.random() * Math.min(6, FLOOR_ROW - 1)));
+    let col = Math.floor(Math.random() * 2);
+    let hasLongSegment = false;
 
-    const segLen = Math.max(3, Math.min(12, Math.floor(cols / 8) + Math.floor(Math.random() * 6)));
+    while (col < cols) {
+      col += Math.floor(Math.random() * 3);
+      if (col >= cols) break;
 
-    let cStart = Math.floor(Math.random() * (cols - segLen));
-    let cEnd = cStart + segLen - 1;
+      const maxSegmentLength = Math.max(3, Math.floor(cols / 3));
+      const segmentLength =
+        1 + Math.floor(Math.random() * Math.max(1, maxSegmentLength));
+      const colEnd = Math.min(cols - 1, col + segmentLength - 1);
 
-    if (!segmentIsReachable(r, cStart, cEnd)) continue;
+      segments.push({ row, colStart: col, colEnd });
+      hasLongSegment = hasLongSegment || colEnd - col + 1 >= 3;
 
-    const clash = platforms.some(
-      (s) => s.row === r && !(cEnd < s.colStart - 1 || cStart > s.colEnd + 1)
-    );
-    if (clash) continue;
+      for (let c = col; c <= colEnd; c += 1) {
+        grid[row][c] = 1;
+      }
 
-    for (let c = cStart; c <= cEnd; c += 1) grid[r][c] = 1;
-    platforms.push({ row: r, colStart: cStart, colEnd: cEnd });
+      col = colEnd + 1 + Math.floor(Math.random() * 3);
+    }
+
+    if (segments.length === 0) {
+      const start = Math.max(0, Math.floor(cols / 2) - 1);
+      const end = Math.min(cols - 1, start + 2);
+      for (let c = start; c <= end; c += 1) {
+        grid[row][c] = 1;
+      }
+      segments.push({ row, colStart: start, colEnd: end });
+      hasLongSegment = true;
+    }
+
+    if (!hasLongSegment) {
+      const firstSegment = segments[0];
+      const needed = 3 - (firstSegment.colEnd - firstSegment.colStart + 1);
+      firstSegment.colEnd = Math.min(cols - 1, firstSegment.colEnd + needed);
+      for (let c = firstSegment.colStart; c <= firstSegment.colEnd; c += 1) {
+        grid[row][c] = 1;
+      }
+    }
+
+    platforms.push(...segments);
   }
 
-  return { grid, platforms, floorRow: FLOOR_ROW, cols };
+  return { grid, platforms, floorRow: FLOOR_ROW, cols, verticalOffset };
 }
 
 const mapData = generateMap();
 const map = mapData.grid;
 const spawnCol = Math.floor(mapData.cols / 2);
 const spawnRow = mapData.floorRow;
+const mapOffsetY = mapData.verticalOffset;
 
 const COYOTE_FRAMES = 7;
 const JUMP_BUFFER_FRAMES = 4;
@@ -77,12 +131,12 @@ const player = {
   width: 34,
   height: 48,
   x: spawnCol * tileSize + (tileSize - 34) / 2,
-  y: spawnRow * tileSize - 48 - 0.01,
+  y: mapOffsetY + spawnRow * tileSize - 48 - 0.01,
   vx: 0,
   vy: 0,
   speed: 0.75,
   maxSpeed: 4.2,
-  jumpForce: -14,
+  jumpForce: -18,
   onGround: true,
   coyoteFrames: 0,
   jumpBufferFrames: 0,
@@ -122,8 +176,10 @@ function isSolidTile(row, col) {
 function checkCollision(x, y, width, height) {
   const left = Math.floor(x / tileSize);
   const right = Math.floor((x + width - 1) / tileSize);
-  const top = Math.floor(y / tileSize);
-  const bottom = Math.floor((y + height - 1) / tileSize);
+  const top = Math.floor((y - mapOffsetY) / tileSize);
+  const bottom = Math.floor((y + height - 1 - mapOffsetY) / tileSize);
+
+  if (bottom < top) return false;
 
   for (let row = top; row <= bottom; row += 1) {
     for (let col = left; col <= right; col += 1) {
@@ -175,14 +231,19 @@ function updatePlayer() {
   }
   if (player.vy > 0) {
     if (checkCollision(nextX, nextY, player.width, player.height)) {
-      nextY = Math.floor((player.y + player.height + player.vy) / tileSize) * tileSize - player.height - 0.01;
+      nextY =
+        Math.floor((player.y + player.height + player.vy - mapOffsetY) / tileSize) *
+          tileSize +
+        mapOffsetY -
+        player.height -
+        0.01;
       player.vy = 0;
       player.onGround = true;
       player.coyoteFrames = COYOTE_FRAMES;
     }
   } else if (player.vy < 0) {
     if (checkCollision(nextX, nextY, player.width, player.height)) {
-      nextY = Math.floor(player.y / tileSize) * tileSize + 0.01;
+      nextY = Math.floor((player.y - mapOffsetY) / tileSize) * tileSize + mapOffsetY + 0.01;
       player.vy = 0;
     }
   }
@@ -249,7 +310,7 @@ function drawTiles() {
     for (let col = 0; col < map[row].length; col += 1) {
       if (map[row][col] === 1) {
         const x = col * tileSize;
-        const y = row * tileSize;
+        const y = mapOffsetY + row * tileSize;
         drawTile(x, y);
       }
     }

@@ -186,6 +186,10 @@ function gameLoop() {
 
 document.addEventListener('keydown', (event) => {
   pressedKeys.add(event.code);
+  if (event.code === 'Escape') {
+    window.location.href = 'menu.html';
+    return;
+  }
   if ((event.code === 'Space' || event.code === 'ArrowUp') && player.onGround) {
     player.vy = player.jumpForce;
     player.onGround = false;

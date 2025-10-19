@@ -221,6 +221,7 @@ export class SquareEnemy {
                     this.collisionOffset;
                 this.state.vy = 0;
                 this.state.onGround = true;
+                this.chooseRandomHorizontalDirection();
             }
         } else if (this.state.vy < 0) {
             if (
@@ -243,6 +244,7 @@ export class SquareEnemy {
                     this.mapOffsetY +
                     this.collisionOffset;
                 this.state.vy = 0;
+                this.chooseRandomHorizontalDirection();
             }
         }
 
@@ -304,6 +306,16 @@ export class SquareEnemy {
         const gapAhead = !this.isSolidAt(frontX, gapCheckY);
 
         return obstacleAhead || gapAhead || playerHigher || targetAbove;
+    }
+
+    chooseRandomHorizontalDirection() {
+        const randomDirection = Math.random() < 0.5 ? -1 : 1;
+        const horizontalSpeed =
+            Math.max(
+                this.constants.MAX_SPEED * 0.6,
+                Math.abs(this.state.vx)
+            ) || this.constants.MAX_SPEED * 0.6;
+        this.state.vx = randomDirection * horizontalSpeed;
     }
 
     getCurrentWaypoint(playerBounds, timestamp) {

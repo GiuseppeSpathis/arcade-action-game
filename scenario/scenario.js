@@ -70,6 +70,9 @@ const map = mapData.grid;
 const spawnCol = Math.floor(mapData.cols / 2);
 const spawnRow = mapData.floorRow;
 
+const COYOTE_FRAMES = 7;
+const JUMP_BUFFER_FRAMES = 4;
+
 const player = {
   width: 34,
   height: 48,
@@ -81,20 +84,27 @@ const player = {
   maxSpeed: 4.2,
   jumpForce: -14,
   onGround: true,
+  coyoteFrames: 0,
+  jumpBufferFrames: 0,
 };
 
 const pressedKeys = new Set();
 
 const JUMP_KEYS = new Set(['Space', 'ArrowUp', 'KeyW']);
 
-function tryJump() {
-  if (!player.onGround) return;
+function queueJump() {
+  player.jumpBufferFrames = JUMP_BUFFER_FRAMES;
+}
+
+function executeJump() {
   player.vy = player.jumpForce;
   player.onGround = false;
+  player.coyoteFrames = 0;
+  player.jumpBufferFrames = 0;
 
-  const impulse = player.maxSpeed * 0.6; 
+  const impulse = player.maxSpeed * 0.6;
   if (pressedKeys.has('ArrowLeft') || pressedKeys.has('KeyA')) {
-    player.vx = Math.min(player.vx, 0);   
+    player.vx = Math.min(player.vx, 0);
     player.vx = Math.max(player.vx, -impulse);
   } else if (pressedKeys.has('ArrowRight') || pressedKeys.has('KeyD')) {
     player.vx = Math.max(player.vx, 0);
@@ -126,6 +136,10 @@ function checkCollision(x, y, width, height) {
 }
 
 function updatePlayer() {
+  if ((player.onGround || player.coyoteFrames > 0) && player.jumpBufferFrames > 0) {
+    executeJump();
+  }
+
   const movingLeft = pressedKeys.has('ArrowLeft') || pressedKeys.has('KeyA');
   const movingRight = pressedKeys.has('ArrowRight') || pressedKeys.has('KeyD');
 
@@ -146,6 +160,8 @@ function updatePlayer() {
   let nextX = player.x + player.vx;
   let nextY = player.y + player.vy;
 
+  player.onGround = false;
+
   if (player.vx > 0) {
     if (checkCollision(nextX, player.y, player.width, player.height)) {
       nextX = Math.floor((player.x + player.width + player.vx) / tileSize) * tileSize - player.width - 0.01;
@@ -157,13 +173,12 @@ function updatePlayer() {
       player.vx = 0;
     }
   }
-
-  player.onGround = false;
   if (player.vy > 0) {
     if (checkCollision(nextX, nextY, player.width, player.height)) {
       nextY = Math.floor((player.y + player.height + player.vy) / tileSize) * tileSize - player.height - 0.01;
       player.vy = 0;
       player.onGround = true;
+      player.coyoteFrames = COYOTE_FRAMES;
     }
   } else if (player.vy < 0) {
     if (checkCollision(nextX, nextY, player.width, player.height)) {
@@ -178,6 +193,19 @@ function updatePlayer() {
   if (player.y >= canvas.height - player.height - 0.01) {
     player.onGround = true;
     player.vy = 0;
+    player.coyoteFrames = COYOTE_FRAMES;
+  }
+
+  if ((player.onGround || player.coyoteFrames > 0) && player.jumpBufferFrames > 0) {
+    executeJump();
+  }
+
+  if (!player.onGround && player.coyoteFrames > 0) {
+    player.coyoteFrames -= 1;
+  }
+
+  if (player.jumpBufferFrames > 0) {
+    player.jumpBufferFrames -= 1;
   }
 }
 
@@ -267,7 +295,7 @@ document.addEventListener('keydown', (event) => {
   }
 
   if (JUMP_KEYS.has(event.code)) {
-    tryJump(); 
+    queueJump();
   }
 });
 

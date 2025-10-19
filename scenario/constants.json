@@ -1,0 +1,161 @@
+{
+  "TILE_SIZE": 60,
+  "GRAVITY": 0.65,
+  "JUMP_FORCE": -18,
+  "COYOTE_FRAMES": 7,
+  "JUMP_BUFFER_FRAMES": 4,
+  "GENERAL": {
+    "MIN_GRID_DIMENSION": 1,
+    "MIN_VERTICAL_OFFSET": 0,
+    "TWO_PI_MULTIPLIER": 2,
+    "SQUARE_EXPONENT": 2,
+    "GRAVITY_DIVISOR": 2
+  },
+  "PLAYER": {
+    "WIDTH": 34,
+    "HEIGHT": 48,
+    "SPEED": 0.75,
+    "MAX_SPEED": 4.2,
+    "JUMP_IMPULSE_MULTIPLIER": 0.6,
+    "DECELERATION_FACTOR": 0.82,
+    "MIN_SPEED_THRESHOLD": 0.05,
+    "MAX_FALL_SPEED": 14,
+    "COLLISION_OFFSET": 0.01,
+    "EYE_OFFSET_X": 10,
+    "EYE_OFFSET_Y": 12,
+    "EYE_SIZE": 6,
+    "BODY_COLOR": "#111111",
+    "EYE_COLOR": "#ffffff",
+    "SPAWN_HORIZONTAL_DIVISOR": 2
+  },
+  "MAP": {
+    "TOP_MARGIN": 2,
+    "MIN_VERTICAL_GAP_TILES": 2,
+    "MAX_VERTICAL_GAP_TILES": 2,
+    "GAP_REDUCTION_TILES": 0,
+    "GAP_RANDOM_ADDITION": 1,
+    "MIN_LAYERS": 3,
+    "ADDITIONAL_LAYER_VARIATION": 3,
+    "MIN_LAYER_COUNT": 1,
+    "INITIAL_COLUMN_OFFSET_RANGE": 2,
+    "COLUMN_SKIP_RANGE": 3,
+    "MAX_SEGMENT_LENGTH_DIVISOR": 3,
+    "MIN_MAX_SEGMENT_LENGTH": 3,
+    "SEGMENT_LENGTH_BASE": 1,
+    "SEGMENT_END_OFFSET": 1,
+    "COLUMN_END_LIMIT_ADJUSTMENT": 1,
+    "LONG_SEGMENT_THRESHOLD": 3,
+    "POST_SEGMENT_SKIP_BASE": 1,
+    "POST_SEGMENT_SKIP_RANGE": 3,
+    "FALLBACK_PLATFORM_DIVISOR": 2,
+    "FALLBACK_PLATFORM_HALF_WIDTH": 1,
+    "FALLBACK_PLATFORM_EXTRA_LENGTH": 2,
+    "FIRST_SEGMENT_MIN_LENGTH": 3,
+    "SOLID_TILE_VALUE": 1,
+    "EMPTY_TILE_VALUE": 0,
+    "LAST_ROW_OFFSET": 1
+  },
+  "TILE": {
+    "SOIL_HEIGHT": 18,
+    "TOP_LIGHT_HEIGHT": 6,
+    "SOIL_COLOR": "#5f3d24",
+    "GRASS_COLOR": "#7ac74f",
+    "HIGHLIGHT_COLOR": "rgba(255, 255, 255, 0.15)"
+  },
+  "BACKGROUND": {
+    "SKY_COLOR": "#9ce5ff",
+    "MOUNTAINS": [
+      {
+        "COLOR": "#5ca1c4",
+        "POINTS": [
+          {
+            "X": -100,
+            "Y_OFFSET": 0
+          },
+          {
+            "X": 200,
+            "Y_OFFSET": 180
+          },
+          {
+            "X": 500,
+            "Y_OFFSET": 0
+          }
+        ]
+      },
+      {
+        "COLOR": "#4a8fb8",
+        "POINTS": [
+          {
+            "X": 300,
+            "Y_OFFSET": 0
+          },
+          {
+            "X": 650,
+            "Y_OFFSET": 140
+          },
+          {
+            "X": 980,
+            "Y_OFFSET": 0
+          }
+        ]
+      }
+    ],
+    "CLOUD_COLOR": "rgba(255, 255, 255, 0.85)",
+    "CLOUDS": [
+      {
+        "CENTER_X": 140,
+        "CENTER_Y": 120
+      },
+      {
+        "CENTER_X": 520,
+        "CENTER_Y": 80
+      }
+    ],
+    "CLOUD_SHAPES": [
+      {
+        "OFFSET_X": 0,
+        "OFFSET_Y": 0,
+        "RADIUS_X": 55,
+        "RADIUS_Y": 24
+      },
+      {
+        "OFFSET_X": 40,
+        "OFFSET_Y": 5,
+        "RADIUS_X": 45,
+        "RADIUS_Y": 20
+      },
+      {
+        "OFFSET_X": -40,
+        "OFFSET_Y": 5,
+        "RADIUS_X": 45,
+        "RADIUS_Y": 20
+      }
+    ]
+  },
+  "INPUT": {
+    "PREVENT_DEFAULT_KEYS": [
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "Space",
+      "KeyA",
+      "KeyD",
+      "KeyW"
+    ],
+    "JUMP_KEYS": [
+      "Space",
+      "ArrowUp",
+      "KeyW"
+    ],
+    "MOVE_LEFT_KEYS": [
+      "ArrowLeft",
+      "KeyA"
+    ],
+    "MOVE_RIGHT_KEYS": [
+      "ArrowRight",
+      "KeyD"
+    ],
+    "EXIT_KEY": "Escape",
+    "EXIT_DESTINATION": "../menu/menu.html"
+  }
+}

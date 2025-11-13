@@ -5,9 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Retro Arcade - Scenario</title>
     <link rel="stylesheet" href="scenario.css" />
-    <link rel="icon" type="image/png" href="../assets/images/favicon-invader.png" sizes="32x32">
+    <link
+      rel="icon"
+      type="image/png"
+      href="../assets/images/favicon-invader.png"
+      sizes="32x32"
+    />
 
-  </head>
+    <script
+      type="module"
+      src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"
+    ></script>
+    <script
+      type="module"
+      src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
+    ></script>
+    <script
+      type="module"
+      src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
+    ></script>
+    </head>
   <body>
     <div class="game-wrapper">
       <button
@@ -17,10 +34,13 @@
         aria-label="Disattiva l'audio"
         aria-pressed="false"
       ></button>
-      
-      <!-- HUD Container will be populated by scenario.js -->
+
       <header id="hudContainer" class="hud"></header>
 
+      <div id="roomCodeDisplay" class="room-code-display" hidden>
+        <span class="room-code-label">ROOM CODE:</span>
+        <span id="roomCodeText" class="room-code-text"></span>
+      </div>
       <main class="game-area">
         <canvas id="gameCanvas" aria-label="Scenario di gioco"></canvas>
         <button
@@ -33,15 +53,22 @@
         </button>
       </main>
     </div>
-    <audio id="bg_music" class="audio" autoplay controls loop style="display: none;">
-    <source src="../assets/musics/scenario.mp3" type="audio/mp3" />
-        Your browser does not support the audio element.
+    <audio
+      id="bg_music"
+      class="audio"
+      autoplay
+      controls
+      loop
+      style="display: none"
+    >
+      <source src="../assets/musics/scenario.mp3" type="audio/mp3" />
+      Your browser does not support the audio element.
     </audio>
-    <audio id="sfx_gameover" preload="auto" style="display:none">
-        <source src="../assets/musics/gameOver.wav" type="audio/wav" />
+    <audio id="sfx_gameover" preload="auto" style="display: none">
+      <source src="../assets/musics/gameOver.wav" type="audio/wav" />
     </audio>
-    <audio id="sfx_hit" preload="auto" style="display:none">
-        <source src="../assets/musics/hit.mp3" type="audio/mpeg" />
+    <audio id="sfx_hit" preload="auto" style="display: none">
+      <source src="../assets/musics/hit.mp3" type="audio/mpeg" />
     </audio>
     <script type="module" src="scenario.js"></script>
   </body>

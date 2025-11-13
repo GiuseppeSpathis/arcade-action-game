@@ -8,10 +8,10 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url('https://images.unsplash.com/photo-1618005198919-d3d4b5a92eee?auto=format&fit=crop&w=1600&q=80')
+  background: url("https://images.unsplash.com/photo-1618005198919-d3d4b5a92eee?auto=format&fit=crop&w=1600&q=80")
       center/cover fixed,
     linear-gradient(#6fb7ff, #1f2545);
-  font-family: 'Press Start 2P', 'Courier New', Courier, monospace;
+  font-family: "Press Start 2P", "Courier New", Courier, monospace;
   color: #fff;
 }
 
@@ -54,7 +54,6 @@ body {
   background: rgba(111, 183, 255, 0.85);
 }
 
-
 /* Updated HUD styles for multiplayer */
 .hud {
   position: absolute;
@@ -73,16 +72,16 @@ body {
   padding: 0.4rem 0.6rem;
   background: rgba(10, 16, 33, 0.75);
   border-radius: 8px;
-  border: 2px solid #FFFFFF; /* Default border, will be colored by JS */
+  border: 2px solid #ffffff; /* Default border, will be colored by JS */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .player-hud .player-label {
   font-size: 0.8rem;
   font-weight: bold;
-  color: #FFFFFF;
+  color: #ffffff;
   margin-right: 0.5rem;
-  text-shadow: 0 0 4px rgba(255,255,255,0.5);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.5);
 }
 
 .lives .heart {
@@ -90,7 +89,7 @@ body {
   font-size: 1.25rem; /* Made hearts slightly smaller */
   color: #ff5d73;
   margin-right: 0.2rem;
-  text-shadow: 0 0 6px rgba(255,93,115,.7);
+  text-shadow: 0 0 6px rgba(255, 93, 115, 0.7);
   animation: heartPulse 1.2s ease-in-out infinite;
   transform-origin: center;
 }
@@ -101,19 +100,37 @@ body {
   animation: none;
 }
 
-.lives .heart:nth-child(2) { animation-delay: .15s; }
-.lives .heart:nth-child(3) { animation-delay: .30s; }
+.lives .heart:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lives .heart:nth-child(3) {
+  animation-delay: 0.3s;
+}
 
 @keyframes heartPulse {
-  0%   { transform: translateY(0) scale(1);   filter: drop-shadow(0 0 0 rgba(255,93,115,0)); }
-  25%  { transform: translateY(-1px) scale(1.12); }
-  40%  { transform: translateY(0) scale(1.00); }
-  60%  { transform: translateY(-1px) scale(1.06); }
-  100% { transform: translateY(0) scale(1);   filter: drop-shadow(0 0 0 rgba(255,93,115,0)); }
+  0% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 93, 115, 0));
+  }
+  25% {
+    transform: translateY(-1px) scale(1.12);
+  }
+  40% {
+    transform: translateY(0) scale(1);
+  }
+  60% {
+    transform: translateY(-1px) scale(1.06);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 93, 115, 0));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lives .heart { animation: none; }
+  .lives .heart {
+    animation: none;
+  }
 }
 
 .game-area {
@@ -160,7 +177,6 @@ canvas {
   background: linear-gradient(#9ce5ff, #6fb7ff);
 }
 
-
 @media (max-width: 768px) {
   .game-wrapper {
     margin: 0; /* Use full screen on mobile */
@@ -183,3 +199,50 @@ canvas {
     font-size: 1rem;
   }
 }
+
+/* --- NEW STYLES FOR ROOM CODE --- */
+.room-code-display {
+  position: absolute;
+  top: 4.5rem; /* Position below the HUD */
+  left: 1.5rem;
+  background: rgba(10, 16, 33, 0.75);
+  border-radius: 8px;
+  border: 2px solid #ffb347; /* Orange border */
+  padding: 0.4rem 0.8rem;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  text-shadow: 0 0 4px rgba(255, 179, 71, 0.7);
+}
+
+.room-code-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-right: 0.75rem;
+  color: #ffb347;
+}
+
+.room-code-text {
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.room-code-display[hidden] {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .room-code-display {
+    top: auto;
+    bottom: 1rem; /* Move to bottom on mobile */
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+  }
+
+  .hud {
+    top: 0.5rem; /* Ensure HUD is at the top */
+  }
+}
+/* --- END NEW STYLES --- */

@@ -1,37 +1,56 @@
-<!DOCTYPE html>
-<html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retro Arcade - Menu</title>
-    <link rel="stylesheet" href="menu.css" />
-    <link rel="icon" type="image/png" href="../assets/images/favicon-invader.png" sizes="32x32">
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Retro Arcade - Menu</title>
+        <link rel="stylesheet" href="menu.css" />
+        <link
+            rel="icon"
+            type="image/png"
+            href="../assets/images/favicon-invader.png"
+            sizes="32x32"
+        />
+    </head>
+    <body>
+        <button
+            id="musicToggle"
+            class="audio-toggle-button"
+            type="button"
+            aria-label="Disable audio"
+            aria-pressed="false"
+        ></button>
+        <div class="menu-panel">
+            <h1>Retro Arcade</h1>
+            <button id="playButton" class="play-button">Play</button>
 
-  </head>
-  <body>
-    <button
-      id="musicToggle"
-      class="audio-toggle-button"
-      type="button"
-      aria-label="Disattiva l'audio"
-      aria-pressed="false"
-    ></button>
-    <div class="menu-panel">
-      <h1>Retro Arcade</h1>
-      <button id="playButton" class="play-button">Play</button>
+            <div id="gameModeContainer" class="game-mode-container hidden">
+                <button id="player1Button" class="play-button mode-button">
+                    1 Player
+                </button>
+                <button id="player2Button" class="play-button mode-button">
+                    2 Players
+                </button>
+                <button id="player3Button" class="play-button mode-button">
+                    3 Players
+                </button>
+                <button id="player4Button" class="play-button mode-button">
+                    4 Players
+                </button>
+            </div>
+        </div>
 
-      <div id="gameModeContainer" class="game-mode-container hidden">
-        <button id="player1Button" class="play-button mode-button">1 Player</button>
-        <button id="player2Button" class="play-button mode-button">2 Players</button>
-        <button id="player3Button" class="play-button mode-button">3 Players</button>
-        <button id="player4Button" class="play-button mode-button">4 Players</button>
-      </div>
-    </div>
-    
-    <audio id="bg_music" class="audio" autoplay controls loop style="display: none;">
-    <source src="../assets/musics/menu.mp3" type="audio/mp3" />
-        Your browser does not support the audio element.
-    </audio>
-    <script type="module" src="menu.js"></script>
-  </body>
+        <audio
+            id="bg_music"
+            class="audio"
+            autoplay
+            controls
+            loop
+            style="display: none"
+        >
+            <source src="../assets/musics/menu.mp3" type="audio/mp3" />
+            Your browser does not support the audio element.
+        </audio>
+        <script type="module" src="menu.js"></script>
+    </body>
 </html>

@@ -123,7 +123,11 @@
   },
   "INPUT": {
     "PREVENT_DEFAULT_KEYS": [
-      "Space", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"
+      "Space",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown"
     ],
     "EXIT_KEY": "Escape",
     "EXIT_DESTINATION": "../menu/menu.html"
@@ -157,6 +161,14 @@
       "JUMP_FORCE": -19,
       "MAX_FALL_SPEED": 14,
       "JUMP_COOLDOWN_MS": 900
+    },
+    "CIRCLE": {
+      "SIZE": 25,
+      "COLOR": "#FF0000",
+      "MOVE_ACCELERATION": 0.9,
+      "MAX_SPEED": 5.0,
+      "DECELERATION_FACTOR": 0.4,
+      "MIN_SPEED_THRESHOLD": 0.04
     }
   }
 }

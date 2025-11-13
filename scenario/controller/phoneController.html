@@ -35,7 +35,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, updateDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Import Your New Config ---
         // This path goes up from 'scenario/controller/' to 'helper/'
@@ -45,6 +45,7 @@
         let db;
         let docRef;
         let playerKey; // e.g., "p2"
+        let sessionListenerUnsubscribe = null; // NEW: To stop the listener
 
         const connectionPanel = document.getElementById("connectionPanel");
         const controlsPanel = document.getElementById("controlsPanel");
@@ -68,9 +69,25 @@
         }
 
         function getDocPath(sessionId) {
-            // Use the new simplified path
             return `game_sessions/${sessionId}`;
         }
+
+        // --- NEW: Function to reset the UI ---
+        function resetToLobby(message) {
+            if (sessionListenerUnsubscribe) {
+                sessionListenerUnsubscribe(); // Stop listening
+                sessionListenerUnsubscribe = null;
+            }
+            docRef = null;
+            playerKey = null;
+
+            controlsPanel.classList.add("hidden");
+            connectionPanel.classList.remove("hidden");
+            
+            connectionStatus.textContent = message || "";
+            roomCodeInput.value = ""; // Clear the room code
+        }
+        // --- END NEW ---
 
         connectButton.addEventListener("click", async () => {
             const roomCode = roomCodeInput.value.trim().toUpperCase();
@@ -92,17 +109,53 @@
             docRef = doc(db, path);
 
             try {
-                // Check if doc exists by trying to set (merge) data
-                await setDoc(docRef, { [playerKey]: { l: false, r: false, j: false, s: false } }, { merge: true });
+                // NEW: Check if doc exists and player key is valid
+                connectionStatus.textContent = "Connecting...";
+                const docSnap = await getDoc(docRef);
+
+                // NEW: Check the nested players object
+                if (!docSnap.exists() || !docSnap.data().players || !docSnap.data().players[playerKey]) {
+                    connectionStatus.textContent = "Error: Room not found or player slot invalid.";
+                    return;
+                }
                 
+                // NEW: Update the nested player object
+                await updateDoc(docRef, {
+                    [`players.${playerKey}.inputs`]: { l: false, r: false, j: false, s: false }, // Reset inputs
+                    [`players.${playerKey}.connected`]: true // Set connected flag
+                });
+                
+                // END NEW
+
                 connectionStatus.textContent = "Connected!";
                 connectionPanel.classList.add("hidden");
                 controlsPanel.classList.remove("hidden");
+                
+                // --- NEW: Listen for game state changes ---
+                if (sessionListenerUnsubscribe) {
+                    sessionListenerUnsubscribe(); // Clear any old listener
+                }
+                sessionListenerUnsubscribe = onSnapshot(docRef, (doc) => {
+                    if (!doc.exists()) {
+                        // Document was deleted
+                        resetToLobby("Host disconnected. Game over.");
+                        return;
+                    }
+                    const state = doc.data()?.gameState;
+                    if (state === "gameover") {
+                        resetToLobby("Game Over! Join a new game.");
+                    } else if (state === "running") {
+                        // Game started, just in case.
+                        connectionStatus.textContent = "Game in progress...";
+                    }
+                });
+                // --- END NEW ---
+
                 setupControls();
 
             } catch (error) {
                 console.error("Error connecting to room:", error);
-                connectionStatus.textContent = "Error: Room not found or connection failed.";
+                connectionStatus.textContent = "Error: Connection failed.";
             }
         });
 
@@ -115,9 +168,14 @@
             const updateInput = (key, value) => {
                 if (!docRef || !playerKey) return;
                 const update = {};
-                update[`${playerKey}.${key}`] = value;
+                // NEW: Update the 'inputs' sub-field in the nested player object
+                update[`players.${playerKey}.inputs.${key}`] = value; 
                 // Send the update to Firestore
-                updateDoc(docRef, update).catch(err => console.error("Failed to send input:", err));
+                updateDoc(docRef, update).catch(err => {
+                    console.error("Failed to send input:", err);
+                    // If update fails, the session likely ended
+                    resetToLobby("Disconnected from game.");
+                });
             };
 
             // Touch events for mobile

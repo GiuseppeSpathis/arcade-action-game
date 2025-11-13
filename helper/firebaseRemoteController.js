@@ -1,4 +1,3 @@
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
@@ -6,6 +5,7 @@ import {
   doc,
   setDoc,
   onSnapshot,
+  updateDoc, // NEW: Import updateDoc
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Import your config from the file you created
@@ -60,17 +60,26 @@ export async function createGameSession(playerCount) {
   const sessionPath = `game_sessions/${roomCode}`;
   const sessionDoc = doc(db, sessionPath);
 
-  // Initialize input state for all potential remote players
-  const initialState = {};
+  // NEW: Initialize with gameState and a nested players object
+  const initialState = {
+    gameState: "lobby", // Game states: "lobby", "running", "gameover"
+    players: {},
+  };
+  const playerTemplate = {
+    inputs: { l: false, r: false, j: false, s: false },
+    connected: false,
+  };
+
   if (playerCount >= 2) {
-    initialState.p2 = { l: false, r: false, j: false, s: false };
+    initialState.players.p2 = structuredClone(playerTemplate);
   }
   if (playerCount >= 3) {
-    initialState.p3 = { l: false, r: false, j: false, s: false };
+    initialState.players.p3 = structuredClone(playerTemplate);
   }
   if (playerCount >= 4) {
-    initialState.p4 = { l: false, r: false, j: false, s: false };
+    initialState.players.p4 = structuredClone(playerTemplate);
   }
+  // END NEW
 
   try {
     await setDoc(sessionDoc, initialState);
@@ -78,15 +87,30 @@ export async function createGameSession(playerCount) {
     return roomCode;
   } catch (error) {
     console.error("Failed to create game session:", error);
-    // Could retry with a new code, but for now, just fail
     throw new Error("Failed to create Firestore session.");
   }
 }
 
 /**
- * Listens for real-time input changes from remote controllers.
+ * NEW: Updates the state of the game.
+ * @param {string} roomCode
+ * @param {"lobby" | "running" | "gameover"} newState
+ */
+export async function setGameState(roomCode, newState) {
+  if (!db || !roomCode) return;
+  const sessionPath = `game_sessions/${roomCode}`;
+  const sessionDoc = doc(db, sessionPath);
+  try {
+    await updateDoc(sessionDoc, { gameState: newState });
+  } catch (error) {
+    console.error(`Failed to set game state to ${newState}:`, error);
+  }
+}
+
+/**
+ * Listens for real-time changes to the session document.
  * @param {string} roomCode - The room code for the session.
- * @param {function} callback - Function to call with the new input data.
+ * @param {function} callback - Function to call with the new session data.
  * @returns {function} An unsubscribe function to stop listening.
  */
 export function listenForRemoteInputs(roomCode, callback) {
@@ -99,7 +123,7 @@ export function listenForRemoteInputs(roomCode, callback) {
   // onSnapshot returns an unsubscribe function
   const unsubscribe = onSnapshot(sessionDoc, (doc) => {
     if (doc.exists()) {
-      callback(doc.data());
+      callback(doc.data()); // Send the *entire* document back
     } else {
       console.log("Session document deleted or does not exist.");
     }

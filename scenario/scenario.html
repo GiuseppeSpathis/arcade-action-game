@@ -24,8 +24,24 @@
       type="module"
       src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
     ></script>
-    </head>
+  </head>
   <body>
+    <div id="connectionOverlay" class="connection-overlay hidden">
+      <h1 class="connection-title">JOIN THE GAME</h1>
+      
+      <div id="roomCodeDisplay" class="room-code-display">
+        <span class="room-code-label">ROOM CODE:</span>
+        <span id="roomCodeText" class="room-code-text">...</span>
+      </div>
+
+      <p class="connection-instructions">
+        Connect your phone to the same Wi-Fi and go to:<br />
+        <span id="connectionUrl" class="connection-url"></span>
+      </p>
+
+      <div id="playerConnectionContainer" class="player-connection-container">
+        </div>
+    </div>
     <div class="game-wrapper">
       <button
         id="musicToggle"
@@ -37,10 +53,6 @@
 
       <header id="hudContainer" class="hud"></header>
 
-      <div id="roomCodeDisplay" class="room-code-display" hidden>
-        <span class="room-code-label">ROOM CODE:</span>
-        <span id="roomCodeText" class="room-code-text"></span>
-      </div>
       <main class="game-area">
         <canvas id="gameCanvas" aria-label="Scenario di gioco"></canvas>
         <button

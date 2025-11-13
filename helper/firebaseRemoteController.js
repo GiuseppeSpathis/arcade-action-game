@@ -5,7 +5,7 @@ import {
   doc,
   setDoc,
   onSnapshot,
-  updateDoc, // NEW: Import updateDoc
+  updateDoc,
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Import your config from the file you created
@@ -25,7 +25,6 @@ export async function initFirebase() {
     console.log("Firebase initialized and host signed in.");
   } catch (error) {
     console.error("Firebase host init failed:", error);
-    // Display this error to the user on the canvas
     return { error: "Could not connect to Firebase. Check console." };
   }
   return { error: null };
@@ -50,7 +49,7 @@ function generateRoomCode() {
  */
 export async function createGameSession(playerCount) {
   if (playerCount <= 1) {
-    return null; // No remote session needed for 1 player
+    return null; 
   }
   if (!db) {
     throw new Error("Firebase not initialized. Call initFirebase() first.");
@@ -60,13 +59,18 @@ export async function createGameSession(playerCount) {
   const sessionPath = `game_sessions/${roomCode}`;
   const sessionDoc = doc(db, sessionPath);
 
-  // NEW: Initialize with gameState and a nested players object
   const initialState = {
-    gameState: "lobby", // Game states: "lobby", "running", "gameover"
+    gameState: "lobby", 
     players: {},
   };
+  
+  // NEW: Updated template with all 9 input keys
   const playerTemplate = {
-    inputs: { l: false, r: false, j: false, s: false },
+    inputs: { 
+        ml: false, mr: false, mu: false, md: false, // move
+        sl: false, sr: false, su: false, sd: false, // shoot
+        j: false // jump
+    },
     connected: false,
   };
 
@@ -79,7 +83,6 @@ export async function createGameSession(playerCount) {
   if (playerCount >= 4) {
     initialState.players.p4 = structuredClone(playerTemplate);
   }
-  // END NEW
 
   try {
     await setDoc(sessionDoc, initialState);
@@ -92,7 +95,7 @@ export async function createGameSession(playerCount) {
 }
 
 /**
- * NEW: Updates the state of the game.
+ * Updates the state of the game.
  * @param {string} roomCode
  * @param {"lobby" | "running" | "gameover"} newState
  */
@@ -120,10 +123,9 @@ export function listenForRemoteInputs(roomCode, callback) {
   const sessionPath = `game_sessions/${roomCode}`;
   const sessionDoc = doc(db, sessionPath);
 
-  // onSnapshot returns an unsubscribe function
   const unsubscribe = onSnapshot(sessionDoc, (doc) => {
     if (doc.exists()) {
-      callback(doc.data()); // Send the *entire* document back
+      callback(doc.data()); 
     } else {
       console.log("Session document deleted or does not exist.");
     }

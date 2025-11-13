@@ -70,9 +70,9 @@ html, body {
 }
 
 
-/* Controls Panel */
+/* --- NEW: Controls Panel Styles --- */
 #controlsPanel {
-    display: flex;
+    flex-direction: row; /* Side-by-side layout */
     justify-content: space-between;
     align-items: center;
     padding: 1rem 5%;
@@ -80,8 +80,8 @@ html, body {
 
 .control-button {
     border: 0;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 12px; /* D-pad buttons look better as squares */
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -89,61 +89,57 @@ html, body {
     color: #fff;
     font-family: inherit;
     font-weight: bold;
-    -webkit-tap-highlight-color: transparent; /* Disable tap flash */
+    font-size: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.1s ease, transform 0.1s ease;
+    width: 70px; /* Standard button size */
+    height: 70px; /* Standard button size */
 }
 
 .control-button:active {
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.5);
     transform: scale(0.95);
 }
 
-.controls-dpad, .controls-actions {
+/* D-Pad Container (shared style) */
+.controls-dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 70px);
+    grid-template-rows: repeat(3, 70px);
+    gap: 5px;
+    width: 215px; /* 70*3 + 5*2 */
+    height: 215px; /* 70*3 + 5*2 */
+}
+
+/* D-pad buttons positioning */
+.dpad-button.up { grid-column: 2; grid-row: 1; }
+.dpad-button.left { grid-column: 1; grid-row: 2; }
+.dpad-button.right { grid-column: 3; grid-row: 2; }
+.dpad-button.down { grid-column: 2; grid-row: 3; }
+
+/* D-Pad specific colors */
+#dpad-move .dpad-button {
+    background-color: rgba(100, 100, 100, 0.4);
+}
+
+#dpad-shoot .dpad-button {
+    background-color: rgba(244, 67, 54, 0.4); /* Red tint for shoot */
+}
+
+/* Action Buttons Container (Right side) */
+.controls-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Stack Shoot D-pad on top of Jump */
     align-items: center;
     justify-content: center;
-    position: relative;
-    width: 150px;
-    height: 150px;
-}
-
-.controls-actions {
-    flex-direction: row;
-    justify-content: space-around;
-    width: 200px;
-}
-
-.dpad-button {
-    width: 70px;
-    height: 70px;
-    position: absolute;
-    background-color: rgba(100, 100, 100, 0.4);
-    border-radius: 12px;
-}
-
-.dpad-button.left {
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-}
-.dpad-button.right {
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.dpad-button.left::after { content: '◀'; font-size: 1.5rem; }
-.dpad-button.right::after { content: '▶'; font-size: 1.5rem; }
-
-.action-button {
-    width: 80px;
-    height: 80px;
-    font-size: 1.5rem;
+    gap: 20px; /* Space between shoot-pad and jump button */
 }
 
 .action-button.jump {
-    background-color: #4CAF50; /* Green A */
-}
-.action-button.shoot {
-    background-color: #F44336; /* Red B */
+    width: 145px; /* Wider jump button */
+    height: 70px;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    background-color: #4CAF50; /* Green */
 }

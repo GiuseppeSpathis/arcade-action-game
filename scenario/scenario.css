@@ -55,18 +55,41 @@ body {
 }
 
 
+/* Updated HUD styles for multiplayer */
 .hud {
   position: absolute;
   top: 0.5rem;
   left: 1.5rem;
   z-index: 2;
+  display: flex; /* Aligns player HUDs horizontally */
+  flex-wrap: wrap; /* Allows HUDs to wrap on small screens */
+  gap: 1rem; /* Space between each player's HUD */
+}
+
+.player-hud {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(10, 16, 33, 0.75);
+  border-radius: 8px;
+  border: 2px solid #FFFFFF; /* Default border, will be colored by JS */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.player-hud .player-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #FFFFFF;
+  margin-right: 0.5rem;
+  text-shadow: 0 0 4px rgba(255,255,255,0.5);
 }
 
 .lives .heart {
   display: inline-block;
-  font-size: 2rem;
+  font-size: 1.25rem; /* Made hearts slightly smaller */
   color: #ff5d73;
-  margin-right: 0.25rem;
+  margin-right: 0.2rem;
   text-shadow: 0 0 6px rgba(255,93,115,.7);
   animation: heartPulse 1.2s ease-in-out infinite;
   transform-origin: center;
@@ -140,11 +163,23 @@ canvas {
 
 @media (max-width: 768px) {
   .game-wrapper {
-    margin: 1rem;
-    padding: 1rem;
+    margin: 0; /* Use full screen on mobile */
+    padding: 0;
   }
 
   .hud {
     left: 1rem;
+    gap: 0.5rem; /* Tighter spacing on mobile */
+  }
+
+  .player-hud {
+    padding: 0.3rem 0.5rem;
+  }
+  .player-hud .player-label {
+    font-size: 0.7rem;
+    margin-right: 0.3rem;
+  }
+  .lives .heart {
+    font-size: 1rem;
   }
 }

@@ -17,13 +17,10 @@
         aria-label="Disattiva l'audio"
         aria-pressed="false"
       ></button>
-      <header class="hud">
-        <div class="lives" aria-label="Vite">
-          <span class="heart" aria-hidden="true">❤</span>
-          <span class="heart" aria-hidden="true">❤</span>
-          <span class="heart" aria-hidden="true">❤</span>
-        </div>
-      </header>
+      
+      <!-- HUD Container will be populated by scenario.js -->
+      <header id="hudContainer" class="hud"></header>
+
       <main class="game-area">
         <canvas id="gameCanvas" aria-label="Scenario di gioco"></canvas>
         <button
@@ -32,7 +29,7 @@
           type="button"
           hidden
         >
-          Torna al menu
+          Return to the menu
         </button>
       </main>
     </div>

@@ -1,16 +1,27 @@
 import { checkCollision } from "./map.js";
 
 export class PlayerController {
-    constructor(constants, mapData, canvas) {
+    constructor(constants, mapData, canvas, playerData, playerIndex) {
         this.constants = constants;
         this.canvas = canvas;
         this.map = mapData.grid;
         this.tileSize = constants.TILE_SIZE;
         this.mapOffsetY = mapData.verticalOffset;
+        
+        // Assign player-specific data
+        this.playerData = playerData;
+        this.playerIndex = playerIndex;
+        this.lives = constants.PLAYER.MAX_LIVES;
+        this.lastDamageAt = -Infinity;
+        this.isDead = false;
+        this.lastPlayerShot = 0;
 
-        const spawnCol = Math.floor(
+
+        const baseSpawnCol = Math.floor(
             mapData.cols / constants.MAP.FALLBACK_PLATFORM_DIVISOR
         );
+        // Offset spawn position based on player index
+        const spawnCol = baseSpawnCol + (playerIndex * 2); 
         const spawnRow = mapData.floorRow;
         const horizontalPadding =
             (this.tileSize - constants.PLAYER.WIDTH) /
@@ -73,19 +84,27 @@ export class PlayerController {
         }
     }
 
+    // Use player-specific input keys
     isMovingLeft(pressedKeys) {
-        return this.constants.INPUT.MOVE_LEFT_KEYS.some((code) =>
+        return this.playerData.inputs.left.some((code) =>
             pressedKeys.has(code)
         );
     }
 
+    // Use player-specific input keys
     isMovingRight(pressedKeys) {
-        return this.constants.INPUT.MOVE_RIGHT_KEYS.some((code) =>
+        return this.playerData.inputs.right.some((code) =>
             pressedKeys.has(code)
         );
     }
 
     update(pressedKeys) {
+        if (this.isDead) {
+            this.state.vx = 0;
+            this.state.vy = 0;
+            return;
+        }
+
         if (
             (this.state.onGround || this.state.coyoteFrames > 0) &&
             this.state.jumpBufferFrames > 0
@@ -274,7 +293,10 @@ export class PlayerController {
     }
 
     draw(ctx) {
-        ctx.fillStyle = this.constants.PLAYER.BODY_COLOR;
+        if (this.isDead) return; // Don't draw if dead
+
+        // Use player-specific color
+        ctx.fillStyle = this.playerData.color;
         ctx.fillRect(
             this.state.x,
             this.state.y,
@@ -282,7 +304,8 @@ export class PlayerController {
             this.state.height
         );
 
-        ctx.fillStyle = this.constants.PLAYER.EYE_COLOR;
+        // Use player-specific eye color
+        ctx.fillStyle = this.playerData.eyeColor;
         ctx.fillRect(
             this.state.x +
                 this.state.width -

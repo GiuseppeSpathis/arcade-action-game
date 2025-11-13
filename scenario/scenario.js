@@ -7,7 +7,10 @@ import { SquareEnemy } from "./enemies/square.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const heartsElements = Array.from(document.querySelectorAll(".heart"));
+
+// Get HUD container
+const hudContainer = document.getElementById("hudContainer"); 
+const playerHUDElements = []; // Will store { container, hearts[] } for each player
 
 const audioElement = document.getElementById("bg_music");
 const toggleButton = document.getElementById("musicToggle");
@@ -35,9 +38,16 @@ async function loadConstants() {
     return response.json();
 }
 
-function createKeySet(values) {
-    return new Set(values);
+// Dynamically creates the set of keys to prevent default browser action
+function createPreventDefaultKeys(baseInput, playerData) {
+    const keys = new Set(baseInput.PREVENT_DEFAULT_KEYS);
+    playerData.forEach(playerDef => {
+        // Add all input keys from all players
+        Object.values(playerDef.inputs).flat().forEach(key => keys.add(key));
+    });
+    return keys;
 }
+
 
 function drawBackground(ctxInstance, backgroundImage) {
     ctxInstance.clearRect(0, 0, canvas.width, canvas.height);
@@ -131,63 +141,122 @@ function drawGameOverOverlay() {
 }
 
 async function initializeGame() {
+    // Get player count from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const playerCount = parseInt(urlParams.get('players') || '1', 10);
+
     const constants = await loadConstants();
     const backgroundImage = await loadImage(
         constants.BACKGROUND.BACKGROUND_IMAGE_SRC
     );
 
     const mapData = generateMap(canvas, constants);
-    const playerController = new PlayerController(constants, mapData, canvas);
-
-
+    
+    // Create all player controllers
+    const players = [];
+    for (let i = 0; i < playerCount; i++) {
+        if (constants.PLAYER_DATA[i]) {
+            const player = new PlayerController(constants, mapData, canvas, constants.PLAYER_DATA[i], i);
+            players.push(player);
+        }
+    }
+    
     const pressedKeys = new Set();
-    const preventDefaultKeys = createKeySet(
-        constants.INPUT.PREVENT_DEFAULT_KEYS
-    );
-    const jumpKeys = createKeySet(constants.INPUT.JUMP_KEYS);
+    const preventDefaultKeys = createPreventDefaultKeys(constants.INPUT, constants.PLAYER_DATA);
+    
     const exitKey = constants.INPUT.EXIT_KEY;
     const exitDestination = constants.INPUT.EXIT_DESTINATION;
 
     let lastFrameTime = performance.now();
     let lastSpawnTimestamp = -Infinity;
-    let lastPlayerShot = 0;
-    let lastDamageAt = -Infinity;
-    let playerLives = constants.PLAYER.MAX_LIVES;
     let isGameOver = false;
     let enemies = [];
     let playerBullets = [];
     let enemyBullets = [];
 
-    updateLivesDisplay(playerLives);
+    // --- HUD Initialization ---
+    function initializeHUD(playerCount) {
+        for (let i = 0; i < playerCount; i++) {
+            if (!constants.PLAYER_DATA[i]) continue;
+            
+            const playerHud = document.createElement("div");
+            playerHud.className = "player-hud";
+            playerHud.id = `player-hud-${i}`;
+            // Style border with player's color
+            playerHud.style.borderColor = constants.PLAYER_DATA[i].color; 
 
-    function updateLivesDisplay(lives) {
-        heartsElements.forEach((heart, index) => {
-            heart.classList.toggle("lost", index >= lives);
-        });
-        const livesContainer = document.querySelector(".lives");
-        if (livesContainer) {
-            livesContainer.setAttribute("aria-label", `Vite rimaste: ${lives}`);
+            const label = document.createElement("span");
+            label.className = "player-label";
+            label.textContent = `P${i + 1}`;
+            playerHud.appendChild(label);
+            
+            const livesContainer = document.createElement("div");
+            livesContainer.className = "lives";
+            livesContainer.setAttribute("aria-label", `P${i+1} Vite: ${constants.PLAYER.MAX_LIVES}`);
+            
+            const hearts = [];
+            for (let j = 0; j < constants.PLAYER.MAX_LIVES; j++) {
+                const heart = document.createElement("span");
+                heart.className = "heart";
+                heart.setAttribute("aria-hidden", "true");
+                heart.textContent = "❤";
+                livesContainer.appendChild(heart);
+                hearts.push(heart);
+            }
+            
+            playerHud.appendChild(livesContainer);
+            hudContainer.appendChild(playerHud);
+            // Store references to the hearts for this player
+            playerHUDElements.push({ container: livesContainer, hearts: hearts });
         }
     }
+    
+    initializeHUD(playerCount);
+    // --- End HUD Initialization ---
 
-    function damagePlayer(timestamp) {
-        if (isGameOver) {
+    // Updates the hearts display for a specific player
+    function updatePlayerLivesDisplay(playerIndex, lives) {
+        const hud = playerHUDElements[playerIndex];
+        if (!hud) return;
+
+        hud.hearts.forEach((heart, index) => {
+            heart.classList.toggle("lost", index >= lives);
+        });
+        hud.container.setAttribute("aria-label", `P${playerIndex + 1} Vite rimaste: ${lives}`);
+    }
+
+    // Damages a specific player
+    function damagePlayer(player, timestamp) {
+        if (isGameOver || player.isDead) {
             return;
         }
-        if (timestamp - lastDamageAt < constants.PLAYER.INVINCIBILITY_WINDOW_MS) {
+        // Use player-specific lastDamageAt
+        if (timestamp - player.lastDamageAt < constants.PLAYER.INVINCIBILITY_WINDOW_MS) {
             return;
         }
-        lastDamageAt = timestamp;
-        playerController.triggerDamageFeedback(timestamp);
-        playerLives = Math.max(0, playerLives - 1);
-        updateLivesDisplay(playerLives);
+        player.lastDamageAt = timestamp;
+        player.triggerDamageFeedback(timestamp);
+        player.lives = Math.max(0, player.lives - 1);
+        
+        // Update the correct player's HUD
+        updatePlayerLivesDisplay(player.playerIndex, player.lives);
+        
         if (sfxHit) {
             try {
                 sfxHit.currentTime = 0;
                 sfxHit.play().catch(() => {});
             } catch {}
         }
-        if (playerLives <= 0) {
+        if (player.lives <= 0) {
+            player.isDead = true;
+            checkAllPlayersDead(); // Check if game should end
+        }
+    }
+
+    // Checks if all players are dead to trigger game over
+    function checkAllPlayersDead() {
+        const allDead = players.every(p => p.isDead);
+        if (allDead) {
             triggerGameOver();
         }
     }
@@ -247,33 +316,28 @@ async function initializeGame() {
         enemies.push(...spawned);
     }
 
-    function getShootingDirectionFromKeys() {
+    // Gets shooting direction based on player-specific keys
+    function getShootingDirectionFromKeys(player, pressedKeys) {
         let directionX = 0;
         let directionY = 0;
         let hasInput = false;
+        const shootKeys = player.playerData.inputs.shoot;
 
-        constants.INPUT.SHOOT_KEYS.forEach((code) => {
-            if (!pressedKeys.has(code)) {
-                return;
+        // Assumes shootKeys is [Up, Down, Left, Right]
+        const keyMap = {
+            [shootKeys[0]]: { y: -1 }, // Up
+            [shootKeys[1]]: { y: 1 },  // Down
+            [shootKeys[2]]: { x: -1 }, // Left
+            [shootKeys[3]]: { x: 1 }   // Right
+        };
+
+        for (const key in keyMap) {
+            if (pressedKeys.has(key)) {
+                hasInput = true;
+                directionX += (keyMap[key].x || 0);
+                directionY += (keyMap[key].y || 0);
             }
-            hasInput = true;
-            switch (code) {
-                case "ArrowUp":
-                    directionY -= 1;
-                    break;
-                case "ArrowDown":
-                    directionY += 1;
-                    break;
-                case "ArrowLeft":
-                    directionX -= 1;
-                    break;
-                case "ArrowRight":
-                    directionX += 1;
-                    break;
-                default:
-                    break;
-            }
-        });
+        }
 
         if (!hasInput) {
             return null;
@@ -286,37 +350,48 @@ async function initializeGame() {
         return { x: directionX, y: directionY };
     }
 
+    // Handles shooting for all active players
     function handlePlayerShooting(timestamp) {
-        const direction = getShootingDirectionFromKeys();
-        if (!direction) {
-            return;
-        }
-        if (timestamp - lastPlayerShot < constants.PLAYER_BULLET.COOLDOWN_MS) {
-            return;
-        }
-        lastPlayerShot = timestamp;
-        const center = playerController.getCenter();
-        playerBullets.push(
-            new Bullet({
-                x: center.x,
-                y: center.y,
-                direction,
-                speed: constants.PLAYER_BULLET.SPEED,
-                radius: constants.PLAYER_BULLET.RADIUS,
-                color: constants.PLAYER_BULLET.COLOR,
-            })
-        );
+        players.forEach(player => {
+            if (player.isDead) return;
+
+            const direction = getShootingDirectionFromKeys(player, pressedKeys);
+            if (!direction) {
+                return;
+            }
+            // Use player-specific shot cooldown
+            if (timestamp - player.lastPlayerShot < constants.PLAYER_BULLET.COOLDOWN_MS) {
+                return;
+            }
+            player.lastPlayerShot = timestamp;
+            const center = player.getCenter();
+            playerBullets.push(
+                new Bullet({
+                    x: center.x,
+                    y: center.y,
+                    direction,
+                    speed: constants.PLAYER_BULLET.SPEED,
+                    radius: constants.PLAYER_BULLET.RADIUS,
+                    color: constants.PLAYER_BULLET.COLOR,
+                })
+            );
+        });
     }
 
-    function updateEnemies(deltaTime, timestamp, playerBounds) {
+    function updateEnemies(deltaTime, timestamp, allPlayers) {
+        // Find the first alive player to target
+        const primaryTarget = allPlayers.find(p => !p.isDead);
+        // If all are dead, just use player 0's bounds
+        const targetBounds = primaryTarget ? primaryTarget.getBounds() : allPlayers[0].getBounds();
+        
         enemies.forEach((enemy) => {
             if (enemy instanceof TriangleEnemy) {
-                const bullet = enemy.update(deltaTime, playerBounds, timestamp, canvas);
+                const bullet = enemy.update(deltaTime, targetBounds, timestamp, canvas);
                 if (bullet) {
                     enemyBullets.push(bullet);
                 }
             } else {
-                enemy.update(deltaTime, playerBounds, timestamp, canvas);
+                enemy.update(deltaTime, targetBounds, timestamp, canvas);
             }
         });
         enemies = enemies.filter((enemy) => enemy.active);
@@ -370,7 +445,8 @@ async function initializeGame() {
         playerBullets = playerBullets.filter((bullet) => bullet.active);
     }
 
-    function updateEnemyBullets(deltaTime, timestamp, playerBounds) {
+    // Checks enemy bullets against all active players
+    function updateEnemyBullets(deltaTime, timestamp) {
         enemyBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
         enemyBullets.forEach((bullet) => {
             if (bulletHitsTiles(bullet)) {
@@ -381,15 +457,22 @@ async function initializeGame() {
             if (!bullet.active) {
                 return;
             }
-            if (bullet.intersectsRect(playerBounds)) {
-                bullet.active = false;
-                damagePlayer(timestamp);
+            
+            for (const player of players) {
+                if (player.isDead) continue; // Skip dead players
+
+                if (bullet.intersectsRect(player.getBounds())) {
+                    bullet.active = false;
+                    damagePlayer(player, timestamp); // Damage the specific player
+                    break; // Bullet hits one player and is destroyed
+                }
             }
         });
         enemyBullets = enemyBullets.filter((bullet) => bullet.active);
     }
 
-    function handleEnemyCollisions(timestamp, playerBounds) {
+    // Checks enemy body collisions against all active players
+    function handleEnemyCollisions(timestamp) {
         enemies.forEach((enemy) => {
             if (!(enemy instanceof SquareEnemy)) {
                 return;
@@ -400,8 +483,14 @@ async function initializeGame() {
             if (typeof enemy.isDying === "function" && enemy.isDying()) {
                 return;
             }
-            if (rectanglesIntersect(enemy.getBounds(), playerBounds)) {
-                damagePlayer(timestamp);
+
+            for (const player of players) {
+                if (player.isDead) continue; // Skip dead players
+
+                if (rectanglesIntersect(enemy.getBounds(), player.getBounds())) {
+                    damagePlayer(player, timestamp); // Damage the specific player
+                    // Note: No break, enemy can hit multiple players at once
+                }
             }
         });
     }
@@ -411,7 +500,9 @@ async function initializeGame() {
         lastFrameTime = timestamp;
 
         if (!isGameOver) {
-            playerController.update(pressedKeys);
+            // Update all players
+            players.forEach(player => player.update(pressedKeys));
+            
             handlePlayerShooting(timestamp);
 
             if (timestamp - lastSpawnTimestamp >= constants.ENEMIES.SPAWN_INTERVAL_MS) {
@@ -419,11 +510,10 @@ async function initializeGame() {
                 lastSpawnTimestamp = timestamp;
             }
 
-            const playerBounds = playerController.getBounds();
-            updateEnemies(deltaTime, timestamp, playerBounds);
+            updateEnemies(deltaTime, timestamp, players); // Pass all players
             updatePlayerBullets(deltaTime);
-            updateEnemyBullets(deltaTime, timestamp, playerBounds);
-            handleEnemyCollisions(timestamp, playerBounds);
+            updateEnemyBullets(deltaTime, timestamp); // No player bounds needed
+            handleEnemyCollisions(timestamp); // No player bounds needed
         }
 
         drawBackground(ctx, backgroundImage);
@@ -432,7 +522,9 @@ async function initializeGame() {
         enemies.forEach((enemy) => enemy.draw(ctx));
         enemyBullets.forEach((bullet) => bullet.draw(ctx));
         playerBullets.forEach((bullet) => bullet.draw(ctx));
-        playerController.draw(ctx);
+        
+        // Draw all players
+        players.forEach(player => player.draw(ctx));
 
         if (isGameOver) {
             drawGameOverOverlay();
@@ -453,8 +545,13 @@ async function initializeGame() {
             return;
         }
 
-        if (!isGameOver && jumpKeys.has(event.code)) {
-            playerController.queueJump();
+        // Check jump keys for all players
+        if (!isGameOver) {
+            players.forEach(player => {
+                if (player.playerData.inputs.jump.includes(event.code)) {
+                    player.queueJump();
+                }
+            });
         }
     });
 

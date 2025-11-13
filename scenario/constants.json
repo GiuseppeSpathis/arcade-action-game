@@ -24,8 +24,6 @@
     "EYE_OFFSET_X": 10,
     "EYE_OFFSET_Y": 12,
     "EYE_SIZE": 6,
-    "BODY_COLOR": "#111111",
-    "EYE_COLOR": "#ffffff",
     "SPAWN_HORIZONTAL_DIVISOR": 2,
     "MAX_LIVES": 3,
     "INVINCIBILITY_WINDOW_MS": 1000,
@@ -34,6 +32,52 @@
     "DAMAGE_OUTLINE_COLOR": "rgba(255, 82, 82, 0.9)",
     "DAMAGE_SPLAT_COLOR": "rgba(255, 94, 94, 0.8)"
   },
+  "PLAYER_DATA": [
+    {
+      "id": 1,
+      "color": "#111111",
+      "eyeColor": "#FFFFFF",
+      "inputs": {
+        "jump": ["Space", "KeyW"],
+        "left": ["KeyA"],
+        "right": ["KeyD"],
+        "shoot": ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]
+      }
+    },
+    {
+      "id": 2,
+      "color": "#E63946",
+      "eyeColor": "#FFFFFF",
+      "inputs": {
+        "jump": ["KeyI"],
+        "left": ["KeyJ"],
+        "right": ["KeyL"],
+        "shoot": ["KeyT", "KeyG", "KeyF", "KeyH"]
+      }
+    },
+    {
+      "id": 3,
+      "color": "#457B9D",
+      "eyeColor": "#FFFFFF",
+      "inputs": {
+        "jump": ["Numpad5"],
+        "left": ["Numpad1"],
+        "right": ["Numpad3"],
+        "shoot": ["Numpad8", "Numpad2", "Numpad4", "Numpad6"]
+      }
+    },
+    {
+      "id": 4,
+      "color": "#A8DADC",
+      "eyeColor": "#111111",
+      "inputs": {
+        "jump": ["Home"],
+        "left": ["Delete"],
+        "right": ["PageDown"],
+        "shoot": ["Insert", "End", "PageUp", "Clear"]
+      }
+    }
+  ],
   "PLAYER_BULLET": {
     "SPEED": 560,
     "RADIUS": 6,
@@ -79,30 +123,7 @@
   },
   "INPUT": {
     "PREVENT_DEFAULT_KEYS": [
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-      "ArrowDown",
-      "Space",
-      "KeyA",
-      "KeyD",
-      "KeyW"
-    ],
-    "JUMP_KEYS": [
-      "Space",
-      "KeyW"
-    ],
-    "MOVE_LEFT_KEYS": [
-      "KeyA"
-    ],
-    "MOVE_RIGHT_KEYS": [
-      "KeyD"
-    ],
-    "SHOOT_KEYS": [
-      "ArrowUp",
-      "ArrowDown",
-      "ArrowLeft",
-      "ArrowRight"
+      "Space", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"
     ],
     "EXIT_KEY": "Escape",
     "EXIT_DESTINATION": "../menu/menu.html"

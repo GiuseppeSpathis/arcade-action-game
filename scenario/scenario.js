@@ -8,7 +8,7 @@ import {
   initFirebase,
   createGameSession,
   listenForRemoteInputs,
-  setGameState, // NEW: Import setGameState
+  setGameState,
 } from "../helper/firebaseRemoteController.js";
 
 // --- Global Game State ---
@@ -25,7 +25,7 @@ let enemyBullets = [];
 let lastSpawnTimestamp = -Infinity;
 let mapData;
 let backgroundImage;
-let roomCode; // NEW: Store roomCode globally
+let roomCode;
 // --- End Global Game State ---
 
 const canvas = document.getElementById("gameCanvas");
@@ -33,7 +33,7 @@ const ctx = canvas.getContext("2d");
 const hudContainer = document.getElementById("hudContainer");
 const playerHUDElements = [];
 
-// --- NEW: Lobby Elements ---
+// --- Lobby Elements ---
 const connectionOverlay = document.getElementById("connectionOverlay");
 const connectionUrl = document.getElementById("connectionUrl");
 const playerConnectionContainer = document.getElementById(
@@ -173,60 +173,75 @@ function drawGameOverOverlay() {
 }
 
 /**
- * NEW: Processes remote inputs during gameplay.
- * This is called by the Firebase listener *after* the game has started.
+ * UPDATED: Processes remote inputs during gameplay.
  */
 function processRemoteInputs(sessionData) {
-  if (!players.length || !constants || !sessionData.players) return; // NEW: Check for sessionData.players
+  if (!players.length || !constants || !sessionData.players) return;
 
   const playerKeys = ["p2", "p3", "p4"];
-  const remotePlayers = sessionData.players; // NEW: Get the nested players object
+  const remotePlayers = sessionData.players;
 
   playerKeys.forEach((key, index) => {
-    const playerIndex = index + 1; // p2 is index 1, p3 is 2, etc.
+    const playerIndex = index + 1; 
 
-    // Check if this player exists in the game and in the input data
     if (!remotePlayers[key] || !players[playerIndex]) {
-      // NEW: Check remotePlayers
       return;
     }
 
-    // NEW: Get inputs from the sub-object
-    const pInputs = remotePlayers[key].inputs; // NEW: Check remotePlayers
+    const pInputs = remotePlayers[key].inputs;
     if (!pInputs) return;
 
     const pConfig = constants.PLAYER_DATA[playerIndex].inputs;
-    const pState = remoteInputsState[key] || { j: false }; // Get old state
+    // Get old state for jump buttons
+    const pState = remoteInputsState[key] || { j: false, mu: false }; 
 
     // --- Map remote inputs to pressedKeys Set ---
-    pInputs.l
+    
+    // 1. Map D-Pad Left/Right to Left/Right movement
+    pInputs.ml // Move Left
       ? pressedKeys.add(pConfig.left[0])
       : pressedKeys.delete(pConfig.left[0]);
-    pInputs.r
+    pInputs.mr // Move Right
       ? pressedKeys.add(pConfig.right[0])
       : pressedKeys.delete(pConfig.right[0]);
-    pInputs.s
-      ? pressedKeys.add(pConfig.shoot[0])
-      : pressedKeys.delete(pConfig.shoot[0]);
-    if (pInputs.j && !pState.j) {
+    
+    // 2. Map "JUMP" button AND D-Pad Up to Jump
+    // (mu = Move Up, j = Jump button)
+    if ((pInputs.j && !pState.j) || (pInputs.mu && !pState.mu)) {
       players[playerIndex].queueJump();
     }
+    
+    // 3. Map Shoot D-Pad to directional shooting
+    // Assumes shootKeys is [Up, Down, Left, Right] in constants.json
+    pInputs.su // Shoot Up
+      ? pressedKeys.add(pConfig.shoot[0])
+      : pressedKeys.delete(pConfig.shoot[0]);
+    pInputs.sd // Shoot Down
+      ? pressedKeys.add(pConfig.shoot[1])
+      : pressedKeys.delete(pConfig.shoot[1]);
+    pInputs.sl // Shoot Left
+      ? pressedKeys.add(pConfig.shoot[2])
+      : pressedKeys.delete(pConfig.shoot[2]);
+    pInputs.sr // Shoot Right
+      ? pressedKeys.add(pConfig.shoot[3])
+      : pressedKeys.delete(pConfig.shoot[3]);
+    
+    // --- END NEW MAPPING ---
+
+    // Store the new state for the next comparison
     remoteInputsState[key] = pInputs;
   });
 }
 
 /**
- * NEW: Sets up the multiplayer lobby screen.
+ * Sets up the multiplayer lobby screen.
  */
 async function setupLobby(playerCount) {
   connectionOverlay.classList.remove("hidden");
-  // The roomCodeDisplay element is INSIDE the overlay, so we don't need to hide/show it separately
-  // It will show when the overlay shows.
 
   // Show connection URL
   const ip = window.location.hostname;
   const port = window.location.port;
-  // Use a fallback for 127.0.0.1 which phones can't use
   const displayIp = ip === "127.0.0.1" ? "YOUR_LAPTOP_IP" : ip;
   connectionUrl.textContent = `http://${displayIp}:${port}/scenario/controller/phoneController.html`;
   if (displayIp === "YOUR_LAPTOP_IP") {
@@ -251,7 +266,7 @@ async function setupLobby(playerCount) {
     const { error } = await initFirebase();
     if (error) throw new Error(error);
 
-    roomCode = await createGameSession(playerCount); // NEW: Assign to global var
+    roomCode = await createGameSession(playerCount);
     if (!roomCode) throw new Error("Failed to create room.");
 
     roomCodeText.textContent = roomCode;
@@ -259,26 +274,25 @@ async function setupLobby(playerCount) {
     // Start listening
     let gameStarted = false;
     firebaseUnsubscribe = listenForRemoteInputs(roomCode, (sessionData) => {
-      if (!sessionData) return; // Doc doesn't exist yet
+      if (!sessionData) return; 
 
       if (gameStarted) {
-        processRemoteInputs(sessionData); // Game is running, process inputs
+        processRemoteInputs(sessionData); 
         return;
       }
 
       // --- Lobby Logic ---
       let allConnected = true;
-      const remotePlayers = sessionData.players || {}; // NEW: Get nested players
+      const remotePlayers = sessionData.players || {}; 
       for (const playerKey of requiredPlayers) {
         if (remotePlayers[playerKey] && remotePlayers[playerKey].connected) {
-          // NEW: Check nested players
           const statusEl = document.getElementById(`status-${playerKey}`);
           if (statusEl) {
             statusEl.textContent = `P${playerKey.charAt(1)}: Connected!`;
             statusEl.classList.add("connected");
           }
         } else {
-          allConnected = false; // Not everyone is here yet
+          allConnected = false; 
         }
       }
 
@@ -287,12 +301,10 @@ async function setupLobby(playerCount) {
         // Set initial input state
         for (const playerKey of requiredPlayers) {
           if (remotePlayers[playerKey] && remotePlayers[playerKey].inputs) {
-            // NEW: Check nested players
-            remoteInputsState[playerKey] = remotePlayers[playerKey].inputs; // NEW: Check nested players
+            remoteInputsState[playerKey] = remotePlayers[playerKey].inputs;
           }
         }
-        // Start the game!
-        setGameState(roomCode, "running"); // NEW: Tell phones the game is running
+        setGameState(roomCode, "running");
         initializeGame(playerCount);
       }
       // --- End Lobby Logic ---
@@ -300,7 +312,6 @@ async function setupLobby(playerCount) {
   } catch (e) {
     console.error("Lobby setup failed:", e);
     roomCodeText.textContent = "ERROR";
-    // roomCodeDisplay is inside the overlay, just update its text
     roomCodeDisplay.style.borderColor = "#E63946";
     roomCodeDisplay.querySelector(".room-code-label").textContent = "ERROR:";
   }
@@ -308,12 +319,10 @@ async function setupLobby(playerCount) {
 
 /**
  * Initializes and starts the actual game.
- * This is now called *after* the lobby is complete.
  */
 async function initializeGame(playerCount) {
   try {
     // --- 1. Load Assets and Map (if not already loaded) ---
-    // We move loading here so 1-player doesn't wait
     if (!constants) {
       constants = await loadConstants();
     }
@@ -393,7 +402,6 @@ async function initializeGame(playerCount) {
     requestAnimationFrame(gameLoop);
   } catch (error) {
     console.error("Failed to initialize the game:", error);
-    // Show error on lobby screen if it's still visible
     if (!connectionOverlay.classList.contains("hidden")) {
       roomCodeText.textContent = "FATAL";
       roomCodeDisplay.querySelector(".room-code-label").textContent = "ERROR:";
@@ -409,7 +417,6 @@ function initializeHUD(playerCount) {
     const playerHud = document.createElement("div");
     playerHud.className = "player-hud";
     playerHud.id = `player-hud-${i}`;
-    // Style border with player's color
     playerHud.style.borderColor = constants.PLAYER_DATA[i].color;
 
     const label = document.createElement("span");
@@ -436,7 +443,6 @@ function initializeHUD(playerCount) {
 
     playerHud.appendChild(livesContainer);
     hudContainer.appendChild(playerHud);
-    // Store references to the hearts for this player
     playerHUDElements.push({ container: livesContainer, hearts: hearts });
   }
 }
@@ -460,7 +466,6 @@ function damagePlayer(player, timestamp) {
   if (isGameOver || player.isDead) {
     return;
   }
-  // Use player-specific lastDamageAt
   if (
     timestamp - player.lastDamageAt <
     constants.PLAYER.INVINCIBILITY_WINDOW_MS
@@ -471,7 +476,6 @@ function damagePlayer(player, timestamp) {
   player.triggerDamageFeedback(timestamp);
   player.lives = Math.max(0, player.lives - 1);
 
-  // Update the correct player's HUD
   updatePlayerLivesDisplay(player.playerIndex, player.lives);
 
   if (sfxHit) {
@@ -482,7 +486,7 @@ function damagePlayer(player, timestamp) {
   }
   if (player.lives <= 0) {
     player.isDead = true;
-    checkAllPlayersDead(); // Check if game should end
+    checkAllPlayersDead();
   }
 }
 
@@ -498,7 +502,6 @@ function triggerGameOver() {
   isGameOver = true;
   pressedKeys.clear();
 
-  // NEW: Tell phones the game is over
   if (roomCode) {
     setGameState(roomCode, "gameover");
   }
@@ -598,7 +601,6 @@ function handlePlayerShooting(timestamp) {
     if (!direction) {
       return;
     }
-    // Use player-specific shot cooldown
     if (
       timestamp - player.lastPlayerShot <
       constants.PLAYER_BULLET.COOLDOWN_MS
@@ -621,9 +623,7 @@ function handlePlayerShooting(timestamp) {
 }
 
 function updateEnemies(deltaTime, timestamp, allPlayers) {
-  // Find the first alive player to target
   const primaryTarget = allPlayers.find((p) => !p.isDead);
-  // If all are dead, just use player 0's bounds
   const targetBounds = primaryTarget
     ? primaryTarget.getBounds()
     : allPlayers[0].getBounds();
@@ -702,12 +702,12 @@ function updateEnemyBullets(deltaTime, timestamp) {
     }
 
     for (const player of players) {
-      if (player.isDead) continue; // Skip dead players
+      if (player.isDead) continue; 
 
       if (bullet.intersectsRect(player.getBounds())) {
         bullet.active = false;
-        damagePlayer(player, timestamp); // Damage the specific player
-        break; // Bullet hits one player and is destroyed
+        damagePlayer(player, timestamp); 
+        break; 
       }
     }
   });
@@ -727,11 +727,10 @@ function handleEnemyCollisions(timestamp) {
     }
 
     for (const player of players) {
-      if (player.isDead) continue; // Skip dead players
+      if (player.isDead) continue; 
 
       if (rectanglesIntersect(enemy.getBounds(), player.getBounds())) {
-        damagePlayer(player, timestamp); // Damage the specific player
-        // Note: No break, enemy can hit multiple players at once
+        damagePlayer(player, timestamp);
       }
     }
   });
@@ -745,11 +744,8 @@ function gameLoop(timestamp) {
   lastFrameTime = timestamp;
 
   if (!isGameOver) {
-    // Update all players
     players.forEach((player) => player.update(pressedKeys));
-
     handlePlayerShooting(timestamp);
-
     if (
       timestamp - lastSpawnTimestamp >=
       constants.ENEMIES.SPAWN_INTERVAL_MS
@@ -757,21 +753,17 @@ function gameLoop(timestamp) {
       spawnEnemyGroup();
       lastSpawnTimestamp = timestamp;
     }
-
-    updateEnemies(deltaTime, timestamp, players); // Pass all players
+    updateEnemies(deltaTime, timestamp, players);
     updatePlayerBullets(deltaTime);
-    updateEnemyBullets(deltaTime, timestamp); // No player bounds needed
-    handleEnemyCollisions(timestamp); // No player bounds needed
+    updateEnemyBullets(deltaTime, timestamp);
+    handleEnemyCollisions(timestamp);
   }
 
   drawBackground(ctx, backgroundImage);
   drawTiles(mapData, constants);
-
   enemies.forEach((enemy) => enemy.draw(ctx));
   enemyBullets.forEach((bullet) => bullet.draw(ctx));
   playerBullets.forEach((bullet) => bullet.draw(ctx));
-
-  // Draw all players
   players.forEach((player) => player.draw(ctx));
 
   if (isGameOver) {
@@ -782,34 +774,26 @@ function gameLoop(timestamp) {
 }
 
 /**
- * NEW: Main entry point.
- * Decides whether to start a 1-player game or the multiplayer lobby.
+ * Main entry point.
  */
 async function main() {
   const urlParams = new URLSearchParams(window.location.search);
   const playerCount = parseInt(urlParams.get("players") || "1", 10);
 
   if (playerCount === 1) {
-    // Start 1-player game immediately
-    // We can pre-load assets while the player is on the menu,
-    // but for now we load them at game start.
     initializeGame(1).catch((error) => {
       console.error("Failed to initialize 1-player game:", error);
     });
   } else {
-    // Start multiplayer lobby
-    // Pre-load assets *while* lobby is active
     try {
       constants = await loadConstants();
       backgroundImage = await loadImage(
         constants.BACKGROUND.BACKGROUND_IMAGE_SRC
       );
       mapData = generateMap(canvas, constants);
-      // Now set up the lobby, assets are loading/loaded
       await setupLobby(playerCount);
     } catch (error) {
       console.error("Failed to pre-load assets or set up lobby:", error);
-      // Show a fatal error on the screen
       connectionOverlay.classList.remove("hidden");
       roomCodeText.textContent = "FATAL";
       roomCodeDisplay.style.borderColor = "#E63946";

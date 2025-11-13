@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Game Controller</title>
-    <!-- This path is correct if this file is in 'scenario/controller/' -->
     <link rel="stylesheet" href="phoneController.css">
 </head>
 <body>
@@ -21,31 +20,35 @@
     </div>
 
     <div id="controlsPanel" class="panel hidden">
-        <div class="controls-dpad">
-            <button id="dpadLeft" class="control-button dpad-button left" aria-label="Left"></button>
-            <button id="dpadRight" class="control-button dpad-button right" aria-label="Right"></button>
+        
+        <div class="controls-dpad" id="dpad-move">
+            <button id="moveUp" class="control-button dpad-button up" aria-label="Move Up">▲</button>
+            <button id="moveLeft" class="control-button dpad-button left" aria-label="Move Left">◀</button>
+            <button id="moveRight" class="control-button dpad-button right" aria-label="Move Right">▶</button>
+            <button id="moveDown" class="control-button dpad-button down" aria-label="Move Down">▼</button>
         </div>
+        
         <div class="controls-actions">
-            <button id="actionShoot" class="control-button action-button shoot" aria-label="Shoot">B</button>
-            <button id="actionJump" class="control-button action-button jump" aria-label="Jump">A</button>
+            <div class="controls-dpad" id="dpad-shoot">
+                <button id="shootUp" class="control-button dpad-button up shoot-btn" aria-label="Shoot Up">▲</button>
+                <button id="shootLeft" class="control-button dpad-button left shoot-btn" aria-label="Shoot Left">◀</button>
+                <button id="shootRight" class="control-button dpad-button right shoot-btn" aria-label="Shoot Right">▶</button>
+                <button id="shootDown" class="control-button dpad-button down shoot-btn" aria-label="Shoot Down">▼</button>
+            </div>
+            <button id="actionJump" class="control-button action-button jump" aria-label="Jump">JUMP</button>
         </div>
-    </div>
 
-    <!-- Firebase -->
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, updateDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // --- Import Your New Config ---
-        // This path goes up from 'scenario/controller/' to 'helper/'
         import { firebaseConfig } from "../../helper/firebaseConfig.js"; 
-        // --- End Config Import ---
 
         let db;
         let docRef;
-        let playerKey; // e.g., "p2"
-        let sessionListenerUnsubscribe = null; // NEW: To stop the listener
+        let playerKey; 
+        let sessionListenerUnsubscribe = null; 
 
         const connectionPanel = document.getElementById("connectionPanel");
         const controlsPanel = document.getElementById("controlsPanel");
@@ -56,7 +59,6 @@
 
         async function initFirebase() {
             try {
-                // Use the imported config
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 const auth = getAuth(app);
@@ -72,10 +74,9 @@
             return `game_sessions/${sessionId}`;
         }
 
-        // --- NEW: Function to reset the UI ---
         function resetToLobby(message) {
             if (sessionListenerUnsubscribe) {
-                sessionListenerUnsubscribe(); // Stop listening
+                sessionListenerUnsubscribe(); 
                 sessionListenerUnsubscribe = null;
             }
             docRef = null;
@@ -85,9 +86,8 @@
             connectionPanel.classList.remove("hidden");
             
             connectionStatus.textContent = message || "";
-            roomCodeInput.value = ""; // Clear the room code
+            roomCodeInput.value = ""; 
         }
-        // --- END NEW ---
 
         connectButton.addEventListener("click", async () => {
             const roomCode = roomCodeInput.value.trim().toUpperCase();
@@ -104,40 +104,38 @@
                 }
             }
 
-            playerKey = playerSelect.value; // "p2", "p3", or "p4"
+            playerKey = playerSelect.value; 
             const path = getDocPath(roomCode);
             docRef = doc(db, path);
 
             try {
-                // NEW: Check if doc exists and player key is valid
                 connectionStatus.textContent = "Connecting...";
                 const docSnap = await getDoc(docRef);
 
-                // NEW: Check the nested players object
                 if (!docSnap.exists() || !docSnap.data().players || !docSnap.data().players[playerKey]) {
                     connectionStatus.textContent = "Error: Room not found or player slot invalid.";
                     return;
                 }
                 
-                // NEW: Update the nested player object
+                // NEW: Update with all 9 inputs
                 await updateDoc(docRef, {
-                    [`players.${playerKey}.inputs`]: { l: false, r: false, j: false, s: false }, // Reset inputs
-                    [`players.${playerKey}.connected`]: true // Set connected flag
+                    [`players.${playerKey}.inputs`]: { 
+                        ml: false, mr: false, mu: false, md: false, // move
+                        sl: false, sr: false, su: false, sd: false, // shoot
+                        j: false // jump
+                    },
+                    [`players.${playerKey}.connected`]: true
                 });
                 
-                // END NEW
-
                 connectionStatus.textContent = "Connected!";
                 connectionPanel.classList.add("hidden");
                 controlsPanel.classList.remove("hidden");
                 
-                // --- NEW: Listen for game state changes ---
                 if (sessionListenerUnsubscribe) {
-                    sessionListenerUnsubscribe(); // Clear any old listener
+                    sessionListenerUnsubscribe(); 
                 }
                 sessionListenerUnsubscribe = onSnapshot(docRef, (doc) => {
                     if (!doc.exists()) {
-                        // Document was deleted
                         resetToLobby("Host disconnected. Game over.");
                         return;
                     }
@@ -145,11 +143,9 @@
                     if (state === "gameover") {
                         resetToLobby("Game Over! Join a new game.");
                     } else if (state === "running") {
-                        // Game started, just in case.
                         connectionStatus.textContent = "Game in progress...";
                     }
                 });
-                // --- END NEW ---
 
                 setupControls();
 
@@ -160,53 +156,40 @@
         });
 
         function setupControls() {
-            const dpadLeft = document.getElementById("dpadLeft");
-            const dpadRight = document.getElementById("dpadRight");
-            const actionJump = document.getElementById("actionJump");
-            const actionShoot = document.getElementById("actionShoot");
+            // NEW: Get all 9 buttons
+            const buttons = [
+                { el: document.getElementById("moveUp"), key: 'mu' },
+                { el: document.getElementById("moveDown"), key: 'md' },
+                { el: document.getElementById("moveLeft"), key: 'ml' },
+                { el: document.getElementById("moveRight"), key: 'mr' },
+                { el: document.getElementById("actionJump"), key: 'j' },
+                { el: document.getElementById("shootUp"), key: 'su' },
+                { el: document.getElementById("shootDown"), key: 'sd' },
+                { el: document.getElementById("shootLeft"), key: 'sl' },
+                { el: document.getElementById("shootRight"), key: 'sr' }
+            ];
 
             const updateInput = (key, value) => {
                 if (!docRef || !playerKey) return;
                 const update = {};
-                // NEW: Update the 'inputs' sub-field in the nested player object
                 update[`players.${playerKey}.inputs.${key}`] = value; 
-                // Send the update to Firestore
                 updateDoc(docRef, update).catch(err => {
                     console.error("Failed to send input:", err);
-                    // If update fails, the session likely ended
                     resetToLobby("Disconnected from game.");
                 });
             };
 
-            // Touch events for mobile
-            dpadLeft.addEventListener("touchstart", (e) => { e.preventDefault(); updateInput('l', true); }, { passive: false });
-            dpadLeft.addEventListener("touchend", (e) => { e.preventDefault(); updateInput('l', false); }, { passive: false });
-            
-            dpadRight.addEventListener("touchstart", (e) => { e.preventDefault(); updateInput('r', true); }, { passive: false });
-            dpadRight.addEventListener("touchend", (e) => { e.preventDefault(); updateInput('r', false); }, { passive: false });
+            // Add listeners for all 9 buttons
+            buttons.forEach(({ el, key }) => {
+                // Touch events
+                el.addEventListener("touchstart", (e) => { e.preventDefault(); updateInput(key, true); }, { passive: false });
+                el.addEventListener("touchend", (e) => { e.preventDefault(); updateInput(key, false); }, { passive: false });
 
-            actionJump.addEventListener("touchstart", (e) => { e.preventDefault(); updateInput('j', true); }, { passive: false });
-            actionJump.addEventListener("touchend", (e) => { e.preventDefault(); updateInput('j', false); }, { passive: false });
-
-            actionShoot.addEventListener("touchstart", (e) => { e.preventDefault(); updateInput('s', true); }, { passive: false });
-            actionShoot.addEventListener("touchend", (e) => { e.preventDefault(); updateInput('s', false); }, { passive: false });
-
-            // Mouse events for testing on desktop
-            dpadLeft.addEventListener("mousedown", () => updateInput('l', true));
-            dpadLeft.addEventListener("mouseup", () => updateInput('l', false));
-            dpadLeft.addEventListener("mouseleave", () => updateInput('l', false));
-
-            dpadRight.addEventListener("mousedown", () => updateInput('r', true));
-            dpadRight.addEventListener("mouseup", () => updateInput('r', false));
-            dpadRight.addEventListener("mouseleave", () => updateInput('r', false));
-            
-            actionJump.addEventListener("mousedown", () => updateInput('j', true));
-            actionJump.addEventListener("mouseup", () => updateInput('j', false));
-            actionJump.addEventListener("mouseleave", () => updateInput('j', false));
-
-            actionShoot.addEventListener("mousedown", () => updateInput('s', true));
-            actionShoot.addEventListener("mouseup", () => updateInput('s', false));
-            actionShoot.addEventListener("mouseleave", () => updateInput('s', false));
+                // Mouse events for testing
+                el.addEventListener("mousedown", () => updateInput(key, true));
+                el.addEventListener("mouseup", () => updateInput(key, false));
+                el.addEventListener("mouseleave", () => updateInput(key, false));
+            });
         }
 
         initFirebase();

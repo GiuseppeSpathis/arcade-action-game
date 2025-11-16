@@ -1,5 +1,10 @@
+<p align="center">
+  <a href="https://giuseppespathis.github.io/arcade-action-game/">
+    <img src="https://img.shields.io/badge/Play%20the%20Game-🎮-green?style=for-the-badge&logo=githubpages" alt="Play the Game">
+  </a>
+</p>
+
 # Arcade Action Game
-Play the game: https://giuseppespathis.github.io/arcade-action-game/
 This project is a 2D minimalist arcade game inspired by the fast-paced, arena-based gameplay of Flat Heroes. It was built from scratch as a computer science project, focusing on low-level browser APIs without the use of any game engines.
 
 The entire game is rendered on HTML5 Canvas using requestAnimationFrame for a smooth 60 FPS animation loop. The project is built using ES6 Classes and Modules for a clean, object-oriented structure.

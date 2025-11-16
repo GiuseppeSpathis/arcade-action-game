@@ -7,6 +7,12 @@ A primary feature is the 4-player local multiplayer mode, which uses Firebase Re
 ## Main Features
 This game was built with a focus on core web technologies. All graphics are drawn to the HTML5 Canvas, and the entire experience is structured using Object-Oriented Design with ES6 classes like PlayerController, TriangleEnemy, and Bullet. The gameplay is dynamic: players have three lives and can jump and shoot in four directions. They face reactive enemies, including a flying Triangle that shoots projectiles, a "seek and destroy" Circle that inflicts touch damage, and a ground-based Square that can jump over obstacles. A key "stretch goal" implemented is the Firebase-powered 4-player local multiplayer. This system allows Player 1 to use the keyboard while up to three others join using a web-based controller on their phones, with all inputs synced in real-time. The game also features background music and sound effects managed via the Web Audio API, along with custom-written physics and collision detection.
 
+
+<p align="center">
+  <img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/8c5ac1f5-0086-4239-b823-78e781e5ab74" />
+</p>
+
+
 ## How to Play
 
 #### Single Player (Player 1)

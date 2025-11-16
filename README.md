@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://giuseppespathis.github.io/arcade-action-game/">
-    <img min-width="400" min-height="400" src="https://img.shields.io/badge/Play%20the%20Game-🎮-green?style=for-the-badge&logo=githubpages" alt="Play the Game">
+    <img min-width="400" min-height="400" src="https://cdnb.artstation.com/p/assets/images/images/033/575/083/original/truong-huynh-siffert-tiffany-buttons-startgame-yellow.gif?1609984515" alt="Play the Game">
   </a>
 </p>
 

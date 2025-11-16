@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://giuseppespathis.github.io/arcade-action-game/">
+    <img width="600" height="600" src="https://cdnb.artstation.com/p/assets/images/images/033/575/083/original/truong-huynh-siffert-tiffany-buttons-startgame-yellow.gif?1609984515" alt="Play the Game">
+  </a>
+</p>
+
 # Arcade Action Game
 This project is a 2D minimalist arcade game inspired by the fast-paced, arena-based gameplay of Flat Heroes. It was built from scratch as a computer science project, focusing on low-level browser APIs without the use of any game engines.
 

@@ -1,6 +1,5 @@
 const MUTED_ICON = "🔇";
 const UNMUTED_ICON = "🔊";
-const VOLUME_ICON = "🔉";
 const VOLUME_STORAGE_KEY = "retro-arcade-volume";
 
 function createVolumeSlider(

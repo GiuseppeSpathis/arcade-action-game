@@ -8,7 +8,7 @@ import {
   updateDoc,
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Import your config from the file you created
+
 import { firebaseConfig } from "./firebaseConfig.js";
 
 let db;
@@ -64,7 +64,7 @@ export async function createGameSession(playerCount) {
     players: {},
   };
   
-  // NEW: Updated template with all 9 input keys
+  // 9 input keys
   const playerTemplate = {
     inputs: { 
         ml: false, mr: false, mu: false, md: false, // move

@@ -16,7 +16,6 @@ body {
     color: #fff;
 }
 
-/* --- NEW: Utility Class --- */
 .hidden {
     display: none !important;
 }
@@ -57,7 +56,6 @@ body {
     vertical-align: middle;
 }
 
-/* --- NEW: Connection Overlay Styles --- */
 .connection-overlay {
     position: absolute;
     top: 0;
@@ -124,7 +122,7 @@ body {
     margin-bottom: 0.5rem;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid #457b9d; /* Blue (P3 color) */
+    border: 2px solid #457b9d; 
     color: #e0e0e0;
     transition:
         background-color 0.3s,
@@ -132,12 +130,12 @@ body {
 }
 
 .player-status.connected {
-    border-color: #7ac74f; /* Green */
+    border-color: #7ac74f; 
     background: rgba(122, 199, 79, 0.15);
     color: #fff;
     font-weight: bold;
 }
-/* --- END NEW STYLES --- */
+
 
 .game-wrapper {
     position: relative;
@@ -328,7 +326,7 @@ canvas {
     }
 }
 
-/* Room code styles (original) */
+
 .room-code-display {
     position: absolute;
     top: 4.5rem;

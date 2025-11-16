@@ -173,7 +173,7 @@ function drawGameOverOverlay() {
 }
 
 /**
- * UPDATED: Processes remote inputs during gameplay.
+ * Processes remote inputs during gameplay.
  */
 function processRemoteInputs(sessionData) {
   if (!players.length || !constants || !sessionData.players) return;
@@ -226,7 +226,6 @@ function processRemoteInputs(sessionData) {
       ? pressedKeys.add(pConfig.shoot[3])
       : pressedKeys.delete(pConfig.shoot[3]);
 
-    // --- END NEW MAPPING ---
 
     // Store the new state for the next comparison
     remoteInputsState[key] = pInputs;

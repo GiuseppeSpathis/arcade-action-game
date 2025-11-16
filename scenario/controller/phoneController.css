@@ -30,7 +30,6 @@ html, body {
     display: none !important;
 }
 
-/* Connection Panel */
 #connectionPanel h1 {
     font-size: 1.5rem;
     text-shadow: 0 0 8px rgba(255, 73, 246, 0.7);
@@ -70,9 +69,8 @@ html, body {
 }
 
 
-/* --- NEW: Controls Panel Styles --- */
 #controlsPanel {
-    flex-direction: row; /* Side-by-side layout */
+    flex-direction: row; 
     justify-content: space-between;
     align-items: center;
     padding: 1rem 5%;
@@ -81,7 +79,7 @@ html, body {
 .control-button {
     border: 0;
     background-color: rgba(255, 255, 255, 0.2);
-    border-radius: 12px; /* D-pad buttons look better as squares */
+    border-radius: 12px; 
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -93,8 +91,8 @@ html, body {
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     -webkit-tap-highlight-color: transparent;
     transition: background-color 0.1s ease, transform 0.1s ease;
-    width: 70px; /* Standard button size */
-    height: 70px; /* Standard button size */
+    width: 70px; 
+    height: 70px;
 }
 
 .control-button:active {
@@ -102,44 +100,40 @@ html, body {
     transform: scale(0.95);
 }
 
-/* D-Pad Container (shared style) */
 .controls-dpad {
     display: grid;
     grid-template-columns: repeat(3, 70px);
     grid-template-rows: repeat(3, 70px);
     gap: 5px;
-    width: 215px; /* 70*3 + 5*2 */
-    height: 215px; /* 70*3 + 5*2 */
+    width: 215px;
+    height: 215px; 
 }
 
-/* D-pad buttons positioning */
 .dpad-button.up { grid-column: 2; grid-row: 1; }
 .dpad-button.left { grid-column: 1; grid-row: 2; }
 .dpad-button.right { grid-column: 3; grid-row: 2; }
 .dpad-button.down { grid-column: 2; grid-row: 3; }
 
-/* D-Pad specific colors */
 #dpad-move .dpad-button {
     background-color: rgba(100, 100, 100, 0.4);
 }
 
 #dpad-shoot .dpad-button {
-    background-color: rgba(244, 67, 54, 0.4); /* Red tint for shoot */
+    background-color: rgba(244, 67, 54, 0.4); 
 }
 
-/* Action Buttons Container (Right side) */
 .controls-actions {
     display: flex;
-    flex-direction: column; /* Stack Shoot D-pad on top of Jump */
+    flex-direction: column; 
     align-items: center;
     justify-content: center;
-    gap: 20px; /* Space between shoot-pad and jump button */
+    gap: 20px; 
 }
 
 .action-button.jump {
-    width: 145px; /* Wider jump button */
+    width: 145px; 
     height: 70px;
     border-radius: 12px;
     font-size: 1.5rem;
-    background-color: #4CAF50; /* Green */
+    background-color: #4CAF50; 
 }

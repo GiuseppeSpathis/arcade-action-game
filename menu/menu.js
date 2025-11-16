@@ -4,7 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const playButton = document.getElementById("playButton");
   const gameModeContainer = document.getElementById("gameModeContainer");
   
-  // Get all the new mode buttons
   const player1Button = document.getElementById("player1Button");
   const player2Button = document.getElementById("player2Button");
   const player3Button = document.getElementById("player3Button");
@@ -18,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModeContainer.classList.remove("hidden"); // Show mode buttons
   });
 
-  // Add event listeners to each button, passing the player count as a URL parameter
+  // Event listeners to each button, passing the player count as a URL parameter
   player1Button.addEventListener("click", () => {
     window.location.href = `${scenarioUrl}?players=1`;
   });

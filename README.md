@@ -26,7 +26,7 @@ This mode requires all devices (the host laptop and player smartphones) to be co
    - On your phone, find the host laptop's Local IP Address (e.g., 192.168.1.10).
    - Open your phone's web browser and navigate to: http://[LAPTOP_IP_ADDRESS]:[PORT]/scenario/controller/phoneController.html (Example: `http://192.168.1.10:5500/scenario/controller/phoneController.html`)
    - Enter the 4-letter Room Code from the laptop screen and select your player slot (P2, P3, or P4) and then press Connect.
-<div style="display: flex; justify-content: center">
+<div style="display: flex; justify-content: center;">
    <img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/1287b393-764e-4544-b9ef-311a790c62d5" />
 </div>
 

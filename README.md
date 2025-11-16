@@ -38,6 +38,11 @@ This mode requires all devices (the host laptop and player smartphones) to be co
 
 Once all players are connected, the game will start automatically. Use the on-screen D-pads for moving and shooting and the "JUMP" button to jump.
 
+<p align="center">
+  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/09b9f192-d2ed-424f-9f41-80ba21e2869e" />
+</p>
+
+
 #### Code Overview
 The project is structured with a clear separation of concerns. The /menu/ directory handles the main menu and player-count selection. The core of the game resides in /scenario/, where scenario.js acts as the main game engine, controlling the render loop, managing game state, and initializing all objects from the constants.json file. The /scenario/helper/ directory contains the core gameplay classes, including player.js for player logic, map.js for dynamic platform generation, and bullet.js. The different enemy classes (circle.js, triangle.js, square.js) are defined in /scenario/enemies/. The multiplayer functionality is split between /scenario/controller/phoneController.html, which is the mobile controller interface, and /helper/firebaseRemoteController.js, which manages the host-side Firebase connection, session creation, and input listening. Finally, /helper/audioController.js is a simple module for managing sound.
 

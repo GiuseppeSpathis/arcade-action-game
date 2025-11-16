@@ -83,7 +83,7 @@
     "SPEED": 1080,
     "RADIUS": 6,
     "COLOR": "#ffe27a",
-    "COOLDOWN_MS": 250
+    "COOLDOWN_MS": 500
   },
   "MAP": {
     "TOP_MARGIN": 2,

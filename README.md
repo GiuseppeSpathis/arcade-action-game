@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://giuseppespathis.github.io/arcade-action-game/">
-    <img width="200" height="200" src="https://cdnb.artstation.com/p/assets/images/images/033/575/083/original/truong-huynh-siffert-tiffany-buttons-startgame-yellow.gif?1609984515" alt="Play the Game">
+    <img width="600" height="600" src="https://cdnb.artstation.com/p/assets/images/images/033/575/083/original/truong-huynh-siffert-tiffany-buttons-startgame-yellow.gif?1609984515" alt="Play the Game">
   </a>
 </p>
 

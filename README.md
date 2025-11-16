@@ -26,7 +26,8 @@ This mode requires all devices (the host laptop and player smartphones) to be co
    - On your phone, find the host laptop's Local IP Address (e.g., 192.168.1.10).
    - Open your phone's web browser and navigate to: http://[LAPTOP_IP_ADDRESS]:[PORT]/scenario/controller/phoneController.html (Example: `http://192.168.1.10:5500/scenario/controller/phoneController.html`)
    - Enter the 4-letter Room Code from the laptop screen and select your player slot (P2, P3, or P4) and then press Connect.
-   - <img width="931" height="702" alt="image" src="https://github.com/user-attachments/assets/1287b393-764e-4544-b9ef-311a790c62d5" />
+
+<img width="931" height="702" alt="image" src="https://github.com/user-attachments/assets/1287b393-764e-4544-b9ef-311a790c62d5" />
 
 Once all players are connected, the game will start automatically. Use the on-screen D-pads for moving and shooting and the "JUMP" button to jump.
 

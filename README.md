@@ -9,7 +9,7 @@ This game was built with a focus on core web technologies. All graphics are draw
 
 
 <p align="center">
-  <img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/8c5ac1f5-0086-4239-b823-78e781e5ab74" />
+  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/8c5ac1f5-0086-4239-b823-78e781e5ab74" />
 </p>
 
 

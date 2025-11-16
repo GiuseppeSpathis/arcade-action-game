@@ -1,67 +1,41 @@
 // Seek and destroy enemy
 // This enemy ignores gravity and is killed by colliding with obstacles,
 // uses seek and destroy behavior to chase the player.
-
-import { checkCollision } from "../helper/map.js";
+//
 
 export class CircleEnemy {
-  constructor(constants, canvas, mapData) {
+  constructor(constants, canvas) {
     this.constants = constants.ENEMIES.CIRCLE;
-    this.fullConstants = constants;
-    this.map = mapData?.grid;
-    this.tileSize = constants.TILE_SIZE;
-    this.mapOffsetY = mapData?.verticalOffset;
-    this.size = this.constants.SIZE;
-    this.collisionOffset = constants.PLAYER.COLLISION_OFFSET;
-
-    const platforms =
-      mapData?.platforms.length > 0
-        ? mapData?.platforms
-        : [
-            {
-              row: mapData?.floorRow,
-              colStart: 0,
-              colEnd: mapData?.cols - 1,
-            },
-          ];
-    const chosenPlatform =
-      platforms[Math.floor(Math.random() * platforms.length)] || platforms[0];
-    const minX = chosenPlatform.colStart * this.tileSize;
-    const maxX =
-      (chosenPlatform.colEnd + 1) * this.tileSize -
-      this.size -
-      this.collisionOffset;
-    const spawnX = Math.min(
-      Math.max(0, maxX),
-      Math.max(
-        Math.max(0, minX),
-        minX + Math.random() * Math.max(1, maxX - minX),
-      ),
-    );
-    const spawnY =
-      this.mapOffsetY +
-      chosenPlatform.row * this.tileSize -
-      this.size -
-      this.collisionOffset;
-
-    this.state = {
-      width: this.size,
-      height: this.size,
-      x: spawnX,
-      y: spawnY,
-      vx: 0,
-      vy: 0,
+    this.globalConstants = constants.ENEMIES;
+    this.width = this.constants.WIDTH;
+    this.height = this.constants.HEIGHT;
+    this.position = {
+      x: Math.random() * Math.max(1, canvas.width - this.width),
+      y: -this.height,
     };
-
+    const minTarget = this.height * 1.2;
+    const maxTarget = Math.min(
+      canvas.height * 0.35,
+      minTarget + this.height * 2.5,
+    );
+    const availableRange = Math.max(this.height * 0.5, maxTarget - minTarget);
+    this.targetY = Math.min(
+      canvas.height - this.height,
+      minTarget + Math.random() * availableRange,
+    );
+    this.isSpawning = true;
+    this.facing = 1;
+    this.lastShotAt = 0;
     this.active = true;
-    this.isSpawning = false;
     this.deathAnimation = {
       active: false,
       startedAt: 0,
-      duration: constants.ENEMIES.DEATH_ANIMATION_DURATION_MS ?? 320,
+      duration: this.globalConstants.DEATH_ANIMATION_DURATION_MS ?? 320,
       fragments: [],
     };
+    this.deathSpinDirection = Math.random() > 0.5 ? 1 : -1;
   }
+
   getNow(externalTimestamp) {
     if (typeof externalTimestamp === "number") {
       return externalTimestamp;
@@ -71,10 +45,10 @@ export class CircleEnemy {
     }
     return Date.now();
   }
-
+  // Add velocity and direction for gradual adjustment
   update(deltaTime, playerBounds, timestamp, canvas) {
     if (!this.active) {
-      return;
+      return null;
     }
 
     if (this.deathAnimation.active) {
@@ -82,73 +56,128 @@ export class CircleEnemy {
       if (now - this.deathAnimation.startedAt >= this.deathAnimation.duration) {
         this.active = false;
       }
-      return;
+      return null;
     }
 
-    // Seek and destroy logic
+    if (this.isSpawning) {
+      this.position.y += this.globalConstants.SPAWN_DESCENT_SPEED * deltaTime;
+      if (this.position.y >= this.targetY) {
+        this.position.y = this.targetY;
+        this.isSpawning = false;
+      }
+      // Reset velocity after spawning
+      if (!this.velocity) {
+        this.velocity = { x: 0, y: 0 };
+      }
+      return null;
+    }
+
+    // Initialize velocity if not present
+    if (!this.velocity) {
+      this.velocity = { x: 0, y: 0 };
+    }
+
     const playerCenterX = playerBounds.x + playerBounds.width / 2;
     const playerCenterY = playerBounds.y + playerBounds.height / 2;
-    const enemyCenterX = this.state.x + this.state.width / 2;
-    const enemyCenterY = this.state.y + this.state.height / 2;
+    const enemyCenterX = this.position.x + this.width / 2;
+    const enemyCenterY = this.position.y + this.height / 2;
 
-    // Calculate direction vector to player
+    // Seek and destroy: calculate desired direction
     const dx = playerCenterX - enemyCenterX;
     const dy = playerCenterY - enemyCenterY;
-    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Normalize direction
-    const dirX = dx / distance;
-    const dirY = dy / distance;
-
-    // Accelerate towards player
-    this.state.vx += dirX * this.constants.SEEK_ACCELERATION;
-    this.state.vy += dirY * this.constants.SEEK_ACCELERATION;
-
-    // Clamp speed
-    const maxSpeed = this.constants.MAX_SPEED;
-    const speed = Math.sqrt(
-      this.state.vx * this.state.vx + this.state.vy * this.state.vy,
-    );
-    if (speed > maxSpeed) {
-      this.state.vx = (this.state.vx / speed) * maxSpeed;
-      this.state.vy = (this.state.vy / speed) * maxSpeed;
+    // Normalize desired direction
+    let desiredDir = { x: 0, y: 0 };
+    if (distance > 0.01) {
+      desiredDir.x = dx / distance;
+      desiredDir.y = dy / distance;
     }
 
-    let nextX = this.state.x + this.state.vx;
-    let nextY = this.state.y + this.state.vy;
+    // Current velocity
+    const speed = this.constants.MOVE_SPEED;
+    const verticalSpeed = this.constants.VERTICAL_ADJUST_SPEED;
 
-    // Check collision with solid tiles (destroy self if collides)
-    if (
-      checkCollision(
-        this.map,
-        nextX,
-        nextY,
-        this.state.width,
-        this.state.height,
-        this.tileSize,
-        this.mapOffsetY,
-        this.fullConstants,
-      )
-    ) {
-      this.takeHit();
-      return;
+    // Gradually adjust velocity towards desired direction
+    // Use a turn rate to limit how much the direction can change per frame
+    const TURN_RATE = this.constants.TURN_RATE; // radians per second, tweak as needed
+
+    // Calculate current direction
+    const currentSpeed = Math.sqrt(
+      this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y,
+    );
+    let currentDir = { x: 0, y: 0 };
+    if (currentSpeed > 0.01) {
+      currentDir.x = this.velocity.x / currentSpeed;
+      currentDir.y = this.velocity.y / currentSpeed;
+    } else {
+      // If stopped, just use desired direction
+      currentDir.x = desiredDir.x;
+      currentDir.y = desiredDir.y;
     }
 
-    // Clamp to canvas bounds
-    this.state.x = Math.max(
+    // Angle between current and desired direction
+    const dot = currentDir.x * desiredDir.x + currentDir.y * desiredDir.y;
+    const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+
+    // Clamp turn amount
+    const maxTurn = TURN_RATE * deltaTime;
+    let newDir = { x: currentDir.x, y: currentDir.y };
+
+    if (angle > 0.001) {
+      // Compute axis of rotation (in 2D, just sign of cross product)
+      const cross = currentDir.x * desiredDir.y - currentDir.y * desiredDir.x;
+      const turnAngle = Math.min(angle, maxTurn);
+      const sinTurn = Math.sin(turnAngle);
+      const cosTurn = Math.cos(turnAngle);
+
+      // Rotate currentDir towards desiredDir by turnAngle
+      // 2D rotation: (x', y') = (x * cos - y * sin, x * sin + y * cos)
+      if (cross > 0) {
+        // Rotate left
+        newDir.x = currentDir.x * cosTurn - currentDir.y * sinTurn;
+        newDir.y = currentDir.x * sinTurn + currentDir.y * cosTurn;
+      } else {
+        // Rotate right
+        newDir.x = currentDir.x * cosTurn + currentDir.y * sinTurn;
+        newDir.y = -currentDir.x * sinTurn + currentDir.y * cosTurn;
+      }
+      // Normalize
+      const ndLen = Math.sqrt(newDir.x * newDir.x + newDir.y * newDir.y);
+      if (ndLen > 0.01) {
+        newDir.x /= ndLen;
+        newDir.y /= ndLen;
+      }
+    }
+
+    // Set velocity based on new direction and speed
+    // Use different speed for vertical and horizontal if needed
+    // Here, we scale x by MOVE_SPEED and y by VERTICAL_ADJUST_SPEED
+    this.velocity.x = newDir.x * speed;
+    this.velocity.y = newDir.y * verticalSpeed;
+
+    // Move position
+    this.position.x += this.velocity.x * deltaTime;
+    this.position.y += this.velocity.y * deltaTime;
+
+    // Clamp position to canvas
+    this.position.x = Math.max(
       0,
-      Math.min(nextX, canvas.width - this.state.width),
+      Math.min(canvas.width - this.width, this.position.x),
     );
-    this.state.y = Math.max(
+    this.position.y = Math.max(
       0,
-      Math.min(nextY, canvas.height - this.state.height),
+      Math.min(canvas.height - this.height, this.position.y),
     );
+
+    return null;
   }
 
   draw(ctx) {
     if (!this.active) {
       return;
     }
+
     const now = this.getNow();
     const isDying = this.deathAnimation.active;
     const progress = isDying
@@ -161,74 +190,68 @@ export class CircleEnemy {
           ),
         )
       : 0;
-    const centerX = this.state.x + this.state.width / 2;
-    const centerY = this.state.y + this.state.height / 2;
+    const centerX = this.position.x + this.width / 2;
+    const centerY = this.position.y + this.height / 2;
 
     ctx.save();
     if (isDying) {
-      const scale = 1 + progress * 0.35;
+      const scale = 1 + progress * 0.4;
       ctx.globalAlpha = Math.max(0.05, 1 - progress);
       ctx.translate(centerX, centerY);
       ctx.scale(scale, scale);
+      ctx.rotate(this.deathSpinDirection * progress * Math.PI * 0.35);
       ctx.translate(-centerX, -centerY);
-      ctx.shadowColor = `rgba(255, 255, 255, ${0.5 * (1 - progress)})`;
-      ctx.shadowBlur = 15 + 26 * (1 - progress);
+      ctx.shadowColor = `rgba(255, 255, 255, ${0.55 * (1 - progress)})`;
+      ctx.shadowBlur = 18 + 32 * (1 - progress);
     }
+
     ctx.fillStyle = this.constants.COLOR;
     ctx.beginPath();
-    ctx.arc(centerX, centerY, this.state.width / 2, 0, Math.PI * 2);
+    ctx.arc(
+      this.position.x + this.width / 2,
+      this.position.y + this.height / 2,
+      Math.min(this.width, this.height) / 2,
+      0,
+      Math.PI * 2,
+    );
+    ctx.closePath();
     ctx.fill();
     ctx.restore();
 
     if (isDying) {
+      ctx.save();
+      const ringRadius =
+        Math.max(this.width, this.height) * (0.45 + progress * 0.9);
+      ctx.globalAlpha = Math.max(0, 0.6 * (1 - progress));
+      ctx.lineWidth = 2 + progress * 6;
+      ctx.strokeStyle = `rgba(255, 220, 120, ${0.7 * (1 - progress)})`;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
       if (!this.deathAnimation.fragments.length) {
-        this.deathAnimation.fragments = Array.from({ length: 8 }, () => ({
-          offsetX: (Math.random() - 0.5) * this.state.width,
-          offsetY: (Math.random() - 0.5) * this.state.height,
-          size: Math.max(4, this.state.width * (0.1 + Math.random() * 0.15)),
+        this.deathAnimation.fragments = Array.from({ length: 6 }, () => ({
           angle: Math.random() * Math.PI * 2,
+          speed: 14 + Math.random() * 18,
         }));
       }
 
       ctx.save();
-      ctx.globalAlpha = Math.max(0, 0.55 * (1 - progress));
-      ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * (1 - progress)})`;
-      ctx.lineWidth = 2 + progress * 4;
-      ctx.beginPath();
-      ctx.arc(
-        centerX,
-        centerY,
-        this.state.width / 2 + 8 + progress * 16,
-        0,
-        Math.PI * 2,
-      );
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.save();
       ctx.globalAlpha = Math.max(0, 0.65 * (1 - progress));
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.55 * (1 - progress)})`;
+      ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * (1 - progress)})`;
+      ctx.lineWidth = 1.2 + (1 - progress) * 1.8;
       this.deathAnimation.fragments.forEach((fragment) => {
-        const travel = progress * 24;
-        const x =
-          centerX +
-          fragment.offsetX * (1 + progress * 0.3) +
-          Math.cos(fragment.angle) * travel;
-        const y =
-          centerY +
-          fragment.offsetY * (1 + progress * 0.3) +
-          Math.sin(fragment.angle) * travel;
-        const size = fragment.size * (1 - progress * 0.6);
-        if (size <= 0) {
-          return;
-        }
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(fragment.angle * 0.5);
+        const startRadius =
+          Math.max(this.width, this.height) * 0.28 +
+          progress * fragment.speed * 0.4;
+        const endRadius = startRadius + fragment.speed * progress * 1.6;
+        const cos = Math.cos(fragment.angle);
+        const sin = Math.sin(fragment.angle);
         ctx.beginPath();
-        ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        ctx.moveTo(centerX + cos * startRadius, centerY + sin * startRadius);
+        ctx.lineTo(centerX + cos * endRadius, centerY + sin * endRadius);
+        ctx.stroke();
       });
       ctx.restore();
     }
@@ -236,10 +259,10 @@ export class CircleEnemy {
 
   getBounds() {
     return {
-      x: this.state.x,
-      y: this.state.y,
-      width: this.state.width,
-      height: this.state.height,
+      x: this.position.x,
+      y: this.position.y,
+      width: this.width,
+      height: this.height,
     };
   }
 

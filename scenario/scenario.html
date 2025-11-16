@@ -1,87 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retro Arcade - Scenario</title>
-    <link rel="stylesheet" href="scenario.css" />
-    <link
-      rel="icon"
-      type="image/png"
-      href="../assets/images/favicon-invader.png"
-      sizes="32x32"
-    />
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Retro Arcade - Scenario</title>
+        <link rel="stylesheet" href="scenario.css" />
+        <link
+            rel="icon"
+            type="image/png"
+            href="../assets/images/favicon-invader.png"
+            sizes="32x32"
+        />
 
-    <script
-      type="module"
-      src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"
-    ></script>
-    <script
-      type="module"
-      src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
-    ></script>
-    <script
-      type="module"
-      src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
-    ></script>
-  </head>
-  <body>
-    <div id="connectionOverlay" class="connection-overlay hidden">
-      <h1 class="connection-title">JOIN THE GAME</h1>
-      
-      <div id="roomCodeDisplay" class="room-code-display">
-        <span class="room-code-label">ROOM CODE:</span>
-        <span id="roomCodeText" class="room-code-text">...</span>
-      </div>
+        <script
+            type="module"
+            src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"
+        ></script>
+        <script
+            type="module"
+            src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"
+        ></script>
+        <script
+            type="module"
+            src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"
+        ></script>
+    </head>
+    <body>
+        <div id="connectionOverlay" class="connection-overlay hidden">
+            <h1 class="connection-title">JOIN THE GAME</h1>
 
-      <p class="connection-instructions">
-        Connect your phone to the same Wi-Fi and go to:<br />
-        <span id="connectionUrl" class="connection-url"></span>
-      </p>
+            <div id="roomCodeDisplay" class="room-code-display">
+                <span class="room-code-label">ROOM CODE:</span>
+                <span id="roomCodeText" class="room-code-text">...</span>
+            </div>
 
-      <div id="playerConnectionContainer" class="player-connection-container">
+            <p class="connection-instructions">
+                Connect your phone to the same Wi-Fi and go to:<br />
+                <span id="connectionUrl" class="connection-url"></span>
+            </p>
+
+            <div
+                id="playerConnectionContainer"
+                class="player-connection-container"
+            ></div>
         </div>
-    </div>
-    <div class="game-wrapper">
-      <button
-        id="musicToggle"
-        class="audio-toggle-button"
-        type="button"
-        aria-label="Disattiva l'audio"
-        aria-pressed="false"
-      ></button>
+        <div class="game-wrapper">
+            <div class="audio-controls">
+                <button
+                    id="musicToggle"
+                    class="audio-toggle-button"
+                    type="button"
+                    aria-label="Disable audio"
+                    aria-pressed="false"
+                ></button>
+                <span
+                    id="musicVolumeSliderContainer"
+                    class="audio-slider-container"
+                ></span>
+            </div>
 
-      <header id="hudContainer" class="hud"></header>
+            <header id="hudContainer" class="hud"></header>
 
-      <main class="game-area">
-        <canvas id="gameCanvas" aria-label="Scenario di gioco"></canvas>
-        <button
-          id="returnMenuButton"
-          class="game-over-button"
-          type="button"
-          hidden
+            <main class="game-area">
+                <canvas id="gameCanvas" aria-label="Scenario di gioco"></canvas>
+                <button
+                    id="returnMenuButton"
+                    class="game-over-button"
+                    type="button"
+                    hidden
+                >
+                    Return to the menu
+                </button>
+            </main>
+        </div>
+        <audio
+            id="bg_music"
+            class="audio"
+            autoplay
+            controls
+            loop
+            style="display: none"
         >
-          Return to the menu
-        </button>
-      </main>
-    </div>
-    <audio
-      id="bg_music"
-      class="audio"
-      autoplay
-      controls
-      loop
-      style="display: none"
-    >
-      <source src="../assets/musics/scenario.mp3" type="audio/mp3" />
-      Your browser does not support the audio element.
-    </audio>
-    <audio id="sfx_gameover" preload="auto" style="display: none">
-      <source src="../assets/musics/gameOver.wav" type="audio/wav" />
-    </audio>
-    <audio id="sfx_hit" preload="auto" style="display: none">
-      <source src="../assets/musics/hit.mp3" type="audio/mpeg" />
-    </audio>
-    <script type="module" src="scenario.js"></script>
-  </body>
+            <source src="../assets/musics/scenario.mp3" type="audio/mp3" />
+            Your browser does not support the audio element.
+        </audio>
+        <audio id="sfx_gameover" preload="auto" style="display: none">
+            <source src="../assets/musics/gameOver.wav" type="audio/wav" />
+        </audio>
+        <audio id="sfx_hit" preload="auto" style="display: none">
+            <source src="../assets/musics/hit.mp3" type="audio/mpeg" />
+        </audio>
+        <script type="module" src="scenario.js"></script>
+    </body>
 </html>

@@ -13,13 +13,19 @@
         />
     </head>
     <body>
-        <button
-            id="musicToggle"
-            class="audio-toggle-button"
-            type="button"
-            aria-label="Disable audio"
-            aria-pressed="false"
-        ></button>
+        <div class="audio-controls">
+            <button
+                id="musicToggle"
+                class="audio-toggle-button"
+                type="button"
+                aria-label="Disable audio"
+                aria-pressed="false"
+            ></button>
+            <span
+                id="musicVolumeSliderContainer"
+                class="audio-slider-container"
+            ></span>
+        </div>
         <div class="menu-panel">
             <h1>Retro Arcade</h1>
             <button id="playButton" class="play-button">Play</button>

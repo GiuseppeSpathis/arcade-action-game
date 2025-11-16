@@ -1,5 +1,6 @@
 {
-  "TILE_SIZE": 60,
+  "DEBUG": true,
+  "TILE_SIZE": 30,
   "GRAVITY": 0.65,
   "JUMP_FORCE": -18,
   "COYOTE_FRAMES": 7,
@@ -13,9 +14,9 @@
   },
   "PLAYER": {
     "WIDTH": 34,
-    "HEIGHT": 48,
-    "SPEED": 0.75,
-    "MAX_SPEED": 4.2,
+    "HEIGHT": 34,
+    "SPEED": 1.5,
+    "MAX_SPEED": 5.5,
     "JUMP_IMPULSE_MULTIPLIER": 0.6,
     "DECELERATION_FACTOR": 0.82,
     "MIN_SPEED_THRESHOLD": 0.05,
@@ -79,7 +80,7 @@
     }
   ],
   "PLAYER_BULLET": {
-    "SPEED": 560,
+    "SPEED": 1080,
     "RADIUS": 6,
     "COLOR": "#ffe27a",
     "COOLDOWN_MS": 250
@@ -87,14 +88,14 @@
   "MAP": {
     "TOP_MARGIN": 2,
     "MIN_VERTICAL_GAP_TILES": 2,
-    "MAX_VERTICAL_GAP_TILES": 2,
+    "MAX_VERTICAL_GAP_TILES": 5,
     "GAP_REDUCTION_TILES": 0,
     "GAP_RANDOM_ADDITION": 1,
-    "MIN_LAYERS": 3,
+    "MIN_LAYERS": 4,
     "ADDITIONAL_LAYER_VARIATION": 3,
     "MIN_LAYER_COUNT": 1,
     "INITIAL_COLUMN_OFFSET_RANGE": 2,
-    "COLUMN_SKIP_RANGE": 3,
+    "COLUMN_SKIP_RANGE": 6,
     "MAX_SEGMENT_LENGTH_DIVISOR": 3,
     "MIN_MAX_SEGMENT_LENGTH": 3,
     "SEGMENT_LENGTH_BASE": 1,
@@ -163,12 +164,12 @@
       "JUMP_COOLDOWN_MS": 900
     },
     "CIRCLE": {
-      "SIZE": 25,
+      "WIDTH": 20,
+      "HEIGHT": 20,
       "COLOR": "#FF0000",
-      "MOVE_ACCELERATION": 0.9,
-      "MAX_SPEED": 5.0,
-      "DECELERATION_FACTOR": 0.4,
-      "MIN_SPEED_THRESHOLD": 0.04
+      "MOVE_SPEED": 280,
+      "VERTICAL_ADJUST_SPEED": 280,
+      "TURN_RATE": 2.5
     }
   }
 }

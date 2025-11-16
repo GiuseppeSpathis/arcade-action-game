@@ -3,7 +3,7 @@ import { generateMap, isSolidTile } from "./helper/map.js";
 import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
 import { TriangleEnemy } from "./enemies/triangle.js";
-import { SquareEnemy } from "./enemies/square.js";
+import { CircleEnemy } from "./enemies/circle.js";
 import {
   initFirebase,
   createGameSession,
@@ -37,7 +37,7 @@ const playerHUDElements = [];
 const connectionOverlay = document.getElementById("connectionOverlay");
 const connectionUrl = document.getElementById("connectionUrl");
 const playerConnectionContainer = document.getElementById(
-  "playerConnectionContainer"
+  "playerConnectionContainer",
 );
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const roomCodeText = document.getElementById("roomCodeText");
@@ -162,12 +162,12 @@ function drawGameOverOverlay() {
   ctx.font = `bold ${fontSize}px 'Press Start 2P', 'Courier New', monospace`;
   ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
   ctx.font = `normal ${Math.floor(
-    fontSize * 0.4
+    fontSize * 0.4,
   )}px 'Press Start 2P', 'Courier New', monospace`;
   ctx.fillText(
     "Press the button to return to the menu",
     canvas.width / 2,
-    canvas.height / 2 + fontSize
+    canvas.height / 2 + fontSize,
   );
   ctx.restore();
 }
@@ -182,7 +182,7 @@ function processRemoteInputs(sessionData) {
   const remotePlayers = sessionData.players;
 
   playerKeys.forEach((key, index) => {
-    const playerIndex = index + 1; 
+    const playerIndex = index + 1;
 
     if (!remotePlayers[key] || !players[playerIndex]) {
       return;
@@ -193,10 +193,10 @@ function processRemoteInputs(sessionData) {
 
     const pConfig = constants.PLAYER_DATA[playerIndex].inputs;
     // Get old state for jump buttons
-    const pState = remoteInputsState[key] || { j: false, mu: false }; 
+    const pState = remoteInputsState[key] || { j: false, mu: false };
 
     // --- Map remote inputs to pressedKeys Set ---
-    
+
     // 1. Map D-Pad Left/Right to Left/Right movement
     pInputs.ml // Move Left
       ? pressedKeys.add(pConfig.left[0])
@@ -204,13 +204,13 @@ function processRemoteInputs(sessionData) {
     pInputs.mr // Move Right
       ? pressedKeys.add(pConfig.right[0])
       : pressedKeys.delete(pConfig.right[0]);
-    
+
     // 2. Map "JUMP" button AND D-Pad Up to Jump
     // (mu = Move Up, j = Jump button)
     if ((pInputs.j && !pState.j) || (pInputs.mu && !pState.mu)) {
       players[playerIndex].queueJump();
     }
-    
+
     // 3. Map Shoot D-Pad to directional shooting
     // Assumes shootKeys is [Up, Down, Left, Right] in constants.json
     pInputs.su // Shoot Up
@@ -225,7 +225,7 @@ function processRemoteInputs(sessionData) {
     pInputs.sr // Shoot Right
       ? pressedKeys.add(pConfig.shoot[3])
       : pressedKeys.delete(pConfig.shoot[3]);
-    
+
     // --- END NEW MAPPING ---
 
     // Store the new state for the next comparison
@@ -274,16 +274,16 @@ async function setupLobby(playerCount) {
     // Start listening
     let gameStarted = false;
     firebaseUnsubscribe = listenForRemoteInputs(roomCode, (sessionData) => {
-      if (!sessionData) return; 
+      if (!sessionData) return;
 
       if (gameStarted) {
-        processRemoteInputs(sessionData); 
+        processRemoteInputs(sessionData);
         return;
       }
 
       // --- Lobby Logic ---
       let allConnected = true;
-      const remotePlayers = sessionData.players || {}; 
+      const remotePlayers = sessionData.players || {};
       for (const playerKey of requiredPlayers) {
         if (remotePlayers[playerKey] && remotePlayers[playerKey].connected) {
           const statusEl = document.getElementById(`status-${playerKey}`);
@@ -292,7 +292,7 @@ async function setupLobby(playerCount) {
             statusEl.classList.add("connected");
           }
         } else {
-          allConnected = false; 
+          allConnected = false;
         }
       }
 
@@ -328,7 +328,7 @@ async function initializeGame(playerCount) {
     }
     if (!backgroundImage) {
       backgroundImage = await loadImage(
-        constants.BACKGROUND.BACKGROUND_IMAGE_SRC
+        constants.BACKGROUND.BACKGROUND_IMAGE_SRC,
       );
     }
     if (!mapData) {
@@ -343,7 +343,7 @@ async function initializeGame(playerCount) {
           mapData,
           canvas,
           constants.PLAYER_DATA[i],
-          i
+          i,
         );
         players.push(player);
       }
@@ -352,7 +352,7 @@ async function initializeGame(playerCount) {
     // --- 3. Setup Input Handling ---
     const preventDefaultKeys = createPreventDefaultKeys(
       constants.INPUT,
-      constants.PLAYER_DATA
+      constants.PLAYER_DATA,
     );
     const exitKey = constants.INPUT.EXIT_KEY;
     const exitDestination = constants.INPUT.EXIT_DESTINATION;
@@ -428,7 +428,7 @@ function initializeHUD(playerCount) {
     livesContainer.className = "lives";
     livesContainer.setAttribute(
       "aria-label",
-      `P${i + 1} Vite: ${constants.PLAYER.MAX_LIVES}`
+      `P${i + 1} Vite: ${constants.PLAYER.MAX_LIVES}`,
     );
 
     const hearts = [];
@@ -458,7 +458,7 @@ function updatePlayerLivesDisplay(playerIndex, lives) {
   });
   hud.container.setAttribute(
     "aria-label",
-    `P${playerIndex + 1} Vite rimaste: ${lives}`
+    `P${playerIndex + 1} Vite rimaste: ${lives}`,
   );
 }
 
@@ -550,10 +550,10 @@ function spawnEnemyGroup() {
     spawned.push(new TriangleEnemy(constants, canvas));
   }
   if (totalEnemies >= 2) {
-    spawned.push(new SquareEnemy(constants, canvas, mapData));
+    spawned.push(new CircleEnemy(constants, canvas, mapData));
   }
   while (spawned.length < totalEnemies) {
-    const enemyClass = Math.random() > 0.5 ? TriangleEnemy : SquareEnemy;
+    const enemyClass = Math.random() > 0.5 ? TriangleEnemy : CircleEnemy;
     spawned.push(new enemyClass(constants, canvas));
   }
 
@@ -617,7 +617,7 @@ function handlePlayerShooting(timestamp) {
         speed: constants.PLAYER_BULLET.SPEED,
         radius: constants.PLAYER_BULLET.RADIUS,
         color: constants.PLAYER_BULLET.COLOR,
-      })
+      }),
     );
   });
 }
@@ -702,12 +702,12 @@ function updateEnemyBullets(deltaTime, timestamp) {
     }
 
     for (const player of players) {
-      if (player.isDead) continue; 
+      if (player.isDead) continue;
 
       if (bullet.intersectsRect(player.getBounds())) {
         bullet.active = false;
-        damagePlayer(player, timestamp); 
-        break; 
+        damagePlayer(player, timestamp);
+        break;
       }
     }
   });
@@ -716,7 +716,7 @@ function updateEnemyBullets(deltaTime, timestamp) {
 
 function handleEnemyCollisions(timestamp) {
   enemies.forEach((enemy) => {
-    if (!(enemy instanceof SquareEnemy)) {
+    if (!(enemy instanceof CircleEnemy)) {
       return;
     }
     if (enemy.isSpawning) {
@@ -727,13 +727,42 @@ function handleEnemyCollisions(timestamp) {
     }
 
     for (const player of players) {
-      if (player.isDead) continue; 
+      if (player.isDead) continue;
 
       if (rectanglesIntersect(enemy.getBounds(), player.getBounds())) {
         damagePlayer(player, timestamp);
       }
     }
   });
+}
+
+// --- DEBUG OVERLAY ---
+function drawDebugOverlay() {
+  ctx.save();
+  ctx.font = "12px monospace";
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(10, 58, 420, Math.max(24, 18 + enemies.length * 16));
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  ctx.fillText(`enemies.length: ${enemies.length}`, 20, 16 * 4);
+
+  enemies.forEach((enemy, idx) => {
+    let type = enemy.constructor?.name || "Unknown";
+    let x = Math.round(enemy.position?.x ?? enemy.x ?? 0);
+    let y = Math.round(enemy.position?.y ?? enemy.y ?? 0);
+    let status = "";
+    if (typeof enemy.isDying === "function" && enemy.isDying())
+      status += "[DYING] ";
+    if (enemy.isSpawning) status += "[SPAWNING] ";
+    if (!enemy.active) status += "[INACTIVE] ";
+    ctx.fillText(
+      `#${idx}: ${type} (${x},${y}) ${status}`.trim(),
+      20,
+      16 * 5 + idx * 16,
+    );
+  });
+  ctx.restore();
 }
 
 /**
@@ -746,10 +775,7 @@ function gameLoop(timestamp) {
   if (!isGameOver) {
     players.forEach((player) => player.update(pressedKeys));
     handlePlayerShooting(timestamp);
-    if (
-      timestamp - lastSpawnTimestamp >=
-      constants.ENEMIES.SPAWN_INTERVAL_MS
-    ) {
+    if (timestamp - lastSpawnTimestamp >= constants.ENEMIES.SPAWN_INTERVAL_MS) {
       spawnEnemyGroup();
       lastSpawnTimestamp = timestamp;
     }
@@ -771,6 +797,10 @@ function gameLoop(timestamp) {
   }
 
   requestAnimationFrame(gameLoop);
+
+  if (constants.DEBUG) {
+    drawDebugOverlay();
+  }
 }
 
 /**
@@ -788,7 +818,7 @@ async function main() {
     try {
       constants = await loadConstants();
       backgroundImage = await loadImage(
-        constants.BACKGROUND.BACKGROUND_IMAGE_SRC
+        constants.BACKGROUND.BACKGROUND_IMAGE_SRC,
       );
       mapData = generateMap(canvas, constants);
       await setupLobby(playerCount);

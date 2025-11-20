@@ -550,10 +550,7 @@ function updateEnemies(deltaTime, timestamp, allPlayers) {
 
   enemies.forEach((enemy) => {
     if (enemy instanceof TriangleEnemy) {
-      const bullet = enemy.update(deltaTime, targetBounds, timestamp, canvas);
-      if (bullet) {
-        enemyBullets.push(bullet);
-      }
+      enemy.update(deltaTime, targetBounds, timestamp, canvas, enemyBullets);
     } else {
       enemy.update(deltaTime, targetBounds, timestamp, canvas);
     }

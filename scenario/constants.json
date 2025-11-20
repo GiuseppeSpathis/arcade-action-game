@@ -1,5 +1,5 @@
 {
-  "DEBUG": false,
+  "DEBUG": true,
   "TILE_SIZE": 30,
   "GRAVITY": 0.65,
   "JUMP_FORCE": -18,

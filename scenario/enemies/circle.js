@@ -1,5 +1,5 @@
 // Seek and destroy enemy
-// This enemy ignores gravity and is killed by colliding with obstacles,
+// This enemy ignores gravity,
 // uses seek and destroy behavior to chase the player.
 //
 

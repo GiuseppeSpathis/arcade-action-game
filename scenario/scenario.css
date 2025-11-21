@@ -122,7 +122,7 @@ body {
     margin-bottom: 0.5rem;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid #457b9d; 
+    border: 2px solid #457b9d;
     color: #e0e0e0;
     transition:
         background-color 0.3s,
@@ -130,12 +130,11 @@ body {
 }
 
 .player-status.connected {
-    border-color: #7ac74f; 
+    border-color: #7ac74f;
     background: rgba(122, 199, 79, 0.15);
     color: #fff;
     font-weight: bold;
 }
-
 
 .game-wrapper {
     position: relative;
@@ -326,7 +325,6 @@ canvas {
     }
 }
 
-
 .room-code-display {
     position: absolute;
     top: 4.5rem;
@@ -356,4 +354,35 @@ canvas {
 
 .room-code-display[hidden] {
     display: none;
+}
+
+.level-counter {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+    z-index: 100;
+}
+
+.level-progress-bar {
+    height: 16px;
+    width: 200px;
+    background: #222;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 8px 0;
+    position: relative;
+}
+
+.level-progress-inner {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width 0.2s;
+    z-index: 300;
 }

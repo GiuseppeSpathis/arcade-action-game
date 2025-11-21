@@ -171,5 +171,10 @@
       "VERTICAL_ADJUST_SPEED": 280,
       "TURN_RATE": 2.5
     }
+  },
+  "LEVELING": {
+    "STARTING_LVL": 1,
+    "LEVEL_UP_SECONDS": 5,
+    "TIME_MULTIPLIER": 1.2
   }
 }

@@ -4,6 +4,7 @@ import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
 import { TriangleEnemy } from "./enemies/triangle.js";
 import { CircleEnemy } from "./enemies/circle.js";
+import { Leveller } from "./helper/leveller.js";
 import {
   drawBackground,
   drawTiles,
@@ -32,6 +33,7 @@ let lastSpawnTimestamp = -Infinity;
 let mapData;
 let backgroundImage;
 let roomCode;
+let leveller;
 // --- End Global Game State ---
 
 const canvas = document.getElementById("gameCanvas");
@@ -316,7 +318,10 @@ async function initializeGame(playerCount) {
       });
     }
 
-    // --- 6. Hide Lobby and Start Game ---
+    // --- 6. Initialize Leveller and timer  ---
+    leveller = new Leveller(constants, constants.INITIAL_LEVEL || 1);
+
+    // --- 7. Hide Lobby and Start Game ---
     connectionOverlay.classList.add("hidden");
     lastFrameTime = performance.now();
     requestAnimationFrame(gameLoop);
@@ -364,6 +369,31 @@ function initializeHUD(playerCount) {
     playerHud.appendChild(livesContainer);
     hudContainer.appendChild(playerHud);
     playerHUDElements.push({ container: livesContainer, hearts: hearts });
+    // Initialize global level counter and progress bar only once
+    if (i === 0) {
+      // Create a single global level container if it doesn't exist
+      let globalLevelContainer = document.createElement("div");
+      globalLevelContainer.id = "global-level-counter";
+      globalLevelContainer.className = "level-counter";
+      // Level text
+      const levelText = document.createElement("span");
+      levelText.id = "level-text";
+      levelText.className = "level-text";
+      globalLevelContainer.appendChild(levelText);
+      // Progress bar
+      let progressBar = document.createElement("div");
+      progressBar.id = "level-progress-bar";
+      progressBar.className = "level-progress-bar";
+      // Inner bar
+      let innerBar = document.createElement("div");
+      innerBar.id = "level-progress-inner";
+      innerBar.className = "level-progress-inner";
+      progressBar.appendChild(innerBar);
+      globalLevelContainer.appendChild(progressBar);
+      hudContainer.appendChild(globalLevelContainer);
+      console.log(globalLevelContainer);
+      console.log(innerBar);
+    }
   }
 }
 
@@ -378,7 +408,7 @@ function updatePlayerLivesDisplay(playerIndex, lives) {
   });
   hud.container.setAttribute(
     "aria-label",
-    `P${playerIndex + 1} Vite rimaste: ${lives}`,
+    `P${playerIndex + 1} Lives left: ${lives}`,
   );
 }
 
@@ -682,6 +712,31 @@ function drawDebugOverlay() {
   ctx.restore();
 }
 
+// --- Level progress update ---
+// update the progress bar of the level
+function updateLevelProgressBar(levelInfo) {
+  // update level text
+  const text_container = document.getElementById("level-text");
+  text_container.textContent = `Level: ${leveller.currentLevel}`;
+  // Take progress bar from playerHUDElements
+  const progressBar = document.getElementById("level-progress-bar");
+  const innerBar = document.getElementById("level-progress-inner");
+  if (
+    progressBar &&
+    innerBar &&
+    levelInfo &&
+    typeof levelInfo.timeToNextLevel === "number" &&
+    leveller &&
+    typeof leveller.timer === "number"
+  ) {
+    const percent = Math.max(
+      0,
+      Math.min(1, leveller.timer / levelInfo.timeToNextLevel),
+    );
+    innerBar.style.width = `${percent * 100}%`;
+  }
+}
+
 /**
  * The Main Game Loop
  */
@@ -700,6 +755,14 @@ function gameLoop(timestamp) {
     updatePlayerBullets(deltaTime);
     updateEnemyBullets(deltaTime, timestamp);
     handleEnemyCollisions(timestamp);
+
+    // Update leveller and level display
+    if (leveller) {
+      let level_update_info = leveller.update(deltaTime);
+      console.log(level_update_info);
+
+      updateLevelProgressBar(level_update_info);
+    }
   }
 
   drawBackground(ctx, backgroundImage, canvas);

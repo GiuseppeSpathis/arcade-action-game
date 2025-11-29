@@ -44,6 +44,10 @@ export class SquareEnemy extends BaseEnemy {
       onGround: true,
     };
 
+    // Initialize BaseEnemy position to match spawn
+    this.position.x = spawnX;
+    this.position.y = spawnY;
+
     this.lastJumpAt = -Infinity;
     this.isSpawning = false; // Square enemies spawn directly onto terrain
   }
@@ -176,6 +180,10 @@ export class SquareEnemy extends BaseEnemy {
       this.state.vy = 0;
       this.state.y = canvas.height - this.state.height - this.collisionOffset;
     }
+
+    // Sync BaseEnemy position so shared effects (health bar, hit flash) follow the square ---
+    this.position.x = this.state.x;
+    this.position.y = this.state.y;
   }
 
   updateStats(newStats) {
@@ -238,6 +246,8 @@ export class SquareEnemy extends BaseEnemy {
     ctx.fillStyle = this.constants.COLOR;
     ctx.fillRect(x, y, w, h);
     ctx.restore();
+    
+    // Call super to draw hit flash and health bar
     super.drawEnemy(ctx, progress);
 
     if (this.deathAnimation.active) {

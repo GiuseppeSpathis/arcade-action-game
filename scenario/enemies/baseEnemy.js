@@ -8,6 +8,9 @@ export class BaseEnemy {
     this.height = enemyConstants.HEIGHT ?? enemyConstants.SIZE;
 
     this.health = enemyConstants.HEALTH;
+    // Initialize display health for animation and timer for visibility
+    this.displayHealth = this.health;
+    this.healthBarVisibleUntil = 0;
 
     this.position = {
       x: Math.random() * Math.max(1, canvas.width - this.width),
@@ -107,27 +110,51 @@ export class BaseEnemy {
       : 0;
 
     this.drawEnemy(ctx, progress);
+    
+    // Draw the health bar overlay
+    this.drawHealthBar(ctx);
+  }
+  
+  // Logic to draw the animated health bar
+  drawHealthBar(ctx) {
+    // Only draw if timer is active and enemy is not dead
+    if (this.getNow() < this.healthBarVisibleUntil && !this.deathAnimation.active) {
+      
+      // Animate displayHealth towards actual health (Lerp)
+      this.displayHealth = this.displayHealth + (this.health - this.displayHealth) * 0.1;
+
+      const maxHealth = this.constants.HEALTH;
+      const pct = Math.max(0, Math.min(1, this.displayHealth / maxHealth));
+
+      const barWidth = this.width;
+      const barHeight = 5;
+      const x = this.position.x;
+      const y = this.position.y + this.height + 5; // Position at bottom
+
+      // Draw Background (Black/Gray)
+      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.fillRect(x, y, barWidth, barHeight);
+
+      // Draw Foreground (Health Color - e.g., Green or Red)
+      // Determine color based on percentage
+      ctx.fillStyle = pct > 0.5 ? "#00ff00" : pct > 0.25 ? "#ffff00" : "#ff0000";
+      ctx.fillRect(x, y, barWidth * pct, barHeight);
+    }
   }
 
   // ---- Overridden by subclasses ----
   updateEnemy() {}
   drawEnemy() {}
+  
   updateStats(newStats, newStatsType) {
     this.health = this.health + newStatsType.HEALTH - this.constants.HEALTH;
+    this.displayHealth = this.health; // Snap display health to new value
 
     this.core = newStats; // constants.ENEMIES
     this.constants = newStatsType; // constants.ENEMIES.<TYPE>
   }
 
   // ---- Shared hit logic ----
-  takeHit(damage) {
-    if (this.deathAnimation.active) return;
-    this.health -= damage;
-    if (this.health <= 0) {
-      this.triggerDeath();
-    }
-  }
-
   triggerDeath() {
     this.deathAnimation.active = true;
     this.deathAnimation.startedAt = this.getNow();
@@ -146,7 +173,8 @@ export class BaseEnemy {
       height: this.height,
     };
   }
-  // ---- Damage effect like player ----// ---- Damage effect on hit, with shape from subclass ----
+
+  // ---- Damage effect ----
   triggerDamageFeedback(timestamp, shapeDrawer) {
     const now = this.getNow(timestamp);
     this.damageEffect = {
@@ -164,11 +192,17 @@ export class BaseEnemy {
     );
   }
 
-  // Override takeHit to trigger damage effect on each hit
+  // Consolidated takeHit to handle damage, effect, and health bar timer
   takeHit(damage, shapeDrawer) {
     if (this.deathAnimation.active) return;
+    
     this.health -= damage;
+    
+    // Reset the health bar visibility timer (1 second from now)
+    this.healthBarVisibleUntil = this.getNow() + 1000;
+
     this.triggerDamageFeedback(undefined, shapeDrawer);
+    
     if (this.health <= 0) {
       this.triggerDeath();
     }

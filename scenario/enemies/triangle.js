@@ -57,6 +57,10 @@ export class TriangleEnemy extends BaseEnemy {
     }
   }
 
+  updateStats(newStats) {
+    super.updateStats(newStats.ENEMIES, newStats.ENEMIES.TRIANGLE);
+  }
+
   fireBullet(bulletsArray) {
     const originX =
       this.position.x +
@@ -77,8 +81,32 @@ export class TriangleEnemy extends BaseEnemy {
 
     bulletsArray.push(bullet);
   }
+  // Custom damage effect for TriangleEnemy
+  drawDamageShape(ctx, x, y, w, h, progress) {
+    // Flashing triangle overlay
+    ctx.save();
+    ctx.globalAlpha = 0.7 - progress * 0.5;
+    ctx.fillStyle = "rgba(255, 241, 118, 0.85)";
+    ctx.beginPath();
 
-  drawEnemy(ctx, progress) {
+    if (this.facing >= 0) {
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + h);
+      ctx.lineTo(x + w, y + h / 2);
+    } else {
+      ctx.moveTo(x + w, y);
+      ctx.lineTo(x + w, y + h);
+      ctx.lineTo(x, y + h / 2);
+    }
+
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Override drawEnemy to include damage effect
+  drawEnemy(ctx, progress = 0) {
+    // Draw base triangle
     const centerX = this.position.x + this.width / 2;
     const centerY = this.position.y + this.height / 2;
 
@@ -111,6 +139,28 @@ export class TriangleEnemy extends BaseEnemy {
 
     ctx.fill();
     ctx.restore();
+
+    // Damage effect overlay
+    if (
+      this.isDamageEffectActive &&
+      typeof this.isDamageEffectActive === "function" &&
+      this.isDamageEffectActive()
+    ) {
+      const now = this.getNow();
+      const elapsed = now - this.damageEffect.startAt;
+      const duration = this.core.DAMAGE_FLASH_DURATION_MS ?? 220;
+      const clampedElapsed = Math.min(Math.max(elapsed, 0), duration);
+      const effectProgress = clampedElapsed / duration;
+
+      this.drawDamageShape(
+        ctx,
+        this.position.x,
+        this.position.y,
+        this.width,
+        this.height,
+        effectProgress,
+      );
+    }
 
     if (this.deathAnimation.active) {
       this.drawDeathEffects(ctx, centerX, centerY, progress);

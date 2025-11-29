@@ -82,6 +82,10 @@ export class CircleEnemy extends BaseEnemy {
     );
   }
 
+  updateStats(newStats) {
+    super.updateStats(newStats.ENEMIES, newStats.ENEMIES.CIRCLE);
+  }
+
   drawEnemy(ctx, progress) {
     const centerX = this.position.x + this.width / 2;
     const centerY = this.position.y + this.height / 2;
@@ -108,6 +112,31 @@ export class CircleEnemy extends BaseEnemy {
     ctx.fill();
 
     ctx.restore();
+
+    // Draw damage effect overlay if active
+    if (this.isDamageEffectActive()) {
+      const now = this.getNow();
+      const elapsed = now - this.damageEffect.startAt;
+      const duration = this.core.DAMAGE_FLASH_DURATION_MS ?? 220;
+      const clampedElapsed = Math.min(Math.max(elapsed, 0), duration);
+      const effectProgress = clampedElapsed / duration;
+
+      // Custom damage effect for CircleEnemy: a glowing ring flash
+      ctx.save();
+      ctx.globalAlpha = 0.45 - effectProgress * 0.35;
+      ctx.strokeStyle = "rgba(255, 241, 118, 0.85)";
+      ctx.lineWidth = 4 + 8 * (1 - effectProgress);
+      ctx.beginPath();
+      ctx.arc(
+        centerX,
+        centerY,
+        Math.min(this.width, this.height) / 2 + 6 * (1 - effectProgress),
+        0,
+        Math.PI * 2,
+      );
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // Death fragments (unchanged)
     if (this.deathAnimation.active) {
@@ -159,5 +188,6 @@ export class CircleEnemy extends BaseEnemy {
     });
 
     ctx.restore();
+    super.drawEnemy(ctx, progress);
   }
 }

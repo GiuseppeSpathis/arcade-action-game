@@ -3,14 +3,14 @@ import { BaseEnemy } from "./baseEnemy.js";
 import { checkCollision, isSolidTile } from "../helper/map.js";
 
 export class SquareEnemy extends BaseEnemy {
-  constructor(constants, canvas, mapData) {
+  constructor(constants, canvas, mapData, fullConstants) {
     super(constants.ENEMIES, constants.ENEMIES.SQUARE, canvas);
 
-    this.fullConstants = constants;
+    this.fullConstants = fullConstants;
     this.map = mapData.grid;
-    this.tileSize = constants.TILE_SIZE;
+    this.tileSize = fullConstants.TILE_SIZE;
     this.mapOffsetY = mapData.verticalOffset;
-    this.collisionOffset = constants.PLAYER.COLLISION_OFFSET;
+    this.collisionOffset = fullConstants.ENEMIES.SQUARE.COLLISION_OFFSET;
 
     this.size = this.constants.SIZE;
 
@@ -178,6 +178,10 @@ export class SquareEnemy extends BaseEnemy {
     }
   }
 
+  updateStats(newStats) {
+    super.updateStats(newStats.ENEMIES, newStats.ENEMIES.SQUARE);
+  }
+
   shouldAttemptJump(direction, playerBounds) {
     if (direction === 0) return false;
 
@@ -234,6 +238,7 @@ export class SquareEnemy extends BaseEnemy {
     ctx.fillStyle = this.constants.COLOR;
     ctx.fillRect(x, y, w, h);
     ctx.restore();
+    super.drawEnemy(ctx, progress);
 
     if (this.deathAnimation.active) {
       this.drawDeathEffects(ctx, centerX, centerY, progress);
@@ -290,6 +295,7 @@ export class SquareEnemy extends BaseEnemy {
     });
 
     ctx.restore();
+    super.drawEnemy(ctx, progress);
   }
 
   getBounds() {

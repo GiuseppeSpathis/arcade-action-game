@@ -4,6 +4,7 @@ import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
 import { TriangleEnemy } from "./enemies/triangle.js";
 import { CircleEnemy } from "./enemies/circle.js";
+import { SquareEnemy } from "./enemies/square.js";
 import { Leveller } from "./helper/leveller.js";
 import {
   drawBackground,
@@ -34,6 +35,7 @@ let mapData;
 let backgroundImage;
 let roomCode;
 let leveller;
+let levelStats = {};
 // --- End Global Game State ---
 
 const canvas = document.getElementById("gameCanvas");
@@ -257,6 +259,8 @@ async function initializeGame(playerCount) {
       mapData = generateMap(canvas, constants);
     }
 
+    levelStats = constants;
+
     // --- 2. Create Players ---
     for (let i = 0; i < playerCount; i++) {
       if (constants.PLAYER_DATA[i]) {
@@ -266,6 +270,7 @@ async function initializeGame(playerCount) {
           canvas,
           constants.PLAYER_DATA[i],
           i,
+          constants.STATS,
         );
         players.push(player);
       }
@@ -307,7 +312,7 @@ async function initializeGame(playerCount) {
     });
 
     // --- 4. Initialize HUD ---
-    initializeHUD(playerCount);
+    initializeHUD(players);
 
     // --- 5. Setup Return Button ---
     if (returnMenuButton) {
@@ -335,29 +340,28 @@ async function initializeGame(playerCount) {
 }
 
 // --- HUD Initialization ---
-function initializeHUD(playerCount) {
-  for (let i = 0; i < playerCount; i++) {
-    if (!constants.PLAYER_DATA[i]) continue;
-
+function initializeHUD(players) {
+  players.forEach((player) => {
     const playerHud = document.createElement("div");
     playerHud.className = "player-hud";
-    playerHud.id = `player-hud-${i}`;
-    playerHud.style.borderColor = constants.PLAYER_DATA[i].color;
+    playerHud.id = `player-hud-${player.playerIndex}`;
+    playerHud.style.borderColor =
+      constants.PLAYER_DATA[player.playerIndex].color;
 
     const label = document.createElement("span");
     label.className = "player-label";
-    label.textContent = `P${i + 1}`;
+    label.textContent = `P${player.playerIndex + 1}`;
     playerHud.appendChild(label);
 
     const livesContainer = document.createElement("div");
     livesContainer.className = "lives";
     livesContainer.setAttribute(
       "aria-label",
-      `P${i + 1} Vite: ${constants.PLAYER.MAX_LIVES}`,
+      `P${player.playerIndex + 1} Lives: ${player.stats.MAX_LIVES}`,
     );
 
     const hearts = [];
-    for (let j = 0; j < constants.PLAYER.MAX_LIVES; j++) {
+    for (let j = 0; j < player.stats.MAX_LIVES; j++) {
       const heart = document.createElement("span");
       heart.className = "heart";
       heart.setAttribute("aria-hidden", "true");
@@ -370,7 +374,7 @@ function initializeHUD(playerCount) {
     hudContainer.appendChild(playerHud);
     playerHUDElements.push({ container: livesContainer, hearts: hearts });
     // Initialize global level counter and progress bar only once
-    if (i === 0) {
+    if (player.playerIndex === 0) {
       // Create a single global level container if it doesn't exist
       let globalLevelContainer = document.createElement("div");
       globalLevelContainer.id = "global-level-counter";
@@ -394,7 +398,7 @@ function initializeHUD(playerCount) {
       console.log(globalLevelContainer);
       console.log(innerBar);
     }
-  }
+  });
 }
 
 // --- Game Logic Functions ---
@@ -492,19 +496,21 @@ function triggerGameOver() {
 }
 
 function spawnEnemyGroup() {
-  const { MIN, MAX } = constants.ENEMIES.GROUP_SIZE;
+  const { MIN, MAX } = levelStats.ENEMIES.GROUP_SIZE;
   const totalEnemies = Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
   const spawned = [];
+  const fullConstants = constants;
 
-  if (totalEnemies >= 1) {
-    spawned.push(new TriangleEnemy(constants, canvas));
-  }
-  if (totalEnemies >= 2) {
-    spawned.push(new CircleEnemy(constants, canvas, mapData));
-  }
   while (spawned.length < totalEnemies) {
-    const enemyClass = Math.random() > 0.5 ? TriangleEnemy : CircleEnemy;
-    spawned.push(new enemyClass(constants, canvas));
+    const enemyTypes = [TriangleEnemy, CircleEnemy, SquareEnemy];
+
+    const enemyClass =
+      enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+    if (enemyClass === SquareEnemy) {
+      spawned.push(new SquareEnemy(levelStats, canvas, mapData, fullConstants));
+    } else {
+      spawned.push(new enemyClass(levelStats, canvas));
+    }
   }
 
   enemies.push(...spawned);
@@ -551,10 +557,8 @@ function handlePlayerShooting(timestamp) {
     if (!direction) {
       return;
     }
-    if (
-      timestamp - player.lastPlayerShot <
-      constants.PLAYER_BULLET.COOLDOWN_MS
-    ) {
+    const STATS = player.getStats();
+    if (timestamp - player.lastPlayerShot < STATS.COOLDOWN_MS) {
       return;
     }
     player.lastPlayerShot = timestamp;
@@ -565,8 +569,9 @@ function handlePlayerShooting(timestamp) {
         y: center.y,
         direction,
         speed: constants.PLAYER_BULLET.SPEED,
-        radius: constants.PLAYER_BULLET.RADIUS,
+        radius: STATS.RADIUS,
         color: constants.PLAYER_BULLET.COLOR,
+        damage: STATS.DAMAGE,
       }),
     );
   });
@@ -627,7 +632,7 @@ function updatePlayerBullets(deltaTime) {
       }
       if (bullet.intersectsRect(enemy.getBounds())) {
         bullet.active = false;
-        enemy.takeHit();
+        enemy.takeHit(bullet.damage);
         break;
       }
     }
@@ -663,7 +668,7 @@ function updateEnemyBullets(deltaTime, timestamp) {
 
 function handleEnemyCollisions(timestamp) {
   enemies.forEach((enemy) => {
-    if (!(enemy instanceof CircleEnemy)) {
+    if (!(enemy instanceof CircleEnemy) && !(enemy instanceof SquareEnemy)) {
       return;
     }
     if (enemy.isSpawning) {
@@ -696,15 +701,16 @@ function drawDebugOverlay() {
 
   enemies.forEach((enemy, idx) => {
     let type = enemy.constructor?.name || "Unknown";
-    let x = Math.round(enemy.position?.x ?? enemy.x ?? 0);
-    let y = Math.round(enemy.position?.y ?? enemy.y ?? 0);
+    let health = enemy.health || 0;
     let status = "";
+    let coord = enemy.getBounds();
+    status += `[x:${Math.round(coord.x)} y:${Math.round(coord.y)}] `;
     if (typeof enemy.isDying === "function" && enemy.isDying())
       status += "[DYING] ";
     if (enemy.isSpawning) status += "[SPAWNING] ";
     if (!enemy.active) status += "[INACTIVE] ";
     ctx.fillText(
-      `#${idx}: ${type} (${x},${y}) ${status}`.trim(),
+      `#${idx}: ${type} (HP: ${health}) ${status}`.trim(),
       20,
       16 * 5 + idx * 16,
     );
@@ -737,6 +743,20 @@ function updateLevelProgressBar(levelInfo) {
   }
 }
 
+function execLevelUp(newStats) {
+  // Update level stats
+  levelStats = newStats;
+  // Update all enemies stats
+  enemies.forEach((enemy) => {
+    if (typeof enemy.updateStats === "function") {
+      enemy.updateStats(newStats);
+    }
+  });
+  // Pause game and
+  // Launch level up UI
+  // TODO
+}
+
 /**
  * The Main Game Loop
  */
@@ -747,7 +767,10 @@ function gameLoop(timestamp) {
   if (!isGameOver) {
     players.forEach((player) => player.update(pressedKeys));
     handlePlayerShooting(timestamp);
-    if (timestamp - lastSpawnTimestamp >= constants.ENEMIES.SPAWN_INTERVAL_MS) {
+    if (
+      timestamp - lastSpawnTimestamp >=
+      levelStats.ENEMIES.SPAWN_INTERVAL_MS
+    ) {
       spawnEnemyGroup();
       lastSpawnTimestamp = timestamp;
     }
@@ -759,9 +782,11 @@ function gameLoop(timestamp) {
     // Update leveller and level display
     if (leveller) {
       let level_update_info = leveller.update(deltaTime);
-      console.log(level_update_info);
-
       updateLevelProgressBar(level_update_info);
+      if (level_update_info.newStats) {
+        console.log(level_update_info);
+        execLevelUp(level_update_info.newStats);
+      }
     }
   }
 

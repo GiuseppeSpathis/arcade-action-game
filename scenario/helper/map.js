@@ -2,19 +2,19 @@ export function generateMap(canvas, constants) {
   const tileSize = constants.TILE_SIZE;
   const rows = Math.max(
     constants.GENERAL.MIN_GRID_DIMENSION,
-    Math.floor(canvas.height / tileSize)
+    Math.floor(canvas.height / tileSize),
   );
   const cols = Math.max(
     constants.GENERAL.MIN_GRID_DIMENSION,
-    Math.floor(canvas.width / tileSize)
+    Math.floor(canvas.width / tileSize),
   );
   const grid = Array.from({ length: rows }, () =>
-    Array(cols).fill(constants.MAP.EMPTY_TILE_VALUE)
+    Array(cols).fill(constants.MAP.EMPTY_TILE_VALUE),
   );
 
   const verticalOffset = Math.max(
     constants.GENERAL.MIN_VERTICAL_OFFSET,
-    canvas.height - rows * tileSize
+    canvas.height - rows * tileSize,
   );
 
   const floorRow = rows - constants.MAP.LAST_ROW_OFFSET;
@@ -31,21 +31,24 @@ export function generateMap(canvas, constants) {
   ];
 
   const maxJumpPixels =
-    (Math.abs(constants.JUMP_FORCE) ** constants.GENERAL.SQUARE_EXPONENT) /
+    Math.abs(constants.JUMP_FORCE * 0.9) ** constants.GENERAL.SQUARE_EXPONENT /
     (constants.GENERAL.GRAVITY_DIVISOR * constants.GRAVITY);
   const gapTiles = Math.max(
     constants.MAP.MIN_VERTICAL_GAP_TILES,
-    Math.floor(maxJumpPixels / tileSize) - constants.MAP.GAP_REDUCTION_TILES
+    Math.floor(maxJumpPixels / tileSize) - constants.MAP.GAP_REDUCTION_TILES,
   );
   const minVerticalGap = gapTiles;
-  const maxVerticalGap = Math.max(gapTiles, constants.MAP.MAX_VERTICAL_GAP_TILES);
+  const maxVerticalGap = Math.max(
+    gapTiles,
+    constants.MAP.MAX_VERTICAL_GAP_TILES,
+  );
 
   const desiredLayers =
     constants.MAP.MIN_LAYERS +
     Math.floor(Math.random() * constants.MAP.ADDITIONAL_LAYER_VARIATION);
   const maxLayersPossible = Math.max(
     constants.MAP.MIN_LAYER_COUNT,
-    Math.floor((floorRow - constants.MAP.TOP_MARGIN) / minVerticalGap) + 1
+    Math.floor((floorRow - constants.MAP.TOP_MARGIN) / minVerticalGap) + 1,
   );
   const targetLayers = Math.min(desiredLayers, maxLayersPossible);
 
@@ -55,8 +58,7 @@ export function generateMap(canvas, constants) {
   while (layerRows.length < targetLayers) {
     const remaining = targetLayers - layerRows.length;
     let maxGap =
-      lastRow -
-      (constants.MAP.TOP_MARGIN + (remaining - 1) * minVerticalGap);
+      lastRow - (constants.MAP.TOP_MARGIN + (remaining - 1) * minVerticalGap);
     if (maxGap < minVerticalGap) {
       maxGap = minVerticalGap;
     }
@@ -69,7 +71,7 @@ export function generateMap(canvas, constants) {
       minVerticalGap +
       Math.floor(
         Math.random() *
-          (maxGap - minVerticalGap + constants.MAP.GAP_RANDOM_ADDITION)
+          (maxGap - minVerticalGap + constants.MAP.GAP_RANDOM_ADDITION),
       );
     let nextRow = lastRow - gap;
 
@@ -93,7 +95,9 @@ export function generateMap(canvas, constants) {
     const row = layerRows[index];
     const segments = [];
 
-    let col = Math.floor(Math.random() * constants.MAP.INITIAL_COLUMN_OFFSET_RANGE);
+    let col = Math.floor(
+      Math.random() * constants.MAP.INITIAL_COLUMN_OFFSET_RANGE,
+    );
     let hasLongSegment = false;
 
     while (col < cols) {
@@ -104,17 +108,17 @@ export function generateMap(canvas, constants) {
 
       const maxSegmentLength = Math.max(
         constants.MAP.MIN_MAX_SEGMENT_LENGTH,
-        Math.floor(cols / constants.MAP.MAX_SEGMENT_LENGTH_DIVISOR)
+        Math.floor(cols / constants.MAP.MAX_SEGMENT_LENGTH_DIVISOR),
       );
       const segmentLength =
         constants.MAP.SEGMENT_LENGTH_BASE +
         Math.floor(
           Math.random() *
-            Math.max(constants.MAP.SEGMENT_LENGTH_BASE, maxSegmentLength)
+            Math.max(constants.MAP.SEGMENT_LENGTH_BASE, maxSegmentLength),
         );
       const colEnd = Math.min(
         cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
-        col + segmentLength - constants.MAP.SEGMENT_END_OFFSET
+        col + segmentLength - constants.MAP.SEGMENT_END_OFFSET,
       );
 
       segments.push({ row, colStart: col, colEnd });
@@ -137,11 +141,11 @@ export function generateMap(canvas, constants) {
       const start = Math.max(
         constants.GENERAL.MIN_VERTICAL_OFFSET,
         Math.floor(cols / constants.MAP.FALLBACK_PLATFORM_DIVISOR) -
-          constants.MAP.FALLBACK_PLATFORM_HALF_WIDTH
+          constants.MAP.FALLBACK_PLATFORM_HALF_WIDTH,
       );
       const end = Math.min(
         cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
-        start + constants.MAP.FALLBACK_PLATFORM_EXTRA_LENGTH
+        start + constants.MAP.FALLBACK_PLATFORM_EXTRA_LENGTH,
       );
       for (let currentCol = start; currentCol <= end; currentCol += 1) {
         grid[row][currentCol] = constants.MAP.SOLID_TILE_VALUE;
@@ -154,11 +158,12 @@ export function generateMap(canvas, constants) {
       const firstSegment = segments[0];
       const needed =
         constants.MAP.FIRST_SEGMENT_MIN_LENGTH -
-        (firstSegment.colEnd - firstSegment.colStart +
+        (firstSegment.colEnd -
+          firstSegment.colStart +
           constants.MAP.SEGMENT_END_OFFSET);
       firstSegment.colEnd = Math.min(
         cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
-        firstSegment.colEnd + needed
+        firstSegment.colEnd + needed,
       );
       for (
         let currentCol = firstSegment.colStart;
@@ -193,13 +198,15 @@ export function checkCollision(
   height,
   tileSize,
   offsetY,
-  constants
+  constants,
 ) {
   const left = Math.floor(x / tileSize);
-  const right = Math.floor((x + width - constants.MAP.SEGMENT_END_OFFSET) / tileSize);
+  const right = Math.floor(
+    (x + width - constants.MAP.SEGMENT_END_OFFSET) / tileSize,
+  );
   const top = Math.floor((y - offsetY) / tileSize);
   const bottom = Math.floor(
-    (y + height - constants.MAP.SEGMENT_END_OFFSET - offsetY) / tileSize
+    (y + height - constants.MAP.SEGMENT_END_OFFSET - offsetY) / tileSize,
   );
 
   if (bottom < top) {
@@ -215,4 +222,3 @@ export function checkCollision(
   }
   return false;
 }
-

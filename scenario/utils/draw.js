@@ -1,4 +1,4 @@
-function drawBackground(ctxInstance, bgImage, canvas) {
+function drawBackground(ctxInstance, bgImage, canvas, level = 1) {
   ctxInstance.clearRect(0, 0, canvas.width, canvas.height);
   if (!bgImage || !bgImage.complete) {
     return;
@@ -23,6 +23,17 @@ function drawBackground(ctxInstance, bgImage, canvas) {
   }
 
   ctxInstance.drawImage(bgImage, offsetX, offsetY, drawWidth, drawHeight);
+
+  // Apply red tint based on level
+  if (level > 1) {
+    ctxInstance.save();
+    // Cap opacity at 0.4 so the background remains visible
+    const opacity = Math.min(0.4, (level - 1) * 0.05);
+    ctxInstance.fillStyle = `rgba(139, 0, 0, ${opacity})`;
+    ctxInstance.globalCompositeOperation = 'multiply';
+    ctxInstance.fillRect(0, 0, canvas.width, canvas.height);
+    ctxInstance.restore();
+  }
 }
 
 function drawTile(ctxInstance, x, y, tileSize, consts) {

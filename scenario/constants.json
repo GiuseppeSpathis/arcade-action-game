@@ -195,7 +195,7 @@
   },
   "LEVELING": {
     "STARTING_LVL": 1,
-    "LEVEL_UP_SECONDS": 5,
+    "LEVEL_UP_SECONDS": 15,
     "TIME_MULTIPLIER": 1.2,
     "SCALING": {
       "ENEMIES": {

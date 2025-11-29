@@ -98,6 +98,23 @@ function rectanglesIntersect(a, b) {
   );
 }
 
+// --- Helper for Color Blending ---
+function blendColor(hexColor1, hexColor2, factor) {
+  const r1 = parseInt(hexColor1.substring(1, 3), 16);
+  const g1 = parseInt(hexColor1.substring(3, 5), 16);
+  const b1 = parseInt(hexColor1.substring(5, 7), 16);
+
+  const r2 = parseInt(hexColor2.substring(1, 3), 16);
+  const g2 = parseInt(hexColor2.substring(3, 5), 16);
+  const b2 = parseInt(hexColor2.substring(5, 7), 16);
+
+  const r = Math.round(r1 + (r2 - r1) * factor);
+  const g = Math.round(g1 + (g2 - g1) * factor);
+  const b = Math.round(b1 + (b2 - b1) * factor);
+
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
 /**
  * Processes remote inputs during gameplay.
  */
@@ -341,6 +358,36 @@ async function initializeGame(playerCount) {
 
 // --- HUD Initialization ---
 function initializeHUD(players) {
+  // Clear existing HUD to prevent duplicates or stale state on restart
+  hudContainer.innerHTML = "";
+  // Reset HUD elements tracker
+  playerHUDElements.length = 0; 
+
+  // 1. Create Global Level UI (Always create this, regardless of player loop)
+  let globalLevelContainer = document.createElement("div");
+  globalLevelContainer.id = "global-level-counter";
+  globalLevelContainer.className = "level-counter";
+
+  const levelText = document.createElement("span");
+  levelText.id = "level-text";
+  levelText.className = "level-text";
+  // Set initial text
+  levelText.textContent = "Level: 1"; 
+  globalLevelContainer.appendChild(levelText);
+
+  let progressBar = document.createElement("div");
+  progressBar.id = "level-progress-bar";
+  progressBar.className = "level-progress-bar";
+
+  let innerBar = document.createElement("div");
+  innerBar.id = "level-progress-inner";
+  innerBar.className = "level-progress-inner";
+  progressBar.appendChild(innerBar);
+
+  globalLevelContainer.appendChild(progressBar);
+  hudContainer.appendChild(globalLevelContainer);
+
+  // 2. Create Individual Player HUDs
   players.forEach((player) => {
     const playerHud = document.createElement("div");
     playerHud.className = "player-hud";
@@ -372,32 +419,9 @@ function initializeHUD(players) {
 
     playerHud.appendChild(livesContainer);
     hudContainer.appendChild(playerHud);
-    playerHUDElements.push({ container: livesContainer, hearts: hearts });
-    // Initialize global level counter and progress bar only once
-    if (player.playerIndex === 0) {
-      // Create a single global level container if it doesn't exist
-      let globalLevelContainer = document.createElement("div");
-      globalLevelContainer.id = "global-level-counter";
-      globalLevelContainer.className = "level-counter";
-      // Level text
-      const levelText = document.createElement("span");
-      levelText.id = "level-text";
-      levelText.className = "level-text";
-      globalLevelContainer.appendChild(levelText);
-      // Progress bar
-      let progressBar = document.createElement("div");
-      progressBar.id = "level-progress-bar";
-      progressBar.className = "level-progress-bar";
-      // Inner bar
-      let innerBar = document.createElement("div");
-      innerBar.id = "level-progress-inner";
-      innerBar.className = "level-progress-inner";
-      progressBar.appendChild(innerBar);
-      globalLevelContainer.appendChild(progressBar);
-      hudContainer.appendChild(globalLevelContainer);
-      console.log(globalLevelContainer);
-      console.log(innerBar);
-    }
+    
+    // Store reference securely by index
+    playerHUDElements[player.playerIndex] = { container: livesContainer, hearts: hearts };
   });
 }
 
@@ -719,20 +743,22 @@ function drawDebugOverlay() {
 }
 
 // --- Level progress update ---
-// update the progress bar of the level
 function updateLevelProgressBar(levelInfo) {
-  // update level text
+  // Safe check for leveller existence
+  if (!leveller) return;
+
+  // update level text with null check
   const text_container = document.getElementById("level-text");
-  text_container.textContent = `Level: ${leveller.currentLevel}`;
-  // Take progress bar from playerHUDElements
-  const progressBar = document.getElementById("level-progress-bar");
+  if (text_container) {
+    text_container.textContent = `Level: ${leveller.currentLevel}`;
+  }
+
+  // update progress bar with null checks
   const innerBar = document.getElementById("level-progress-inner");
   if (
-    progressBar &&
     innerBar &&
     levelInfo &&
     typeof levelInfo.timeToNextLevel === "number" &&
-    leveller &&
     typeof leveller.timer === "number"
   ) {
     const percent = Math.max(
@@ -744,17 +770,44 @@ function updateLevelProgressBar(levelInfo) {
 }
 
 function execLevelUp(newStats) {
-  // Update level stats
+  // 1. Update level stats (Enemies scaling)
   levelStats = newStats;
-  // Update all enemies stats
+  
+  // 2. Visual Updates: Shift tiles towards red/darker tones
+  const currentLevel = leveller ? leveller.currentLevel : 1;
+  // Factor increases by 0.1 per level, capped at 1.0 (Level 11+)
+  const redFactor = Math.min(1, (currentLevel - 1) * 0.1);
+  
+  if (constants && constants.TILE) {
+    // Note: This updates the global constants object, which affects drawTiles immediately
+    constants.TILE.GRASS_COLOR = blendColor("#7ac74f", "#660000", redFactor);
+    constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
+    constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
+    
+    // Make highlighting more aggressive (red)
+    constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
+  }
+
+  // 3. Regenerate Map
+  mapData = generateMap(canvas, constants);
+
+  // 4. Respawn Players (preserve lives/power, reset position)
+  players.forEach((player) => {
+    player.respawn(mapData);
+  });
+
+  // 5. Reset Game Entities
+  enemies = [];
+  playerBullets = [];
+  enemyBullets = [];
+  lastSpawnTimestamp = -Infinity; // Trigger immediate spawn cycle
+  
+  // Update enemies with new stats immediately (though the array is empty, this handles if we kept any)
   enemies.forEach((enemy) => {
     if (typeof enemy.updateStats === "function") {
       enemy.updateStats(newStats);
     }
   });
-  // Pause game and
-  // Launch level up UI
-  // TODO
 }
 
 /**
@@ -790,7 +843,10 @@ function gameLoop(timestamp) {
     }
   }
 
-  drawBackground(ctx, backgroundImage, canvas);
+  // Pass the current level to drawBackground for the red tint effect
+  const currentLvl = leveller ? leveller.currentLevel : 1;
+  drawBackground(ctx, backgroundImage, canvas, currentLvl);
+  
   drawTiles(mapData, constants, ctx);
   enemies.forEach((enemy) => enemy.draw(ctx));
   enemyBullets.forEach((bullet) => bullet.draw(ctx));

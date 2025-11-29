@@ -17,25 +17,12 @@ export class PlayerController {
     this.lastPlayerShot = 0;
     this.stats = stats;
 
-    const baseSpawnCol = Math.floor(
-      mapData.cols / constants.MAP.FALLBACK_PLATFORM_DIVISOR,
-    );
-    // Offset spawn position based on player index
-    const spawnCol = baseSpawnCol + playerIndex * 2;
-    const spawnRow = mapData.floorRow;
-    const horizontalPadding =
-      (this.tileSize - constants.STATS.SIZE) /
-      constants.PLAYER.SPAWN_HORIZONTAL_DIVISOR;
-
+    // Initialize state structure
     this.state = {
       width: stats.SIZE,
       height: stats.SIZE,
-      x: spawnCol * this.tileSize + horizontalPadding,
-      y:
-        this.mapOffsetY +
-        spawnRow * this.tileSize -
-        stats.SIZE -
-        constants.PLAYER.COLLISION_OFFSET,
+      x: 0,
+      y: 0,
       vx: 0,
       vy: 0,
       onGround: true,
@@ -43,8 +30,11 @@ export class PlayerController {
       jumpBufferFrames: 0,
       rotation: 0,
       rotationVelocity: 0,
-      wallJumpCooldown: 0 // Initialize cooldown
+      wallJumpCooldown: 0 
     };
+
+    // Calculate initial position and physics state
+    this.respawn(mapData);
 
     this.damageEffect = {
       startAt: -Infinity,
@@ -65,6 +55,39 @@ export class PlayerController {
 
     this.lives = this.lives + newStats.MAX_LIVES - this.stats.MAX_LIVES;
     this.stats = newStats;
+  }
+
+  // Resets player position and physics for a new map for the new level
+  respawn(mapData) {
+    this.map = mapData.grid;
+    this.mapOffsetY = mapData.verticalOffset;
+
+    const baseSpawnCol = Math.floor(
+      mapData.cols / this.constants.MAP.FALLBACK_PLATFORM_DIVISOR,
+    );
+    // Offset spawn position based on player index
+    const spawnCol = baseSpawnCol + this.playerIndex * 2;
+    const spawnRow = mapData.floorRow;
+    const horizontalPadding =
+      (this.tileSize - this.stats.SIZE) /
+      this.constants.PLAYER.SPAWN_HORIZONTAL_DIVISOR;
+
+    this.state.x = spawnCol * this.tileSize + horizontalPadding;
+    this.state.y =
+      this.mapOffsetY +
+      spawnRow * this.tileSize -
+      this.stats.SIZE -
+      this.constants.PLAYER.COLLISION_OFFSET;
+
+    // Reset physics
+    this.state.vx = 0;
+    this.state.vy = 0;
+    this.state.onGround = true;
+    this.state.coyoteFrames = 0;
+    this.state.jumpBufferFrames = 0;
+    this.state.rotation = 0;
+    this.state.rotationVelocity = 0;
+    this.state.wallJumpCooldown = 0;
   }
 
   getNow(externalTimestamp) {

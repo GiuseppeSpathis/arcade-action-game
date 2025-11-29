@@ -14,7 +14,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // When Play is clicked, hide it and show the mode buttons
   playButton.addEventListener("click", () => {
     playButton.classList.add("hidden"); // Hide play button
-    gameModeContainer.classList.remove("hidden"); // Show mode buttons
+    gameModeContainer.classList.remove("hidden"); // Show mode buttons container
+
+    // Use requestAnimationFrame to ensure the browser renders the container 
+    // as visible BEFORE adding the animation class.
+    requestAnimationFrame(() => {
+        const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
+        
+        modeButtons.forEach((button, index) => {
+            button.classList.add("fade-in-up");
+            // Delay increases by 0.1s for each button
+            button.style.animationDelay = `${index * 0.1}s`;
+        });
+    });
   });
 
   // Event listeners to each button, passing the player count as a URL parameter

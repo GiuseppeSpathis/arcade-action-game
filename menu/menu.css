@@ -17,6 +17,41 @@
         );
 }
 
+/* Animation Definitions */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.menu-panel h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2.5rem;
+    letter-spacing: 0.2rem;
+    text-shadow: 0 0 12px rgba(255, 73, 246, 0.7);
+    
+    /* Animation settings */
+    opacity: 0; 
+    animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation-delay: 0.2s;
+}
+
+#playButton {
+    opacity: 0; 
+    animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    animation-delay: 0.5s;
+}
+
+.fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
 .audio-slider-container {
     position: absolute;
     top: 1.25rem;
@@ -110,14 +145,7 @@ body {
     border-radius: 18px;
     border: 3px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
-    width: min(90%, 28rem); /* Added a max-width */
-}
-
-.menu-panel h1 {
-    font-size: 2.5rem;
-    margin-bottom: 2.5rem;
-    letter-spacing: 0.2rem;
-    text-shadow: 0 0 12px rgba(255, 73, 246, 0.7);
+    width: min(90%, 28rem);
 }
 
 .play-button {
@@ -128,17 +156,31 @@ body {
     background: linear-gradient(135deg, #ff4df6, #ffb347);
     color: #050813;
     cursor: pointer;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
     text-transform: uppercase;
     width: 100%; 
+    
+    /* Color and text-shadow to transition for smooth effect */
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        text-shadow 0.2s ease;
 }
 
+/* HOVER STATE ANIMATION */
 .play-button:hover,
 .play-button:focus {
-    transform: translateY(-4px);
+    /* Moves up AND scales up (making text bigger) */
+    transform: translateY(-4px) scale(1.05); 
+    
+    /* Existing box shadow */
     box-shadow: 0 12px 22px rgba(255, 77, 246, 0.45);
+    
+    /* Text becomes white */
+    color: #ffffff;
+    
+    /* Text gets a white glow/highlight */
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
 }
 
 .game-mode-container {

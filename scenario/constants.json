@@ -111,16 +111,17 @@
     "FALLBACK_PLATFORM_EXTRA_LENGTH": 2,
     "FIRST_SEGMENT_MIN_LENGTH": 3,
     "SOLID_TILE_VALUE": 1,
+    "WALL_TILE_VALUE": 2,
     "EMPTY_TILE_VALUE": 0,
     "LAST_ROW_OFFSET": 1,
     "LAYER_COUNT": 4,
     "PRESETS": [
-      "__        ________      _____           ______",
-      "______        _________________           ____",
-      "_______________            ___________      __",
-      "________________________         ___  ____   _",
-      "___           ________         _______________",
-      "_________    ___        ________________    __"
+      "_____        ________      _____      _____   ",
+      "    ______        _________________           ",
+      "_______________            ___________        ",
+      "   _____________________         ___  ____    ",
+      "_______        ________         _______________",
+      "_________    ___        ________________      "
     ]
   },
   "TILE": {
@@ -128,7 +129,8 @@
     "TOP_LIGHT_HEIGHT": 6,
     "SOIL_COLOR": "#5f3d24",
     "GRASS_COLOR": "#7ac74f",
-    "HIGHLIGHT_COLOR": "rgba(255, 255, 255, 0.15)"
+    "HIGHLIGHT_COLOR": "rgba(255, 255, 255, 0.15)",
+    "WALL_COLOR": "#5f3d24"
   },
   "BACKGROUND": {
     "BACKGROUND_IMAGE_SRC": "../assets/images/backgroundScenario.png"

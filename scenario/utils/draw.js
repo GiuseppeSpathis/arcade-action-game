@@ -52,10 +52,26 @@ function drawTiles(map, consts, ctx) {
 
   for (let row = 0; row < map.grid.length; row += 1) {
     for (let col = 0; col < map.grid[row].length; col += 1) {
-      if (map.grid[row][col] === consts.MAP.SOLID_TILE_VALUE) {
-        const tileX = col * tileSize;
-        const tileY = offsetY + row * tileSize;
+      const tileValue = map.grid[row][col];
+      const tileX = col * tileSize;
+      const tileY = offsetY + row * tileSize;
+
+      if (tileValue === consts.MAP.SOLID_TILE_VALUE) {
         drawTile(ctx, tileX, tileY, tileSize, consts);
+      } else if (tileValue === consts.MAP.WALL_TILE_VALUE) {
+        ctx.fillStyle = consts.TILE.WALL_COLOR;
+        
+        // Fill the top gap 
+        if (row === 0) {
+          // If this is the top row, draw from the very top of the canvas (y=0)
+          // down to the bottom of this tile.
+          const totalHeight = tileSize + offsetY;
+          ctx.fillRect(tileX, 0, tileSize, totalHeight);
+        } else {
+          // Standard drawing for other rows
+          ctx.fillRect(tileX, tileY, tileSize, tileSize);
+        }
+       
       }
     }
   }

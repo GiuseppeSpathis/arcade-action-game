@@ -127,6 +127,13 @@ export function generateMap(canvas, constants) {
     }
   }
 
+  
+  // Iterating from 0 (top) to rows (bottom) covers the entire height
+  for (let r = 0; r < rows; r++) {
+    grid[r][0] = constants.MAP.WALL_TILE_VALUE;
+    grid[r][cols - 1] = constants.MAP.WALL_TILE_VALUE;
+  }
+
   return { grid, platforms, floorRow, cols, verticalOffset };
 }
 
@@ -137,7 +144,10 @@ export function isSolidTile(map, row, col, constants) {
   if (col < 0 || col >= map[row].length) {
     return false;
   }
-  return map[row][col] === constants.MAP.SOLID_TILE_VALUE;
+  return (
+    map[row][col] === constants.MAP.SOLID_TILE_VALUE ||
+    map[row][col] === constants.MAP.WALL_TILE_VALUE
+  );
 }
 
 export function checkCollision(

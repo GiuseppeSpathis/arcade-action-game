@@ -41,6 +41,9 @@ export class PlayerController {
       onGround: true,
       coyoteFrames: 0,
       jumpBufferFrames: 0,
+      rotation: 0,
+      rotationVelocity: 0,
+      wallJumpCooldown: 0 // Initialize cooldown
     };
 
     this.damageEffect = {
@@ -78,20 +81,41 @@ export class PlayerController {
     this.state.jumpBufferFrames = this.constants.JUMP_BUFFER_FRAMES;
   }
 
-  executeJump(pressedKeys) {
-    this.state.vy = this.constants.JUMP_FORCE;
-    this.state.onGround = false;
-    this.state.coyoteFrames = 0;
-    this.state.jumpBufferFrames = 0;
+  executeJump(pressedKeys, touchingLeft, touchingRight) {
+    // Normal Jump
+    if (this.state.onGround || this.state.coyoteFrames > 0) {
+      this.state.vy = this.constants.JUMP_FORCE;
+      this.state.onGround = false;
+      this.state.coyoteFrames = 0;
+      this.state.jumpBufferFrames = 0;
 
-    const impulse =
-      this.stats.MAX_SPEED * this.constants.PLAYER.JUMP_IMPULSE_MULTIPLIER;
-    if (this.isMovingLeft(pressedKeys)) {
-      this.state.vx = Math.min(this.state.vx, 0);
-      this.state.vx = Math.max(this.state.vx, -impulse);
-    } else if (this.isMovingRight(pressedKeys)) {
-      this.state.vx = Math.max(this.state.vx, 0);
-      this.state.vx = Math.min(this.state.vx, impulse);
+      const impulse =
+        this.stats.MAX_SPEED * this.constants.PLAYER.JUMP_IMPULSE_MULTIPLIER;
+      if (this.isMovingLeft(pressedKeys)) {
+        this.state.vx = Math.min(this.state.vx, 0);
+        this.state.vx = Math.max(this.state.vx, -impulse);
+      } else if (this.isMovingRight(pressedKeys)) {
+        this.state.vx = Math.max(this.state.vx, 0);
+        this.state.vx = Math.min(this.state.vx, impulse);
+      }
+    } 
+    // Wall Jump with Cooldown Check
+    else if ((touchingLeft || touchingRight) && this.state.wallJumpCooldown <= 0) {
+      this.state.vy = this.constants.JUMP_FORCE;
+      this.state.jumpBufferFrames = 0;
+      
+      // Set the cooldown (countdown)
+      this.state.wallJumpCooldown = this.constants.PLAYER.WALL_JUMP_COOLDOWN_FRAMES || 25;
+      
+      const wallImpulse = this.constants.PLAYER.WALL_JUMP_IMPULSE_X || 8;
+      
+      if (touchingLeft) {
+        this.state.vx = wallImpulse; // Jump Right
+        this.state.rotationVelocity = this.constants.PLAYER.ROTATION_SPEED || 0.2;
+      } else {
+        this.state.vx = -wallImpulse; // Jump Left
+        this.state.rotationVelocity = -(this.constants.PLAYER.ROTATION_SPEED || 0.2);
+      }
     }
   }
 
@@ -112,11 +136,40 @@ export class PlayerController {
       return;
     }
 
-    if (
-      (this.state.onGround || this.state.coyoteFrames > 0) &&
-      this.state.jumpBufferFrames > 0
-    ) {
-      this.executeJump(pressedKeys);
+    // Decrement Wall Jump Cooldown
+    if (this.state.wallJumpCooldown > 0) {
+      this.state.wallJumpCooldown -= 1;
+    }
+
+    // Check for wall contacts (slightly padded check)
+    const checkOffset = 2;
+    const wallCheckHeight = this.state.height - 4; 
+    const wallCheckY = this.state.y + 2;
+
+    const touchingLeft = checkCollision(
+      this.map,
+      this.state.x - checkOffset,
+      wallCheckY,
+      this.state.width,
+      wallCheckHeight,
+      this.tileSize,
+      this.mapOffsetY,
+      this.constants
+    );
+
+    const touchingRight = checkCollision(
+      this.map,
+      this.state.x + checkOffset,
+      wallCheckY,
+      this.state.width,
+      wallCheckHeight,
+      this.tileSize,
+      this.mapOffsetY,
+      this.constants
+    );
+
+    if (this.state.jumpBufferFrames > 0) {
+      this.executeJump(pressedKeys, touchingLeft, touchingRight);
     }
 
     const movingLeft = this.isMovingLeft(pressedKeys);
@@ -256,11 +309,11 @@ export class PlayerController {
       this.state.coyoteFrames = this.constants.COYOTE_FRAMES;
     }
 
-    if (
-      (this.state.onGround || this.state.coyoteFrames > 0) &&
-      this.state.jumpBufferFrames > 0
-    ) {
-      this.executeJump(pressedKeys);
+    if (this.state.onGround) {
+        this.state.rotation = 0;
+        this.state.rotationVelocity = 0;
+    } else {
+        this.state.rotation += this.state.rotationVelocity;
     }
 
     if (!this.state.onGround && this.state.coyoteFrames > 0) {
@@ -290,9 +343,16 @@ export class PlayerController {
   }
 
   draw(ctx) {
-    if (this.isDead) return; // Don't draw if dead
+    if (this.isDead) return;
 
-    // Use player-specific color
+    ctx.save();
+    
+    const centerX = this.state.x + this.state.width / 2;
+    const centerY = this.state.y + this.state.height / 2;
+    ctx.translate(centerX, centerY);
+    ctx.rotate(this.state.rotation);
+    ctx.translate(-centerX, -centerY);
+
     ctx.fillStyle = this.playerData.color;
     ctx.fillRect(
       this.state.x,
@@ -301,7 +361,6 @@ export class PlayerController {
       this.state.height,
     );
 
-    // Use player-specific eye color
     ctx.fillStyle = this.playerData.eyeColor;
     ctx.fillRect(
       this.state.x + this.state.width - this.constants.PLAYER.EYE_OFFSET_X,
@@ -309,6 +368,8 @@ export class PlayerController {
       this.constants.PLAYER.EYE_SIZE,
       this.constants.PLAYER.EYE_SIZE,
     );
+    
+    ctx.restore();
 
     const now = this.getNow();
     const effectActive = now < this.damageEffect.endAt;
@@ -325,6 +386,11 @@ export class PlayerController {
     const pulse = 0.4 + Math.sin(progress * Math.PI * 3) * 0.35;
 
     ctx.save();
+    
+    ctx.translate(centerX, centerY);
+    ctx.rotate(this.state.rotation);
+    ctx.translate(-centerX, -centerY);
+
     ctx.globalAlpha = 0.6 + pulse * 0.35;
     ctx.fillStyle =
       this.constants.PLAYER.DAMAGE_FLASH_COLOR || "rgba(255, 241, 118, 0.75)";
@@ -334,9 +400,7 @@ export class PlayerController {
       this.state.width + 4,
       this.state.height + 4,
     );
-    ctx.restore();
-
-    ctx.save();
+    
     ctx.lineWidth = 2.5 + (1 - progress) * 3.5;
     ctx.strokeStyle =
       this.constants.PLAYER.DAMAGE_OUTLINE_COLOR || "rgba(255, 82, 82, 0.9)";
@@ -355,6 +419,7 @@ export class PlayerController {
     const baseX = this.state.x + this.state.width / 2;
     const baseY = this.state.y + this.state.height / 2;
     const splatAlpha = Math.max(0, 1 - progress * 1.15);
+    
     this.damageEffect.splats.forEach((splat, index) => {
       const wobble = Math.sin(progress * Math.PI * (2 + index)) * 3;
       const radius = Math.max(

@@ -43,15 +43,8 @@ export function generateMap(canvas, constants) {
     constants.MAP.MAX_VERTICAL_GAP_TILES,
   );
 
-  const desiredLayers =
-    constants.MAP.MIN_LAYERS +
-    Math.floor(Math.random() * constants.MAP.ADDITIONAL_LAYER_VARIATION);
-  const maxLayersPossible = Math.max(
-    constants.MAP.MIN_LAYER_COUNT,
-    Math.floor((floorRow - constants.MAP.TOP_MARGIN) / minVerticalGap) + 1,
-  );
-  const targetLayers = Math.min(desiredLayers, maxLayersPossible);
-
+  // Use the constant LAYER_COUNT + 1 (for the floor)
+  const targetLayers = constants.MAP.LAYER_COUNT + 1;
   const layerRows = [floorRow];
   let lastRow = floorRow;
 
@@ -59,11 +52,13 @@ export function generateMap(canvas, constants) {
     const remaining = targetLayers - layerRows.length;
     let maxGap =
       lastRow - (constants.MAP.TOP_MARGIN + (remaining - 1) * minVerticalGap);
+
     if (maxGap < minVerticalGap) {
       maxGap = minVerticalGap;
     }
     maxGap = Math.min(maxGap, maxVerticalGap);
-    if (maxGap < minVerticalGap) {
+
+    if (lastRow - minVerticalGap < constants.MAP.TOP_MARGIN) {
       break;
     }
 
@@ -93,88 +88,43 @@ export function generateMap(canvas, constants) {
 
   for (let index = 1; index < layerRows.length; index += 1) {
     const row = layerRows[index];
-    const segments = [];
 
-    let col = Math.floor(
-      Math.random() * constants.MAP.INITIAL_COLUMN_OFFSET_RANGE,
+    const presetIndex = Math.floor(
+      Math.random() * constants.MAP.PRESETS.length,
     );
-    let hasLongSegment = false;
+    const preset = constants.MAP.PRESETS[presetIndex];
 
-    while (col < cols) {
-      col += Math.floor(Math.random() * constants.MAP.COLUMN_SKIP_RANGE);
-      if (col >= cols) {
-        break;
-      }
+    let currentSegmentStart = -1;
 
-      const maxSegmentLength = Math.max(
-        constants.MAP.MIN_MAX_SEGMENT_LENGTH,
-        Math.floor(cols / constants.MAP.MAX_SEGMENT_LENGTH_DIVISOR),
-      );
-      const segmentLength =
-        constants.MAP.SEGMENT_LENGTH_BASE +
-        Math.floor(
-          Math.random() *
-            Math.max(constants.MAP.SEGMENT_LENGTH_BASE, maxSegmentLength),
-        );
-      const colEnd = Math.min(
-        cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
-        col + segmentLength - constants.MAP.SEGMENT_END_OFFSET,
-      );
+    for (let col = 0; col < cols; col += 1) {
+      const scaledIndex = Math.floor((col / cols) * preset.length);
+      const char = preset[scaledIndex];
+      const isSolid = char === '_';
 
-      segments.push({ row, colStart: col, colEnd });
-      hasLongSegment =
-        hasLongSegment ||
-        colEnd - col + constants.MAP.SEGMENT_END_OFFSET >=
-          constants.MAP.LONG_SEGMENT_THRESHOLD;
-
-      for (let currentCol = col; currentCol <= colEnd; currentCol += 1) {
-        grid[row][currentCol] = constants.MAP.SOLID_TILE_VALUE;
-      }
-
-      col =
-        colEnd +
-        constants.MAP.POST_SEGMENT_SKIP_BASE +
-        Math.floor(Math.random() * constants.MAP.POST_SEGMENT_SKIP_RANGE);
-    }
-
-    if (segments.length === 0) {
-      const start = Math.max(
-        constants.GENERAL.MIN_VERTICAL_OFFSET,
-        Math.floor(cols / constants.MAP.FALLBACK_PLATFORM_DIVISOR) -
-          constants.MAP.FALLBACK_PLATFORM_HALF_WIDTH,
-      );
-      const end = Math.min(
-        cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
-        start + constants.MAP.FALLBACK_PLATFORM_EXTRA_LENGTH,
-      );
-      for (let currentCol = start; currentCol <= end; currentCol += 1) {
-        grid[row][currentCol] = constants.MAP.SOLID_TILE_VALUE;
-      }
-      segments.push({ row, colStart: start, colEnd: end });
-      hasLongSegment = true;
-    }
-
-    if (!hasLongSegment) {
-      const firstSegment = segments[0];
-      const needed =
-        constants.MAP.FIRST_SEGMENT_MIN_LENGTH -
-        (firstSegment.colEnd -
-          firstSegment.colStart +
-          constants.MAP.SEGMENT_END_OFFSET);
-      firstSegment.colEnd = Math.min(
-        cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
-        firstSegment.colEnd + needed,
-      );
-      for (
-        let currentCol = firstSegment.colStart;
-        currentCol <= firstSegment.colEnd;
-        currentCol += 1
-      ) {
-        grid[row][currentCol] = constants.MAP.SOLID_TILE_VALUE;
+      if (isSolid) {
+        grid[row][col] = constants.MAP.SOLID_TILE_VALUE;
+        if (currentSegmentStart === -1) {
+          currentSegmentStart = col;
+        }
+      } else {
+        if (currentSegmentStart !== -1) {
+          platforms.push({
+            row,
+            colStart: currentSegmentStart,
+            colEnd: col - 1,
+          });
+          currentSegmentStart = -1;
+        }
       }
     }
 
-    platforms.push(...segments);
+    if (currentSegmentStart !== -1) {
+      platforms.push({
+        row,
+        colStart: currentSegmentStart,
+        colEnd: cols - 1,
+      });
+    }
   }
 
   return { grid, platforms, floorRow, cols, verticalOffset };

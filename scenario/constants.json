@@ -8,7 +8,6 @@
   "GENERAL": {
     "MIN_GRID_DIMENSION": 1,
     "MIN_VERTICAL_OFFSET": 0,
-    "TWO_PI_MULTIPLIER": 2,
     "SQUARE_EXPONENT": 2,
     "GRAVITY_DIVISOR": 2
   },
@@ -96,23 +95,9 @@
     "MAX_VERTICAL_GAP_TILES": 5,
     "GAP_REDUCTION_TILES": 0,
     "GAP_RANDOM_ADDITION": 1,
-    "MIN_LAYERS": 4,
-    "ADDITIONAL_LAYER_VARIATION": 3,
-    "MIN_LAYER_COUNT": 1,
-    "INITIAL_COLUMN_OFFSET_RANGE": 2,
-    "COLUMN_SKIP_RANGE": 6,
-    "MAX_SEGMENT_LENGTH_DIVISOR": 3,
-    "MIN_MAX_SEGMENT_LENGTH": 3,
-    "SEGMENT_LENGTH_BASE": 1,
     "SEGMENT_END_OFFSET": 1,
     "COLUMN_END_LIMIT_ADJUSTMENT": 1,
-    "LONG_SEGMENT_THRESHOLD": 3,
-    "POST_SEGMENT_SKIP_BASE": 1,
-    "POST_SEGMENT_SKIP_RANGE": 3,
     "FALLBACK_PLATFORM_DIVISOR": 2,
-    "FALLBACK_PLATFORM_HALF_WIDTH": 1,
-    "FALLBACK_PLATFORM_EXTRA_LENGTH": 2,
-    "FIRST_SEGMENT_MIN_LENGTH": 3,
     "SOLID_TILE_VALUE": 1,
     "WALL_TILE_VALUE": 2,
     "EMPTY_TILE_VALUE": 0,
@@ -152,7 +137,6 @@
   "ENEMIES": {
     "SPAWN_INTERVAL_MS": 10000,
     "DEATH_ANIMATION_DURATION_MS": 360,
-    "HEALTH_DEFAULT": 100,
     "GROUP_SIZE": {
       "MIN": 2,
       "MAX": 3
@@ -194,7 +178,6 @@
     }
   },
   "LEVELING": {
-    "STARTING_LVL": 1,
     "LEVEL_UP_SECONDS": 15,
     "TIME_MULTIPLIER": 1.2,
     "SCALING": {
@@ -246,30 +229,6 @@
           "interval": 2
         },
         "TURN_RATE": { "type": "step", "step": 0.5, "interval": 2 }
-      }
-    },
-    "POWERS": {
-      "CHOICES": 3,
-      "TODO": "more powers for the players, code the multiplier level up",
-      "PLAYER": {
-        "SIZE": {
-          "TEXT": "-20% Player size",
-          "MULTIPLIER": 0.8,
-          "MIN_CAP": 12
-        },
-        "SPEED": { "TEXT": "+30% Move speed", "MULTIPLIER": 1.3, "CAP": 11 },
-        "MAX_LIVES": { "TEXT": "+1 Max life", "MULTIPLIER": 1, "CAP": 10 },
-        "RADIUS": { "TEXT": "+30% Bullet size", "MULTIPLIER": 1.3, "CAP": 12 },
-        "COOLDOWN_MS": {
-          "TEXT": "+20% Firing rate",
-          "MULTIPLIER": 0.8,
-          "MIN_CAP": 100
-        },
-        "DAMAGE": {
-          "TEXT": "+25% Bullet damage",
-          "MULTIPLIER": 1.25,
-          "CAP": 9999
-        }
       }
     }
   }

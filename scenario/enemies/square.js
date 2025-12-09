@@ -29,10 +29,11 @@ export class SquareEnemy extends BaseEnemy {
     );
 
     const spawnY =
-      this.mapOffsetY +
+      (this.mapOffsetY - (this.mapOffsetY*0.2) +
       chosen.row * this.tileSize -
       this.size -
-      this.collisionOffset;
+      this.collisionOffset +
+      (this.mapOffsetY*0.1) ;
 
     this.state = {
       x: spawnX,
@@ -246,7 +247,7 @@ export class SquareEnemy extends BaseEnemy {
     ctx.fillStyle = this.constants.COLOR;
     ctx.fillRect(x, y, w, h);
     ctx.restore();
-    
+
     // Call super to draw hit flash and health bar
     super.drawEnemy(ctx, progress);
 

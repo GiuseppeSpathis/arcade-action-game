@@ -158,14 +158,14 @@
       "SIZE": 40,
       "COLOR": "#4546FF",
       "MOVE_ACCELERATION": 0.65,
-      "COLLISION_OFFSET": 0.02,
+      "COLLISION_OFFSET": 0.2,
       "HEALTH": 120,
       "MAX_SPEED": 3.4,
       "DECELERATION_FACTOR": 0.8,
       "MIN_SPEED_THRESHOLD": 0.04,
-      "JUMP_FORCE": -12,
+      "JUMP_FORCE": -18,
       "MAX_FALL_SPEED": 14,
-      "JUMP_COOLDOWN_MS": 900
+      "JUMP_COOLDOWN_MS": 2000
     },
     "CIRCLE": {
       "WIDTH": 20,
@@ -233,7 +233,6 @@
     },
     "POWERS": {
       "CHOICES": 3,
-      "TODO": "more powers for the players, code the multiplier level up",
       "PLAYER": {
         "SIZE": {
           "TEXT": "-20% Player size",
@@ -241,11 +240,11 @@
           "MIN_CAP": 12
         },
         "SPEED": { "TEXT": "+30% Move speed", "MULTIPLIER": 1.3, "CAP": 11 },
-        "MAX_LIVES": { "TEXT": "+1 Max life", "MULTIPLIER": 1, "CAP": 10 },
-        "RADIUS": { "TEXT": "+30% Bullet size", "MULTIPLIER": 1.3, "CAP": 12 },
+        "MAX_LIVES": { "TEXT": "+1 Health", "MULTIPLIER": 1, "CAP": 10 },
+        "RADIUS": { "TEXT": "+50% Bullet size", "MULTIPLIER": 1.5, "CAP": 24 },
         "COOLDOWN_MS": {
-          "TEXT": "+20% Firing rate",
-          "MULTIPLIER": 0.8,
+          "TEXT": "+25% Firing rate",
+          "MULTIPLIER": 0.75,
           "MIN_CAP": 100
         },
         "DAMAGE": {

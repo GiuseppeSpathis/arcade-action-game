@@ -36,6 +36,11 @@ let backgroundImage;
 let roomCode;
 let leveller;
 let levelStats = {};
+// --- Upgrade State Variables ---
+let GAME_PAUSED = false;
+let playerUpgradeQueue = [];
+let currentUpgradePlayerIndex = 0;
+
 // --- End Global Game State ---
 
 const canvas = document.getElementById("gameCanvas");
@@ -51,8 +56,19 @@ const playerConnectionContainer = document.getElementById(
 );
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const roomCodeText = document.getElementById("roomCodeText");
-// --- End Lobby Elements ---
 
+// --- DOM Elements ---
+const upgradeOverlay = document.getElementById("upgradeOverlay");
+const currentPlayerPrompt = document.getElementById("currentPlayerPrompt");
+const powerUpContainer = document.getElementById("powerUpContainer");
+
+// --- Pause Elements ---
+let pauseOverlay = document.getElementById("pauseOverlay");
+let pauseToggle = document.getElementById("pauseToggle");
+let resumeButton = document.getElementById("resumeButton");
+let quitButton = document.getElementById("quitButton");
+
+// --- Audio Elements ---
 const audioElement = document.getElementById("bg_music");
 const toggleButton = document.getElementById("musicToggle");
 const returnMenuButton = document.getElementById("returnMenuButton");
@@ -259,6 +275,52 @@ async function setupLobby(playerCount) {
 }
 
 /**
+ * Helper to ensure Pause UI elements exist and are positioned correctly.
+ */
+function ensurePauseUI() {
+  // 1. Check or Create Pause Button
+  if (!pauseToggle) {
+    pauseToggle = document.createElement("button");
+    pauseToggle.id = "pauseToggle";
+    pauseToggle.className = "audio-toggle-button pause-toggle-button";
+    pauseToggle.type = "button";
+    pauseToggle.ariaLabel = "Pause Game";
+
+    // Append to audio controls if exists, otherwise body
+    const audioControls = document.querySelector(".audio-controls");
+    if (audioControls) {
+      audioControls.insertBefore(pauseToggle, audioControls.firstChild);
+    } else {
+      document.body.appendChild(pauseToggle);
+      pauseToggle.style.position = "absolute";
+      pauseToggle.style.top = "1rem";
+    }
+  }
+
+  // 2. FORCE POSITIONING: Move button to the left to avoid Volume Slider overlap
+  // Volume slider is typically around right: 5.5rem, so we move this to ~16rem
+  pauseToggle.style.right = "13.3rem";
+  pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
+
+  // 3. Check or Create Overlay
+  if (!pauseOverlay) {
+    pauseOverlay = document.createElement("div");
+    pauseOverlay.id = "pauseOverlay";
+    pauseOverlay.className = "pause-overlay hidden";
+    pauseOverlay.innerHTML = `
+        <h1 class="pause-title">GAME PAUSED</h1>
+        <button id="resumeButton" class="game-over-button resume-button" type="button">RESUME</button>
+        <button id="quitButton" class="game-over-button quit-button" type="button">QUIT GAME</button>
+    `;
+    document.body.appendChild(pauseOverlay);
+  }
+
+  // Re-fetch button references to ensure we have the DOM elements
+  resumeButton = document.getElementById("resumeButton");
+  quitButton = document.getElementById("quitButton");
+}
+
+/**
  * Initializes and starts the actual game.
  */
 async function initializeGame(playerCount) {
@@ -340,6 +402,25 @@ async function initializeGame(playerCount) {
       });
     }
 
+    // --- 5b. Setup Pause/Resume/Quit Buttons ---
+    //
+    ensurePauseUI();
+
+    if (pauseToggle) {
+      pauseToggle.addEventListener("click", () => {
+        // If the game is paused by an upgrade screen, clicking pause button should be ignored
+        if (upgradeOverlay.classList.contains("hidden")) {
+          toggleGamePause(!GAME_PAUSED);
+        }
+      });
+    }
+    if (resumeButton) {
+      resumeButton.addEventListener("click", handleResume);
+    }
+    if (quitButton) {
+      quitButton.addEventListener("click", handleQuit);
+    }
+
     // --- 6. Initialize Leveller and timer  ---
     leveller = new Leveller(constants, constants.INITIAL_LEVEL || 1);
 
@@ -361,7 +442,7 @@ function initializeHUD(players) {
   // Clear existing HUD to prevent duplicates or stale state on restart
   hudContainer.innerHTML = "";
   // Reset HUD elements tracker
-  playerHUDElements.length = 0; 
+  playerHUDElements.length = 0;
 
   // 1. Create Global Level UI (Always create this, regardless of player loop)
   let globalLevelContainer = document.createElement("div");
@@ -372,7 +453,7 @@ function initializeHUD(players) {
   levelText.id = "level-text";
   levelText.className = "level-text";
   // Set initial text
-  levelText.textContent = "Level: 1"; 
+  levelText.textContent = "Level: 1";
   globalLevelContainer.appendChild(levelText);
 
   let progressBar = document.createElement("div");
@@ -419,9 +500,12 @@ function initializeHUD(players) {
 
     playerHud.appendChild(livesContainer);
     hudContainer.appendChild(playerHud);
-    
+
     // Store reference securely by index
-    playerHUDElements[player.playerIndex] = { container: livesContainer, hearts: hearts };
+    playerHUDElements[player.playerIndex] = {
+      container: livesContainer,
+      hearts: hearts,
+    };
   });
 }
 
@@ -769,21 +853,21 @@ function updateLevelProgressBar(levelInfo) {
   }
 }
 
-function execLevelUp(newStats) {
+function applyLevelChangesAndResume(newStats) {
   // 1. Update level stats (Enemies scaling)
   levelStats = newStats;
-  
+
   // 2. Visual Updates: Shift tiles towards red/darker tones
   const currentLevel = leveller ? leveller.currentLevel : 1;
   // Factor increases by 0.1 per level, capped at 1.0 (Level 11+)
   const redFactor = Math.min(1, (currentLevel - 1) * 0.1);
-  
+
   if (constants && constants.TILE) {
     // Note: This updates the global constants object, which affects drawTiles immediately
     constants.TILE.GRASS_COLOR = blendColor("#7ac74f", "#660000", redFactor);
     constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
     constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
-    
+
     // Make highlighting more aggressive (red)
     constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
   }
@@ -801,13 +885,243 @@ function execLevelUp(newStats) {
   playerBullets = [];
   enemyBullets = [];
   lastSpawnTimestamp = -Infinity; // Trigger immediate spawn cycle
-  
+
   // Update enemies with new stats immediately (though the array is empty, this handles if we kept any)
   enemies.forEach((enemy) => {
     if (typeof enemy.updateStats === "function") {
       enemy.updateStats(newStats);
     }
   });
+
+  // 6. Resume the game
+  toggleGamePause(false);
+}
+
+// =================================================================
+// 1. Game State Management
+// =================================================================
+
+/**
+ * Pauses or unpauses the game.
+ * @param {boolean} pauseState - true to pause, false to unpause.
+ */
+function toggleGamePause(pauseState) {
+  GAME_PAUSED = pauseState;
+  if (pauseToggle) {
+    pauseToggle.classList.toggle("paused", pauseState);
+    // Explicitly set text content to ensure icon is visible
+    pauseToggle.textContent = pauseState ? "▶" : "⏸";
+  }
+  if (pauseOverlay) {
+    pauseOverlay.classList.toggle("hidden", !pauseState);
+  }
+}
+
+// --- Pause/Resume/Quit Handlers ---
+function handlePause() {
+  // Only allow pause if the game is running and not already paused by an upgrade screen
+  if (
+    !isGameOver &&
+    !GAME_PAUSED &&
+    !upgradeOverlay.classList.contains("hidden")
+  ) {
+    toggleGamePause(true);
+    // Ensure the pause overlay (z-index 25) is shown instead of the upgrade overlay (z-index 15)
+    upgradeOverlay.classList.add("hidden");
+  }
+  // If upgrade overlay is visible, prevent pausing manually until selection is complete
+}
+
+function handleResume() {
+  if (GAME_PAUSED) {
+    toggleGamePause(false);
+  }
+}
+
+function handleQuit() {
+  const exitDestination =
+    constants?.INPUT?.EXIT_DESTINATION || "../menu/menu.html";
+  if (firebaseUnsubscribe) firebaseUnsubscribe();
+  window.location.href = exitDestination;
+}
+
+// =================================================================
+// LEVEL UPGRADE LOGIC
+// =================================================================
+
+/**
+ * Starts the sequential upgrade process for all active players.
+ * @param {Array<Object>} activePlayers - The array of PlayerController instances.
+ * @param {Object} newStats - The new level stats object from the leveller.
+ */
+function handleLevelUp(activePlayers, newStats) {
+  console.log(
+    `Level Up to ${leveller.currentLevel}! Starting upgrade process.`,
+  );
+  // We only call toggleGamePause to stop the game loop, then manage the visibility of the upgrade overlay manually.
+  GAME_PAUSED = true; // Directly pause the game loop without triggering the general pause overlay
+  upgradeOverlay.classList.remove("hidden"); // Show upgrade overlay
+  pauseOverlay.classList.add("hidden"); // Ensure pause overlay is hidden
+
+  // ... (rest of the function) ...
+  // Create a queue of players to upgrade (only active ones)
+  playerUpgradeQueue = activePlayers.filter((p) => !p.isDead);
+  currentUpgradePlayerIndex = 0;
+
+  if (playerUpgradeQueue.length > 0) {
+    startUpgradeProcess(newStats);
+  } else {
+    // If no active players, skip upgrade and resume
+    applyLevelChangesAndResume(newStats);
+  }
+}
+
+/**
+ * Handles the current player's upgrade selection or completes the process.
+ */
+function startUpgradeProcess(newStats) {
+  if (currentUpgradePlayerIndex < playerUpgradeQueue.length) {
+    const player = playerUpgradeQueue[currentUpgradePlayerIndex];
+    const powers = selectRandomPowers(constants.LEVELING.POWERS.CHOICES);
+    showUpgradeScreen(player, powers, newStats);
+  } else {
+    // All players have chosen their upgrade. Apply level changes and Resume game.
+    console.log(
+      "All players upgraded. Applying global changes and resuming game.",
+    );
+    upgradeOverlay.classList.add("hidden");
+    // NOTE: applyLevelChangesAndResume handles toggleGamePause(false);
+    applyLevelChangesAndResume(newStats);
+  }
+}
+
+/**
+ * Randomly selects a specified number of unique power-ups from constants.json.
+ * @param {number} count - The number of power-ups to select.
+ * @returns {Array<string>} An array of power-up keys (e.g., ["SIZE", "SPEED", "DAMAGE"]).
+ */
+function selectRandomPowers(count) {
+  const allPowers = Object.keys(constants.LEVELING.POWERS.PLAYER);
+  const selectedPowers = new Set();
+
+  if (count >= allPowers.length) {
+    return allPowers;
+  }
+
+  while (selectedPowers.size < count) {
+    const randomIndex = Math.floor(Math.random() * allPowers.length);
+    selectedPowers.add(allPowers[randomIndex]);
+  }
+
+  return Array.from(selectedPowers);
+}
+
+/**
+ * Displays the upgrade screen for the given player with the selected powers.
+ */
+function showUpgradeScreen(player, powers, newStats) {
+  const playerConfig = constants.PLAYER_DATA.find((p) => p.id === player.id);
+  const playerColor = playerConfig ? playerConfig.color : "#FFFFFF";
+
+  // Update player prompt text
+  currentPlayerPrompt.innerHTML = `Player ${player.playerIndex + 1} (${playerColor} color), choose your upgrade.`;
+  currentPlayerPrompt.style.color = playerColor;
+
+  // Clear previous options
+  powerUpContainer.innerHTML = "";
+
+  powers.forEach((powerKey) => {
+    const powerData = constants.LEVELING.POWERS.PLAYER[powerKey];
+    if (!powerData) return;
+
+    const button = document.createElement("button");
+    button.className = "power-up-button";
+    button.innerText = powerData.TEXT;
+    button.setAttribute("data-power-key", powerKey);
+
+    button.addEventListener("click", () => {
+      // Disable all buttons to prevent double-clicks
+      powerUpContainer
+        .querySelectorAll("button")
+        .forEach((btn) => (btn.disabled = true));
+
+      applyPowerUp(player, powerKey);
+
+      // Move to the next player
+      currentUpgradePlayerIndex++;
+      startUpgradeProcess(newStats);
+    });
+
+    powerUpContainer.appendChild(button);
+  });
+}
+
+/**
+ * Applies the selected power-up's effects to the player's stats.
+ */
+function applyPowerUp(player, powerKey) {
+  const power = constants.LEVELING.POWERS.PLAYER[powerKey];
+
+  if (!player || !power) return;
+
+  let statKey = null;
+  const playerStats = player.getStats();
+
+  switch (powerKey) {
+    case "SIZE":
+      statKey = "SIZE";
+      break;
+    case "SPEED":
+      statKey = "MAX_SPEED";
+      break;
+    case "MAX_LIVES":
+      statKey = "MAX_LIVES";
+      break;
+    case "RADIUS":
+      statKey = "RADIUS";
+      break;
+    case "COOLDOWN_MS":
+      statKey = "COOLDOWN_MS";
+      break;
+    case "DAMAGE":
+      statKey = "DAMAGE";
+      break;
+    default:
+      return;
+  }
+
+  if (statKey === "MAX_LIVES") {
+    // Increase the maximum lives stat
+    playerStats.MAX_LIVES += power.MULTIPLIER;
+    // Also increase current lives, up to the new max
+    player.lives = Math.min(
+      playerStats.MAX_LIVES,
+      player.lives + power.MULTIPLIER,
+    );
+    initializeHUD(players); // Re-initialize HUD to reflect new max lives
+    updatePlayerLivesDisplay(player.playerIndex, player.lives);
+  } else {
+    // Apply multiplier/factor and check cap/min_cap
+    const currentValue = playerStats[statKey];
+    let newValue = currentValue * power.MULTIPLIER;
+
+    if (power.CAP && newValue > power.CAP) {
+      newValue = power.CAP;
+    } else if (power.MIN_CAP && newValue < power.MIN_CAP) {
+      newValue = power.MIN_CAP;
+    }
+
+    // Update the player's stat object
+    playerStats[statKey] = newValue;
+
+    // Special handling for size/speed which might be cached on the player object itself
+    if (statKey === "SIZE") {
+      player.state.width = newValue;
+      player.state.height = newValue;
+    } else if (statKey === "MAX_SPEED") {
+      player.maxSpeed = newValue;
+    }
+  }
 }
 
 /**
@@ -818,27 +1132,30 @@ function gameLoop(timestamp) {
   lastFrameTime = timestamp;
 
   if (!isGameOver) {
-    players.forEach((player) => player.update(pressedKeys));
-    handlePlayerShooting(timestamp);
-    if (
-      timestamp - lastSpawnTimestamp >=
-      levelStats.ENEMIES.SPAWN_INTERVAL_MS
-    ) {
-      spawnEnemyGroup();
-      lastSpawnTimestamp = timestamp;
+    if (!GAME_PAUSED) {
+      players.forEach((player) => player.update(pressedKeys));
+      handlePlayerShooting(timestamp);
+      if (
+        timestamp - lastSpawnTimestamp >=
+        levelStats.ENEMIES.SPAWN_INTERVAL_MS
+      ) {
+        spawnEnemyGroup();
+        lastSpawnTimestamp = timestamp;
+      }
+      updateEnemies(deltaTime, timestamp, players);
+      updatePlayerBullets(deltaTime);
+      updateEnemyBullets(deltaTime, timestamp);
+      handleEnemyCollisions(timestamp);
     }
-    updateEnemies(deltaTime, timestamp, players);
-    updatePlayerBullets(deltaTime);
-    updateEnemyBullets(deltaTime, timestamp);
-    handleEnemyCollisions(timestamp);
 
     // Update leveller and level display
-    if (leveller) {
+    if (leveller && !GAME_PAUSED) {
       let level_update_info = leveller.update(deltaTime);
       updateLevelProgressBar(level_update_info);
       if (level_update_info.newStats) {
-        console.log(level_update_info);
-        execLevelUp(level_update_info.newStats);
+        console.log("Level Up Detected. Triggering upgrade process.");
+        // Call the new upgrade handler instead of immediately executing level changes
+        handleLevelUp(players, level_update_info.newStats);
       }
     }
   }
@@ -846,7 +1163,7 @@ function gameLoop(timestamp) {
   // Pass the current level to drawBackground for the red tint effect
   const currentLvl = leveller ? leveller.currentLevel : 1;
   drawBackground(ctx, backgroundImage, canvas, currentLvl);
-  
+
   drawTiles(mapData, constants, ctx);
   enemies.forEach((enemy) => enemy.draw(ctx));
   enemyBullets.forEach((bullet) => bullet.draw(ctx));

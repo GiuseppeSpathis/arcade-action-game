@@ -14,11 +14,15 @@ body {
         linear-gradient(#6fb7ff, #1f2545);
     font-family: "Press Start 2P", "Courier New", Courier, monospace;
     color: #fff;
+    overflow: hidden; /* Prevent scrollbars during game */
 }
 
 .hidden {
     display: none !important;
 }
+
+/* --- HUD & Audio (Top Layer - Z-Index 30+) --- */
+/* These elements stay bright and clickable even when game is paused/overlayed */
 
 .audio-slider-container {
     position: absolute;
@@ -31,7 +35,7 @@ body {
     padding: 0.25rem 0.75rem;
     border: 2px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-    z-index: 9999;
+    z-index: 31; /* Highest priority UI */
 }
 
 .audio-slider-container input[type="range"] {
@@ -56,98 +60,6 @@ body {
     vertical-align: middle;
 }
 
-.connection-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(5, 8, 19, 0.92);
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    color: #fff;
-    padding: 1rem;
-}
-
-.connection-title {
-    font-size: 2.5rem;
-    letter-spacing: 0.2rem;
-    text-shadow: 0 0 12px rgba(255, 73, 246, 0.7);
-    margin-bottom: 2rem;
-}
-
-.connection-instructions {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: #a8dadc;
-    margin-top: 1.5rem;
-}
-
-.connection-url {
-    color: #ffb347;
-    font-weight: bold;
-    word-break: break-all;
-}
-
-/* Styles for room code when in overlay */
-.connection-overlay .room-code-display {
-    position: static; /* Override absolute positioning */
-    transform: none;
-    border-width: 3px;
-    padding: 1rem 1.5rem;
-}
-
-.connection-overlay .room-code-label {
-    font-size: 1rem;
-}
-
-.connection-overlay .room-code-text {
-    font-size: 1.75rem;
-    letter-spacing: 4px;
-}
-
-/* Player connection status list */
-.player-connection-container {
-    margin-top: 2rem;
-    width: min(90%, 300px);
-}
-
-.player-status {
-    font-size: 1.1rem;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid #457b9d;
-    color: #e0e0e0;
-    transition:
-        background-color 0.3s,
-        border-color 0.3s;
-}
-
-.player-status.connected {
-    border-color: #7ac74f;
-    background: rgba(122, 199, 79, 0.15);
-    color: #fff;
-    font-weight: bold;
-}
-
-.game-wrapper {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(10, 16, 33, 0.7);
-    overflow: hidden;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 0;
-}
-
 .audio-toggle-button {
     position: absolute;
     top: 1rem;
@@ -167,7 +79,7 @@ body {
         transform 0.2s ease,
         box-shadow 0.2s ease,
         background 0.2s ease;
-    z-index: 3;
+    z-index: 30; /* Above overlays */
 }
 
 .audio-toggle-button:hover,
@@ -178,11 +90,16 @@ body {
     background: rgba(111, 183, 255, 0.85);
 }
 
+.pause-toggle-button {
+    right: 5.5rem; /* Positioned left of music toggle */
+    z-index: 30;
+}
+
 .hud {
     position: absolute;
     top: 0.5rem;
     left: 1.5rem;
-    z-index: 2;
+    z-index: 30; /* Above overlays */
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
@@ -256,41 +173,77 @@ body {
     }
 }
 
-.game-area {
-    position: relative;
-    overflow: hidden;
-}
-
-.game-over-button {
+.room-code-display {
     position: absolute;
-    left: 50%;
-    bottom: 27%;
-    transform: translate(-50%, -50%);
-    padding: 0.9rem 1.8rem;
-    font-size: 0.95rem;
-    background: rgba(93, 155, 255, 0.9);
-    color: #0a1021;
-    border: 3px solid rgba(255, 255, 255, 0.85);
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    z-index: 4;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+    top: 4.5rem;
+    left: 1.5rem;
+    background: rgba(10, 16, 33, 0.75);
+    border-radius: 8px;
+    border: 2px solid #ffb347;
+    padding: 0.4rem 0.8rem;
+    z-index: 30; /* Above overlays */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    text-shadow: 0 0 4px rgba(255, 179, 71, 0.7);
 }
 
-.game-over-button:hover,
-.game-over-button:focus {
-    transform: translate(-50%, -50%) scale(1.04);
-    box-shadow: 0 16px 28px rgba(0, 0, 0, 0.45);
-    outline: none;
+.room-code-label {
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-right: 0.75rem;
+    color: #ffb347;
 }
 
-.game-over-button[hidden] {
-    display: none;
+.room-code-text {
+    font-size: 1rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.level-counter {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+    z-index: 30; /* Above overlays */
+}
+
+.level-progress-bar {
+    height: 16px;
+    width: 200px;
+    background: #222;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 8px 0;
+    position: relative;
+}
+
+.level-progress-inner {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width 0.2s;
+    z-index: 31;
+}
+
+/* --- Game Area (Bottom Layer) --- */
+
+.game-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(10, 16, 33, 0.7);
+    overflow: hidden;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    z-index: 0;
 }
 
 canvas {
@@ -300,6 +253,230 @@ canvas {
     border: none;
     border-radius: 0;
     background: linear-gradient(#9ce5ff, #6fb7ff);
+}
+
+/* --- Overlays (Middle Layer - Z-Index 10-25) --- */
+
+.connection-overlay,
+.upgrade-overlay,
+.pause-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+}
+
+.connection-overlay {
+    background: rgba(5, 8, 19, 0.92);
+    z-index: 10;
+}
+
+.upgrade-overlay {
+    background: rgba(5, 8, 19, 0.95);
+    z-index: 1;
+}
+
+.pause-overlay {
+    background: rgba(5, 8, 19, 0.95);
+    z-index: 1;
+}
+
+/* Overlay Content Styles */
+
+.connection-title {
+    font-size: 2.5rem;
+    letter-spacing: 0.2rem;
+    text-shadow: 0 0 12px rgba(255, 73, 246, 0.7);
+    margin-bottom: 2rem;
+}
+
+.connection-instructions {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #a8dadc;
+    margin-top: 1.5rem;
+}
+
+.connection-url {
+    color: #ffb347;
+    font-weight: bold;
+    word-break: break-all;
+}
+
+.connection-overlay .room-code-display {
+    position: static;
+    transform: none;
+    border-width: 3px;
+    padding: 1rem 1.5rem;
+    margin: 1rem 0;
+}
+
+.connection-overlay .room-code-text {
+    font-size: 1.75rem;
+    letter-spacing: 4px;
+}
+
+.player-connection-container {
+    margin-top: 2rem;
+    width: min(90%, 300px);
+}
+
+.player-status {
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid #457b9d;
+    color: #e0e0e0;
+    transition:
+        background-color 0.3s,
+        border-color 0.3s;
+}
+
+.player-status.connected {
+    border-color: #7ac74f;
+    background: rgba(122, 199, 79, 0.15);
+    color: #fff;
+    font-weight: bold;
+}
+
+.upgrade-title {
+    font-size: 3rem;
+    letter-spacing: 0.3rem;
+    color: #ffb347;
+    text-shadow: 0 0 15px rgba(255, 179, 71, 0.9);
+    margin-bottom: 2rem;
+}
+
+.player-prompt {
+    font-size: 1.2rem;
+    color: #a8dadc;
+    margin-bottom: 3rem;
+    min-height: 1.5rem;
+}
+
+.power-up-container {
+    display: flex;
+    gap: 2rem;
+    max-width: 90%;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pause-title {
+    font-size: 4rem;
+    letter-spacing: 0.4rem;
+    color: #ff5d73;
+    text-shadow: 0 0 20px rgba(255, 93, 115, 0.9);
+    margin-bottom: 3rem;
+}
+
+/* --- Buttons --- */
+
+/* Base Style (Matches Menu .play-button) */
+.game-over-button,
+.power-up-button {
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 1.2rem 2.4rem;
+    color: #050813;
+    border: 3px solid #ff4df6;
+    background: linear-gradient(135deg, #ff4df6, #ffb347);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+
+    /* Animation settings */
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        text-shadow 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+/* Hover Effects (Consistent across all buttons) */
+.game-over-button:hover,
+.game-over-button:focus,
+.power-up-button:hover,
+.power-up-button:focus {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 22px rgba(255, 77, 246, 0.45);
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+    outline: none;
+}
+
+/* Specific Button Types */
+
+.power-up-button {
+    width: 280px;
+    height: 140px;
+    padding: 1rem;
+    background: #457b9d; /* Blue variant for powerups */
+    border-color: #a8dadc;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1.4;
+    font-size: 0.95rem;
+    letter-spacing: 1px;
+}
+
+.power-up-button:hover,
+.power-up-button:focus {
+    background: #1d3557;
+    border-color: #ffb347;
+    box-shadow: 0 15px 25px rgba(255, 179, 71, 0.5);
+}
+
+.resume-button {
+    border-color: #7ac74f;
+    background: linear-gradient(135deg, #7ac74f, #a8dadc);
+    margin: 1rem 0;
+    min-width: 240px;
+}
+
+.resume-button:hover,
+.resume-button:focus {
+    box-shadow: 0 12px 22px rgba(122, 199, 79, 0.45);
+}
+
+.quit-button {
+    border-color: #e63946;
+    background: linear-gradient(135deg, #e63946, #ff5d73);
+    margin: 1rem 0;
+    min-width: 240px;
+}
+
+.quit-button:hover,
+.quit-button:focus {
+    box-shadow: 0 12px 22px rgba(230, 57, 70, 0.45);
+}
+
+/* Return Menu Button (Game Over Screen) */
+#returnMenuButton {
+    position: absolute;
+    left: 50%;
+    bottom: 27%;
+    transform: translate(-50%, -50%);
+    z-index: 20; /* Ensure clickable */
+    /* Uses base .game-over-button styles */
+}
+#returnMenuButton:hover {
+    transform: translate(-50%, -50%) scale(1.05); /* Override standard hover transform to keep centering */
 }
 
 @media (max-width: 768px) {
@@ -323,66 +500,12 @@ canvas {
     .lives .heart {
         font-size: 1rem;
     }
-}
 
-.room-code-display {
-    position: absolute;
-    top: 4.5rem;
-    left: 1.5rem;
-    background: rgba(10, 16, 33, 0.75);
-    border-radius: 8px;
-    border: 2px solid #ffb347;
-    padding: 0.4rem 0.8rem;
-    z-index: 2;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    color: #ffffff;
-    text-shadow: 0 0 4px rgba(255, 179, 71, 0.7);
-}
+    .pause-title {
+        font-size: 2.5rem;
+    }
 
-.room-code-label {
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-right: 0.75rem;
-    color: #ffb347;
-}
-
-.room-code-text {
-    font-size: 1rem;
-    font-weight: bold;
-    letter-spacing: 2px;
-}
-
-.room-code-display[hidden] {
-    display: none;
-}
-
-.level-counter {
-    position: fixed;
-    left: 24px;
-    bottom: 24px;
-    color: #fff;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 8px 18px;
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 1.2em;
-    z-index: 100;
-}
-
-.level-progress-bar {
-    height: 16px;
-    width: 200px;
-    background: #222;
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 8px 0;
-    position: relative;
-}
-
-.level-progress-inner {
-    height: 100%;
-    width: 0%;
-    background: #4caf50;
-    transition: width 0.2s;
-    z-index: 300;
+    .upgrade-title {
+        font-size: 2rem;
+    }
 }

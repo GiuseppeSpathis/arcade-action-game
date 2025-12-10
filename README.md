@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://giuseppespathis.github.io/arcade-action-game/">
+  <a href="https://giuseppespathis.github.io/arcade-action-game/" target="_blank">
     <img width="600" height="600" src="https://cdnb.artstation.com/p/assets/images/images/033/575/083/original/truong-huynh-siffert-tiffany-buttons-startgame-yellow.gif?1609984515" alt="Play the Game">
   </a>
 </p>
@@ -15,12 +15,13 @@ This game was built with a focus on core web technologies. All graphics are draw
 
 
 <p align="center">
-  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/8c5ac1f5-0086-4239-b823-78e781e5ab74" />
+  <img width="700" height="700" alt="tutorial1" src="https://github.com/user-attachments/assets/e72d3cd5-9811-4f36-965b-213b5649f91c" />
 </p>
 
 
-## How to Play
 
+## How to Play
+Goal: Survive as long as possible to reach higher levels! When you complete a level, you gain a power-up. Keep an eye on your remaining lives (hearts) in the top-left corner and the current level in the bottom-left.
 #### Single Player (Player 1)
 
 - Move: A / D keys
@@ -29,14 +30,12 @@ This game was built with a focus on core web technologies. All graphics are draw
 
 - Shoot: Arrow Keys (Up, Down, Left, Right)
 
-#### Local Multiplayer (Players 2-4)
-This mode requires all devices (the host laptop and player smartphones) to be connected to the same Wi-Fi network.
+#### Multiplayer (Players 2-4)
 1. Host Setup (Laptop)
    - From the main menu, select "2 Players", "3 Players", or "4 Players".
    - A lobby screen will appear, showing a 4-letter Room Code.
 2. Player Setup (Smartphone)
-   - On your phone, find the host laptop's Local IP Address (e.g., 192.168.1.10).
-   - Open your phone's web browser and navigate to: http://[LAPTOP_IP_ADDRESS]:[PORT]/scenario/controller/phoneController.html (Example: `http://192.168.1.10:5500/scenario/controller/phoneController.html`)
+   - On your phone, open your phone's web browser and navigate to: https://giuseppespathis.github.io/arcade-action-game/scenario/controller/phoneController.html
    - Enter the 4-letter Room Code from the laptop screen and select your player slot (P2, P3, or P4) and then press Connect.
 <p align="center">
   <img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/1287b393-764e-4544-b9ef-311a790c62d5" />
@@ -45,7 +44,7 @@ This mode requires all devices (the host laptop and player smartphones) to be co
 Once all players are connected, the game will start automatically. Use the on-screen D-pads for moving and shooting and the "JUMP" button to jump.
 
 <p align="center">
-  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/09b9f192-d2ed-424f-9f41-80ba21e2869e" />
+  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/20544b09-0785-418e-b2e3-b1993c4385dc" />
 </p>
 
 

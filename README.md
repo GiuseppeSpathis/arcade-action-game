@@ -30,7 +30,7 @@ Goal: Survive as long as possible to reach higher levels! When you complete a le
 
 - Shoot: Arrow Keys (Up, Down, Left, Right)
 
-#### Local Multiplayer (Players 2-4)
+#### Multiplayer (Players 2-4)
 1. Host Setup (Laptop)
    - From the main menu, select "2 Players", "3 Players", or "4 Players".
    - A lobby screen will appear, showing a 4-letter Room Code.

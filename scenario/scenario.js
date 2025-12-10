@@ -17,7 +17,7 @@ import {
   createGameSession,
   listenForRemoteInputs,
   setGameState,
-  deleteGameSession, // <--- ADDED THIS IMPORT
+  deleteGameSession, // Importante per disconnettere
 } from "../helper/firebaseRemoteController.js";
 
 // --- Global Game State ---
@@ -193,7 +193,14 @@ function processRemoteInputs(sessionData) {
 async function setupLobby(playerCount) {
   connectionOverlay.classList.remove("hidden");
 
-  connectionUrl.textContent = `https://giuseppespathis.github.io/arcade-action-game/scenario/controller/phoneController.html`;
+  const ip = window.location.hostname;
+  const port = window.location.port;
+  const displayIp = ip === "127.0.0.1" ? "YOUR_LAPTOP_IP" : ip;
+  connectionUrl.textContent = `http://${displayIp}:${port}/scenario/controller/phoneController.html`;
+  if (displayIp === "YOUR_LAPTOP_IP") {
+    connectionUrl.previousElementSibling.innerHTML =
+      "Connect your phone to the same Wi-Fi and (after finding your IP) go to:";
+  }
 
   const requiredPlayers = [];
   for (let i = 2; i <= playerCount; i++) {
@@ -338,8 +345,7 @@ async function initializeGame(playerCount) {
       }
       pressedKeys.add(event.code);
       if (event.code === exitKey) {
-        if (firebaseUnsubscribe) firebaseUnsubscribe();
-        window.location.href = exitDestination;
+        handleQuit();
         return;
       }
       if (!isGameOver) {
@@ -361,9 +367,16 @@ async function initializeGame(playerCount) {
 
     initializeHUD(players);
 
+    // --- SETUP RETURN MENU BUTTON (Game Over) ---
     if (returnMenuButton) {
-      returnMenuButton.hidden = true;
-      returnMenuButton.addEventListener("click", () => {
+      // Ensure it starts hidden
+      returnMenuButton.classList.add("hidden"); 
+      
+      // Add Click Logic with Deletion
+      returnMenuButton.addEventListener("click", async () => {
+        if (roomCode) {
+            await deleteGameSession(roomCode);
+        }
         if (firebaseUnsubscribe) firebaseUnsubscribe();
         window.location.href = exitDestination;
       });
@@ -550,8 +563,11 @@ function triggerGameOver() {
     } catch {}
   }
 
+  // --- FORCE SHOW BUTTON ---
   if (returnMenuButton) {
-    returnMenuButton.hidden = false;
+    returnMenuButton.classList.remove("hidden"); // Remove CSS class
+    returnMenuButton.hidden = false; // Set JS property
+    returnMenuButton.style.display = "block"; // Force display
     returnMenuButton.focus({ preventScroll: true });
   }
 }
@@ -832,9 +848,14 @@ function handleResume() {
   }
 }
 
-function handleQuit() {
+async function handleQuit() {
   const exitDestination =
     constants?.INPUT?.EXIT_DESTINATION || "../menu/menu.html";
+  
+  if (roomCode) {
+      await deleteGameSession(roomCode);
+  }
+
   if (firebaseUnsubscribe) firebaseUnsubscribe();
   window.location.href = exitDestination;
 }

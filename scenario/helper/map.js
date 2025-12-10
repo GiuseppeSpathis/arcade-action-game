@@ -6,7 +6,7 @@ export function generateMap(canvas, constants) {
   );
   const cols = Math.max(
     constants.GENERAL.MIN_GRID_DIMENSION,
-    Math.floor(canvas.width / tileSize),
+    Math.ceil(canvas.width / tileSize), 
   );
   const grid = Array.from({ length: rows }, () =>
     Array(cols).fill(constants.MAP.EMPTY_TILE_VALUE),

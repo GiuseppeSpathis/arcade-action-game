@@ -20,7 +20,7 @@ This game was built with a focus on core web technologies. All graphics are draw
 
 
 ## How to Play
-
+Goal: Survive as long as possible to reach higher levels! When you complete a level, you gain a power-up. Keep an eye on your remaining lives (hearts) in the top-left corner and the current level in the bottom-left.
 #### Single Player (Player 1)
 
 - Move: A / D keys

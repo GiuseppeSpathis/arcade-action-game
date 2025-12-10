@@ -33,7 +33,7 @@ export class SquareEnemy extends BaseEnemy {
       chosen.row * this.tileSize -
       this.size -
       this.collisionOffset +
-      (this.mapOffsetY*0.1) ;
+      (this.mapOffsetY*0.1));
 
     this.state = {
       x: spawnX,

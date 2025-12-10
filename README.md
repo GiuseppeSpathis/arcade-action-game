@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://giuseppespathis.github.io/arcade-action-game/">
+  <a href="https://giuseppespathis.github.io/arcade-action-game/" target="_blank">
     <img width="600" height="600" src="https://cdnb.artstation.com/p/assets/images/images/033/575/083/original/truong-huynh-siffert-tiffany-buttons-startgame-yellow.gif?1609984515" alt="Play the Game">
   </a>
 </p>
@@ -44,7 +44,7 @@ Goal: Survive as long as possible to reach higher levels! When you complete a le
 Once all players are connected, the game will start automatically. Use the on-screen D-pads for moving and shooting and the "JUMP" button to jump.
 
 <p align="center">
-  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/09b9f192-d2ed-424f-9f41-80ba21e2869e" />
+  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/20544b09-0785-418e-b2e3-b1993c4385dc" />
 </p>
 
 

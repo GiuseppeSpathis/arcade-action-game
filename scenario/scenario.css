@@ -381,7 +381,53 @@ canvas {
 
 /* --- Buttons --- */
 
-/* Base Style (Matches Menu .play-button) */
+/* Shared Play Button Styles (Matches Menu) */
+.play-button {
+    font-family: inherit;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 1.2rem 2.4rem;
+    color: #050813;
+    border: 3px solid #ff4df6;
+    background: linear-gradient(135deg, #ff4df6, #ffb347);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+    
+    /* Animation settings */
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        text-shadow 0.2s ease,
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.play-button:hover,
+.play-button:focus {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 22px rgba(255, 77, 246, 0.45);
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+    outline: none;
+}
+
+/* Secondary Button Style (Transparent) */
+.secondary-button {
+    background: transparent;
+    color: #ff4df6;
+}
+
+.secondary-button:hover,
+.secondary-button:focus {
+    background: #ff4df6;
+    color: #050813;
+    box-shadow: 0 0 15px rgba(255, 77, 246, 0.6);
+}
+
+/* Game Over Button (Legacy style, similar to play-button) */
 .game-over-button,
 .power-up-button {
     font-family: inherit;
@@ -396,7 +442,6 @@ canvas {
     background: linear-gradient(135deg, #ff4df6, #ffb347);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
 
-    /* Animation settings */
     transition:
         transform 0.2s ease,
         box-shadow 0.2s ease,
@@ -406,7 +451,6 @@ canvas {
         border-color 0.2s ease;
 }
 
-/* Hover Effects (Consistent across all buttons) */
 .game-over-button:hover,
 .game-over-button:focus,
 .power-up-button:hover,
@@ -473,7 +517,6 @@ canvas {
     bottom: 27%;
     transform: translate(-50%, -50%);
     z-index: 20; /* Ensure clickable */
-    /* Uses base .game-over-button styles */
 }
 #returnMenuButton:hover {
     transform: translate(-50%, -50%) scale(1.05); /* Override standard hover transform to keep centering */

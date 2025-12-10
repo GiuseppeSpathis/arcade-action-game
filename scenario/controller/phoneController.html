@@ -136,7 +136,7 @@
                 }
                 sessionListenerUnsubscribe = onSnapshot(docRef, (doc) => {
                     if (!doc.exists()) {
-                        resetToLobby("Host disconnected. Game over.");
+                        resetToLobby("Host disconnected.");
                         return;
                     }
                     const state = doc.data()?.gameState;

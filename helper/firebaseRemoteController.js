@@ -6,6 +6,7 @@ import {
   setDoc,
   onSnapshot,
   updateDoc,
+  deleteDoc, // <--- ADDED THIS IMPORT
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
@@ -108,6 +109,23 @@ export async function setGameState(roomCode, newState) {
   } catch (error) {
     console.error(`Failed to set game state to ${newState}:`, error);
   }
+}
+
+/**
+ * Deletes the game session document from Firestore.
+ * This effectively disconnects all players listening to this room.
+ * @param {string} roomCode 
+ */
+export async function deleteGameSession(roomCode) {
+    if (!db || !roomCode) return;
+    const sessionPath = `game_sessions/${roomCode}`;
+    const sessionDoc = doc(db, sessionPath);
+    try {
+      await deleteDoc(sessionDoc);
+      console.log(`Game session ${roomCode} deleted.`);
+    } catch (error) {
+      console.error("Failed to delete game session:", error);
+    }
 }
 
 /**

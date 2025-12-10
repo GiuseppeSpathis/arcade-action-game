@@ -4,11 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const playButton = document.getElementById("playButton");
   const tutorialButton = document.getElementById("tutorialButton");
   const closeTutorialButton = document.getElementById("closeTutorialButton");
+  const backToMenuButton = document.getElementById("backToMenuButton"); // Select Back Button
   
   const mainMenuButtons = document.getElementById("mainMenuButtons");
   const gameModeContainer = document.getElementById("gameModeContainer");
   const tutorialOverlay = document.getElementById("tutorialOverlay");
-  // Select the scrollable content container
   const tutorialContent = document.querySelector(".tutorial-content");
   
   const player1Button = document.getElementById("player1Button");
@@ -20,13 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- PLAY BUTTON LOGIC ---
   playButton.addEventListener("click", () => {
-    // Hide the main menu buttons container (Play + Tutorial)
     mainMenuButtons.classList.add("hidden"); 
-    
-    // Show mode buttons container
     gameModeContainer.classList.remove("hidden"); 
 
-    // Animation logic
     requestAnimationFrame(() => {
         const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
         modeButtons.forEach((button, index) => {
@@ -36,11 +32,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // --- BACK BUTTON LOGIC ---
+  if (backToMenuButton) {
+      backToMenuButton.addEventListener("click", () => {
+          // Hide mode container, Show main menu
+          gameModeContainer.classList.add("hidden");
+          mainMenuButtons.classList.remove("hidden");
+          
+          // Reset animations
+          const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
+          modeButtons.forEach((button) => {
+              button.classList.remove("fade-in-up");
+              button.style.animationDelay = '0s';
+          });
+      });
+  }
+
   // --- TUTORIAL LOGIC ---
   if (tutorialButton) {
       tutorialButton.addEventListener("click", () => {
         tutorialOverlay.classList.remove("hidden");
-        // RESET SCROLL POSITION TO TOP
         if (tutorialContent) {
             tutorialContent.scrollTop = 0;
         }
@@ -53,7 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Allow closing tutorial by clicking outside the content box
   if (tutorialOverlay) {
       tutorialOverlay.addEventListener("click", (e) => {
         if (e.target === tutorialOverlay) {

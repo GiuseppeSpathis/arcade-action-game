@@ -17,6 +17,7 @@ import {
   createGameSession,
   listenForRemoteInputs,
   setGameState,
+  deleteGameSession, // <--- ADDED THIS IMPORT
 } from "../helper/firebaseRemoteController.js";
 
 // --- Global Game State ---
@@ -33,15 +34,12 @@ let enemyBullets = [];
 let lastSpawnTimestamp = -Infinity;
 let mapData;
 let backgroundImage;
-let roomCode;
+let roomCode; // This holds the current room code
 let leveller;
 let levelStats = {};
-// --- Upgrade State Variables ---
 let GAME_PAUSED = false;
 let playerUpgradeQueue = [];
 let currentUpgradePlayerIndex = 0;
-
-// --- End Global Game State ---
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -51,11 +49,11 @@ const playerHUDElements = [];
 // --- Lobby Elements ---
 const connectionOverlay = document.getElementById("connectionOverlay");
 const connectionUrl = document.getElementById("connectionUrl");
-const playerConnectionContainer = document.getElementById(
-  "playerConnectionContainer",
-);
+const playerConnectionContainer = document.getElementById("playerConnectionContainer");
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const roomCodeText = document.getElementById("roomCodeText");
+const lobbyRoomCode = document.getElementById("lobbyRoomCode");
+const lobbyBackButton = document.getElementById("lobbyBackButton");
 
 // --- DOM Elements ---
 const upgradeOverlay = document.getElementById("upgradeOverlay");
@@ -79,6 +77,22 @@ if (sfxHit) sfxHit.volume = 0.75;
 
 setupAudioToggle({ audioElement, toggleButton });
 
+// --- LOBBY BACK BUTTON LOGIC ---
+if (lobbyBackButton) {
+    lobbyBackButton.addEventListener("click", async () => {
+        // DELETE SESSION FROM FIREBASE TO DISCONNECT PLAYERS
+        if (roomCode) {
+            await deleteGameSession(roomCode);
+        }
+
+        // Stop listening to firebase if we leave
+        if (firebaseUnsubscribe) firebaseUnsubscribe();
+        
+        // Return to menu
+        window.location.href = "../menu/menu.html";
+    });
+}
+
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -97,7 +111,6 @@ async function loadConstants() {
 function createPreventDefaultKeys(baseInput, playerData) {
   const keys = new Set(baseInput.PREVENT_DEFAULT_KEYS);
   playerData.forEach((playerDef) => {
-    // Add all input keys from all players
     Object.values(playerDef.inputs)
       .flat()
       .forEach((key) => keys.add(key));
@@ -114,7 +127,6 @@ function rectanglesIntersect(a, b) {
   );
 }
 
-// --- Helper for Color Blending ---
 function blendColor(hexColor1, hexColor2, factor) {
   const r1 = parseInt(hexColor1.substring(1, 3), 16);
   const g1 = parseInt(hexColor1.substring(3, 5), 16);
@@ -131,9 +143,6 @@ function blendColor(hexColor1, hexColor2, factor) {
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-/**
- * Processes remote inputs during gameplay.
- */
 function processRemoteInputs(sessionData) {
   if (!players.length || !constants || !sessionData.players) return;
 
@@ -151,62 +160,41 @@ function processRemoteInputs(sessionData) {
     if (!pInputs) return;
 
     const pConfig = constants.PLAYER_DATA[playerIndex].inputs;
-    // Get old state for jump buttons
     const pState = remoteInputsState[key] || { j: false, mu: false };
 
-    // --- Map remote inputs to pressedKeys Set ---
-
-    // 1. Map D-Pad Left/Right to Left/Right movement
-    pInputs.ml // Move Left
+    pInputs.ml 
       ? pressedKeys.add(pConfig.left[0])
       : pressedKeys.delete(pConfig.left[0]);
-    pInputs.mr // Move Right
+    pInputs.mr 
       ? pressedKeys.add(pConfig.right[0])
       : pressedKeys.delete(pConfig.right[0]);
 
-    // 2. Map "JUMP" button AND D-Pad Up to Jump
-    // (mu = Move Up, j = Jump button)
     if ((pInputs.j && !pState.j) || (pInputs.mu && !pState.mu)) {
       players[playerIndex].queueJump();
     }
 
-    // 3. Map Shoot D-Pad to directional shooting
-    // Assumes shootKeys is [Up, Down, Left, Right] in constants.json
-    pInputs.su // Shoot Up
+    pInputs.su 
       ? pressedKeys.add(pConfig.shoot[0])
       : pressedKeys.delete(pConfig.shoot[0]);
-    pInputs.sd // Shoot Down
+    pInputs.sd 
       ? pressedKeys.add(pConfig.shoot[1])
       : pressedKeys.delete(pConfig.shoot[1]);
-    pInputs.sl // Shoot Left
+    pInputs.sl 
       ? pressedKeys.add(pConfig.shoot[2])
       : pressedKeys.delete(pConfig.shoot[2]);
-    pInputs.sr // Shoot Right
+    pInputs.sr 
       ? pressedKeys.add(pConfig.shoot[3])
       : pressedKeys.delete(pConfig.shoot[3]);
 
-    // Store the new state for the next comparison
     remoteInputsState[key] = pInputs;
   });
 }
 
-/**
- * Sets up the multiplayer lobby screen.
- */
 async function setupLobby(playerCount) {
   connectionOverlay.classList.remove("hidden");
 
-  // Show connection URL
-  const ip = window.location.hostname;
-  const port = window.location.port;
-  const displayIp = ip === "127.0.0.1" ? "YOUR_LAPTOP_IP" : ip;
-  connectionUrl.textContent = `http://${displayIp}:${port}/scenario/controller/phoneController.html`;
-  if (displayIp === "YOUR_LAPTOP_IP") {
-    connectionUrl.previousElementSibling.innerHTML =
-      "Connect your phone to the same Wi-Fi and (after finding your IP) go to:";
-  }
+  connectionUrl.textContent = `https://giuseppespathis.github.io/arcade-action-game/scenario/controller/phoneController.html`;
 
-  // Create "waiting" list
   const requiredPlayers = [];
   for (let i = 2; i <= playerCount; i++) {
     const playerKey = `p${i}`;
@@ -218,7 +206,6 @@ async function setupLobby(playerCount) {
     playerConnectionContainer.appendChild(statusEl);
   }
 
-  // Init Firebase and create session
   try {
     const { error } = await initFirebase();
     if (error) throw new Error(error);
@@ -226,9 +213,10 @@ async function setupLobby(playerCount) {
     roomCode = await createGameSession(playerCount);
     if (!roomCode) throw new Error("Failed to create room.");
 
+    // Update both room code displays (In-game HUD and Lobby Overlay)
     roomCodeText.textContent = roomCode;
+    if (lobbyRoomCode) lobbyRoomCode.textContent = roomCode;
 
-    // Start listening
     let gameStarted = false;
     firebaseUnsubscribe = listenForRemoteInputs(roomCode, (sessionData) => {
       if (!sessionData) return;
@@ -238,7 +226,6 @@ async function setupLobby(playerCount) {
         return;
       }
 
-      // --- Lobby Logic ---
       let allConnected = true;
       const remotePlayers = sessionData.players || {};
       for (const playerKey of requiredPlayers) {
@@ -255,7 +242,6 @@ async function setupLobby(playerCount) {
 
       if (allConnected) {
         gameStarted = true;
-        // Set initial input state
         for (const playerKey of requiredPlayers) {
           if (remotePlayers[playerKey] && remotePlayers[playerKey].inputs) {
             remoteInputsState[playerKey] = remotePlayers[playerKey].inputs;
@@ -264,21 +250,15 @@ async function setupLobby(playerCount) {
         setGameState(roomCode, "running");
         initializeGame(playerCount);
       }
-      // --- End Lobby Logic ---
     });
   } catch (e) {
     console.error("Lobby setup failed:", e);
     roomCodeText.textContent = "ERROR";
-    roomCodeDisplay.style.borderColor = "#E63946";
-    roomCodeDisplay.querySelector(".room-code-label").textContent = "ERROR:";
+    if (lobbyRoomCode) lobbyRoomCode.textContent = "ERROR";
   }
 }
 
-/**
- * Helper to ensure Pause UI elements exist and are positioned correctly.
- */
 function ensurePauseUI() {
-  // 1. Check or Create Pause Button
   if (!pauseToggle) {
     pauseToggle = document.createElement("button");
     pauseToggle.id = "pauseToggle";
@@ -286,7 +266,6 @@ function ensurePauseUI() {
     pauseToggle.type = "button";
     pauseToggle.ariaLabel = "Pause Game";
 
-    // Append to audio controls if exists, otherwise body
     const audioControls = document.querySelector(".audio-controls");
     if (audioControls) {
       audioControls.insertBefore(pauseToggle, audioControls.firstChild);
@@ -297,12 +276,9 @@ function ensurePauseUI() {
     }
   }
 
-  // 2. FORCE POSITIONING: Move button to the left to avoid Volume Slider overlap
-  // Volume slider is typically around right: 5.5rem, so we move this to ~16rem
   pauseToggle.style.right = "13.3rem";
   pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
 
-  // 3. Check or Create Overlay
   if (!pauseOverlay) {
     pauseOverlay = document.createElement("div");
     pauseOverlay.id = "pauseOverlay";
@@ -315,17 +291,12 @@ function ensurePauseUI() {
     document.body.appendChild(pauseOverlay);
   }
 
-  // Re-fetch button references to ensure we have the DOM elements
   resumeButton = document.getElementById("resumeButton");
   quitButton = document.getElementById("quitButton");
 }
 
-/**
- * Initializes and starts the actual game.
- */
 async function initializeGame(playerCount) {
   try {
-    // --- 1. Load Assets and Map (if not already loaded) ---
     if (!constants) {
       constants = await loadConstants();
     }
@@ -340,7 +311,6 @@ async function initializeGame(playerCount) {
 
     levelStats = constants;
 
-    // --- 2. Create Players ---
     for (let i = 0; i < playerCount; i++) {
       if (constants.PLAYER_DATA[i]) {
         const player = new PlayerController(
@@ -355,7 +325,6 @@ async function initializeGame(playerCount) {
       }
     }
 
-    // --- 3. Setup Input Handling ---
     const preventDefaultKeys = createPreventDefaultKeys(
       constants.INPUT,
       constants.PLAYER_DATA,
@@ -390,10 +359,8 @@ async function initializeGame(playerCount) {
       if (firebaseUnsubscribe) firebaseUnsubscribe();
     });
 
-    // --- 4. Initialize HUD ---
     initializeHUD(players);
 
-    // --- 5. Setup Return Button ---
     if (returnMenuButton) {
       returnMenuButton.hidden = true;
       returnMenuButton.addEventListener("click", () => {
@@ -402,13 +369,10 @@ async function initializeGame(playerCount) {
       });
     }
 
-    // --- 5b. Setup Pause/Resume/Quit Buttons ---
-    //
     ensurePauseUI();
 
     if (pauseToggle) {
       pauseToggle.addEventListener("click", () => {
-        // If the game is paused by an upgrade screen, clicking pause button should be ignored
         if (upgradeOverlay.classList.contains("hidden")) {
           toggleGamePause(!GAME_PAUSED);
         }
@@ -421,10 +385,8 @@ async function initializeGame(playerCount) {
       quitButton.addEventListener("click", handleQuit);
     }
 
-    // --- 6. Initialize Leveller and timer  ---
     leveller = new Leveller(constants, constants.INITIAL_LEVEL || 1);
 
-    // --- 7. Hide Lobby and Start Game ---
     connectionOverlay.classList.add("hidden");
     lastFrameTime = performance.now();
     requestAnimationFrame(gameLoop);
@@ -432,19 +394,15 @@ async function initializeGame(playerCount) {
     console.error("Failed to initialize the game:", error);
     if (!connectionOverlay.classList.contains("hidden")) {
       roomCodeText.textContent = "FATAL";
-      roomCodeDisplay.querySelector(".room-code-label").textContent = "ERROR:";
+      if (lobbyRoomCode) lobbyRoomCode.textContent = "FATAL";
     }
   }
 }
 
-// --- HUD Initialization ---
 function initializeHUD(players) {
-  // Clear existing HUD to prevent duplicates or stale state on restart
   hudContainer.innerHTML = "";
-  // Reset HUD elements tracker
   playerHUDElements.length = 0;
 
-  // 1. Create Global Level UI (Always create this, regardless of player loop)
   let globalLevelContainer = document.createElement("div");
   globalLevelContainer.id = "global-level-counter";
   globalLevelContainer.className = "level-counter";
@@ -452,7 +410,6 @@ function initializeHUD(players) {
   const levelText = document.createElement("span");
   levelText.id = "level-text";
   levelText.className = "level-text";
-  // Set initial text
   levelText.textContent = "Level: 1";
   globalLevelContainer.appendChild(levelText);
 
@@ -468,7 +425,6 @@ function initializeHUD(players) {
   globalLevelContainer.appendChild(progressBar);
   hudContainer.appendChild(globalLevelContainer);
 
-  // 2. Create Individual Player HUDs
   players.forEach((player) => {
     const playerHud = document.createElement("div");
     playerHud.className = "player-hud";
@@ -501,15 +457,12 @@ function initializeHUD(players) {
     playerHud.appendChild(livesContainer);
     hudContainer.appendChild(playerHud);
 
-    // Store reference securely by index
     playerHUDElements[player.playerIndex] = {
       container: livesContainer,
       hearts: hearts,
     };
   });
 }
-
-// --- Game Logic Functions ---
 
 function updatePlayerLivesDisplay(playerIndex, lives) {
   const hud = playerHUDElements[playerIndex];
@@ -630,12 +583,11 @@ function getShootingDirectionFromKeys(player, keys) {
   let hasInput = false;
   const shootKeys = player.playerData.inputs.shoot;
 
-  // Assumes shootKeys is [Up, Down, Left, Right]
   const keyMap = {
-    [shootKeys[0]]: { y: -1 }, // Up
-    [shootKeys[1]]: { y: 1 }, // Down
-    [shootKeys[2]]: { x: -1 }, // Left
-    [shootKeys[3]]: { x: 1 }, // Right
+    [shootKeys[0]]: { y: -1 }, 
+    [shootKeys[1]]: { y: 1 }, 
+    [shootKeys[2]]: { x: -1 }, 
+    [shootKeys[3]]: { x: 1 }, 
   };
 
   for (const key in keyMap) {
@@ -796,48 +748,14 @@ function handleEnemyCollisions(timestamp) {
   });
 }
 
-// --- DEBUG OVERLAY ---
-function drawDebugOverlay() {
-  ctx.save();
-  ctx.font = "12px monospace";
-  ctx.fillStyle = "rgba(0,0,0,0.7)";
-  ctx.fillRect(10, 58, 420, Math.max(24, 18 + enemies.length * 16));
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "top";
-  ctx.fillText(`enemies.length: ${enemies.length}`, 20, 16 * 4);
-
-  enemies.forEach((enemy, idx) => {
-    let type = enemy.constructor?.name || "Unknown";
-    let health = enemy.health || 0;
-    let status = "";
-    let coord = enemy.getBounds();
-    status += `[x:${Math.round(coord.x)} y:${Math.round(coord.y)}] `;
-    if (typeof enemy.isDying === "function" && enemy.isDying())
-      status += "[DYING] ";
-    if (enemy.isSpawning) status += "[SPAWNING] ";
-    if (!enemy.active) status += "[INACTIVE] ";
-    ctx.fillText(
-      `#${idx}: ${type} (HP: ${health}) ${status}`.trim(),
-      20,
-      16 * 5 + idx * 16,
-    );
-  });
-  ctx.restore();
-}
-
-// --- Level progress update ---
 function updateLevelProgressBar(levelInfo) {
-  // Safe check for leveller existence
   if (!leveller) return;
 
-  // update level text with null check
   const text_container = document.getElementById("level-text");
   if (text_container) {
     text_container.textContent = `Level: ${leveller.currentLevel}`;
   }
 
-  // update progress bar with null checks
   const innerBar = document.getElementById("level-progress-inner");
   if (
     innerBar &&
@@ -854,62 +772,42 @@ function updateLevelProgressBar(levelInfo) {
 }
 
 function applyLevelChangesAndResume(newStats) {
-  // 1. Update level stats (Enemies scaling)
   levelStats = newStats;
 
-  // 2. Visual Updates: Shift tiles towards red/darker tones
   const currentLevel = leveller ? leveller.currentLevel : 1;
-  // Factor increases by 0.1 per level, capped at 1.0 (Level 11+)
   const redFactor = Math.min(1, (currentLevel - 1) * 0.1);
 
   if (constants && constants.TILE) {
-    // Note: This updates the global constants object, which affects drawTiles immediately
     constants.TILE.GRASS_COLOR = blendColor("#7ac74f", "#660000", redFactor);
     constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
     constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
-
-    // Make highlighting more aggressive (red)
     constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
   }
 
-  // 3. Regenerate Map
   mapData = generateMap(canvas, constants);
 
-  // 4. Respawn Players (preserve lives/power, reset position)
   players.forEach((player) => {
     player.respawn(mapData);
   });
 
-  // 5. Reset Game Entities
   enemies = [];
   playerBullets = [];
   enemyBullets = [];
-  lastSpawnTimestamp = -Infinity; // Trigger immediate spawn cycle
+  lastSpawnTimestamp = -Infinity; 
 
-  // Update enemies with new stats immediately (though the array is empty, this handles if we kept any)
   enemies.forEach((enemy) => {
     if (typeof enemy.updateStats === "function") {
       enemy.updateStats(newStats);
     }
   });
 
-  // 6. Resume the game
   toggleGamePause(false);
 }
 
-// =================================================================
-// 1. Game State Management
-// =================================================================
-
-/**
- * Pauses or unpauses the game.
- * @param {boolean} pauseState - true to pause, false to unpause.
- */
 function toggleGamePause(pauseState) {
   GAME_PAUSED = pauseState;
   if (pauseToggle) {
     pauseToggle.classList.toggle("paused", pauseState);
-    // Explicitly set text content to ensure icon is visible
     pauseToggle.textContent = pauseState ? "▶" : "⏸";
   }
   if (pauseOverlay) {
@@ -917,19 +815,15 @@ function toggleGamePause(pauseState) {
   }
 }
 
-// --- Pause/Resume/Quit Handlers ---
 function handlePause() {
-  // Only allow pause if the game is running and not already paused by an upgrade screen
   if (
     !isGameOver &&
     !GAME_PAUSED &&
     !upgradeOverlay.classList.contains("hidden")
   ) {
     toggleGamePause(true);
-    // Ensure the pause overlay (z-index 25) is shown instead of the upgrade overlay (z-index 15)
     upgradeOverlay.classList.add("hidden");
   }
-  // If upgrade overlay is visible, prevent pausing manually until selection is complete
 }
 
 function handleResume() {
@@ -945,61 +839,38 @@ function handleQuit() {
   window.location.href = exitDestination;
 }
 
-// =================================================================
-// LEVEL UPGRADE LOGIC
-// =================================================================
-
-/**
- * Starts the sequential upgrade process for all active players.
- * @param {Array<Object>} activePlayers - The array of PlayerController instances.
- * @param {Object} newStats - The new level stats object from the leveller.
- */
 function handleLevelUp(activePlayers, newStats) {
   console.log(
     `Level Up to ${leveller.currentLevel}! Starting upgrade process.`,
   );
-  // We only call toggleGamePause to stop the game loop, then manage the visibility of the upgrade overlay manually.
-  GAME_PAUSED = true; // Directly pause the game loop without triggering the general pause overlay
-  upgradeOverlay.classList.remove("hidden"); // Show upgrade overlay
-  pauseOverlay.classList.add("hidden"); // Ensure pause overlay is hidden
+  GAME_PAUSED = true; 
+  upgradeOverlay.classList.remove("hidden"); 
+  pauseOverlay.classList.add("hidden"); 
 
-  // ... (rest of the function) ...
-  // Create a queue of players to upgrade (only active ones)
   playerUpgradeQueue = activePlayers.filter((p) => !p.isDead);
   currentUpgradePlayerIndex = 0;
 
   if (playerUpgradeQueue.length > 0) {
     startUpgradeProcess(newStats);
   } else {
-    // If no active players, skip upgrade and resume
     applyLevelChangesAndResume(newStats);
   }
 }
 
-/**
- * Handles the current player's upgrade selection or completes the process.
- */
 function startUpgradeProcess(newStats) {
   if (currentUpgradePlayerIndex < playerUpgradeQueue.length) {
     const player = playerUpgradeQueue[currentUpgradePlayerIndex];
     const powers = selectRandomPowers(constants.LEVELING.POWERS.CHOICES);
     showUpgradeScreen(player, powers, newStats);
   } else {
-    // All players have chosen their upgrade. Apply level changes and Resume game.
     console.log(
       "All players upgraded. Applying global changes and resuming game.",
     );
     upgradeOverlay.classList.add("hidden");
-    // NOTE: applyLevelChangesAndResume handles toggleGamePause(false);
     applyLevelChangesAndResume(newStats);
   }
 }
 
-/**
- * Randomly selects a specified number of unique power-ups from constants.json.
- * @param {number} count - The number of power-ups to select.
- * @returns {Array<string>} An array of power-up keys (e.g., ["SIZE", "SPEED", "DAMAGE"]).
- */
 function selectRandomPowers(count) {
   const allPowers = Object.keys(constants.LEVELING.POWERS.PLAYER);
   const selectedPowers = new Set();
@@ -1016,18 +887,13 @@ function selectRandomPowers(count) {
   return Array.from(selectedPowers);
 }
 
-/**
- * Displays the upgrade screen for the given player with the selected powers.
- */
 function showUpgradeScreen(player, powers, newStats) {
   const playerConfig = constants.PLAYER_DATA.find((p) => p.id === player.id);
   const playerColor = playerConfig ? playerConfig.color : "#FFFFFF";
 
-  // Update player prompt text
   currentPlayerPrompt.innerHTML = `Player ${player.playerIndex + 1} (${playerColor} color), choose your upgrade.`;
   currentPlayerPrompt.style.color = playerColor;
 
-  // Clear previous options
   powerUpContainer.innerHTML = "";
 
   powers.forEach((powerKey) => {
@@ -1040,14 +906,12 @@ function showUpgradeScreen(player, powers, newStats) {
     button.setAttribute("data-power-key", powerKey);
 
     button.addEventListener("click", () => {
-      // Disable all buttons to prevent double-clicks
       powerUpContainer
         .querySelectorAll("button")
         .forEach((btn) => (btn.disabled = true));
 
       applyPowerUp(player, powerKey);
 
-      // Move to the next player
       currentUpgradePlayerIndex++;
       startUpgradeProcess(newStats);
     });
@@ -1056,9 +920,6 @@ function showUpgradeScreen(player, powers, newStats) {
   });
 }
 
-/**
- * Applies the selected power-up's effects to the player's stats.
- */
 function applyPowerUp(player, powerKey) {
   const power = constants.LEVELING.POWERS.PLAYER[powerKey];
 
@@ -1091,17 +952,14 @@ function applyPowerUp(player, powerKey) {
   }
 
   if (statKey === "MAX_LIVES") {
-    // Increase the maximum lives stat
     playerStats.MAX_LIVES += power.MULTIPLIER;
-    // Also increase current lives, up to the new max
     player.lives = Math.min(
       playerStats.MAX_LIVES,
       player.lives + power.MULTIPLIER,
     );
-    initializeHUD(players); // Re-initialize HUD to reflect new max lives
+    initializeHUD(players); 
     updatePlayerLivesDisplay(player.playerIndex, player.lives);
   } else {
-    // Apply multiplier/factor and check cap/min_cap
     const currentValue = playerStats[statKey];
     let newValue = currentValue * power.MULTIPLIER;
 
@@ -1111,10 +969,8 @@ function applyPowerUp(player, powerKey) {
       newValue = power.MIN_CAP;
     }
 
-    // Update the player's stat object
     playerStats[statKey] = newValue;
 
-    // Special handling for size/speed which might be cached on the player object itself
     if (statKey === "SIZE") {
       player.state.width = newValue;
       player.state.height = newValue;
@@ -1124,9 +980,6 @@ function applyPowerUp(player, powerKey) {
   }
 }
 
-/**
- * The Main Game Loop
- */
 function gameLoop(timestamp) {
   const deltaTime = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
   lastFrameTime = timestamp;
@@ -1148,19 +1001,16 @@ function gameLoop(timestamp) {
       handleEnemyCollisions(timestamp);
     }
 
-    // Update leveller and level display
     if (leveller && !GAME_PAUSED) {
       let level_update_info = leveller.update(deltaTime);
       updateLevelProgressBar(level_update_info);
       if (level_update_info.newStats) {
         console.log("Level Up Detected. Triggering upgrade process.");
-        // Call the new upgrade handler instead of immediately executing level changes
         handleLevelUp(players, level_update_info.newStats);
       }
     }
   }
 
-  // Pass the current level to drawBackground for the red tint effect
   const currentLvl = leveller ? leveller.currentLevel : 1;
   drawBackground(ctx, backgroundImage, canvas, currentLvl);
 
@@ -1175,15 +1025,8 @@ function gameLoop(timestamp) {
   }
 
   requestAnimationFrame(gameLoop);
-
-  if (constants.DEBUG) {
-    drawDebugOverlay();
-  }
 }
 
-/**
- * Main entry point.
- */
 async function main() {
   const urlParams = new URLSearchParams(window.location.search);
   const playerCount = parseInt(urlParams.get("players") || "1", 10);
@@ -1204,12 +1047,10 @@ async function main() {
       console.error("Failed to pre-load assets or set up lobby:", error);
       connectionOverlay.classList.remove("hidden");
       roomCodeText.textContent = "FATAL";
-      roomCodeDisplay.style.borderColor = "#E63946";
-      roomCodeDisplay.querySelector(".room-code-label").textContent = "ERROR:";
+      if (lobbyRoomCode) lobbyRoomCode.textContent = "FATAL";
       connectionUrl.textContent = "Could not load game assets. Please refresh.";
     }
   }
 }
 
-// Start the application
 main();

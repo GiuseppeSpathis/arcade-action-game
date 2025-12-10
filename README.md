@@ -30,13 +30,11 @@ This game was built with a focus on core web technologies. All graphics are draw
 - Shoot: Arrow Keys (Up, Down, Left, Right)
 
 #### Local Multiplayer (Players 2-4)
-This mode requires all devices (the host laptop and player smartphones) to be connected to the same Wi-Fi network.
 1. Host Setup (Laptop)
    - From the main menu, select "2 Players", "3 Players", or "4 Players".
    - A lobby screen will appear, showing a 4-letter Room Code.
 2. Player Setup (Smartphone)
-   - On your phone, find the host laptop's Local IP Address (e.g., 192.168.1.10).
-   - Open your phone's web browser and navigate to: http://[LAPTOP_IP_ADDRESS]:[PORT]/scenario/controller/phoneController.html (Example: `http://192.168.1.10:5500/scenario/controller/phoneController.html`)
+   - On your phone, open your phone's web browser and navigate to: https://giuseppespathis.github.io/arcade-action-game/scenario/controller/phoneController.html
    - Enter the 4-letter Room Code from the laptop screen and select your player slot (P2, P3, or P4) and then press Connect.
 <p align="center">
   <img width="600" height="500" alt="image" src="https://github.com/user-attachments/assets/1287b393-764e-4544-b9ef-311a790c62d5" />

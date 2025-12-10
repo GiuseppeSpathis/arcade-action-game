@@ -15,8 +15,9 @@ This game was built with a focus on core web technologies. All graphics are draw
 
 
 <p align="center">
-  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/8c5ac1f5-0086-4239-b823-78e781e5ab74" />
+  <img width="700" height="700" alt="tutorial1" src="https://github.com/user-attachments/assets/e72d3cd5-9811-4f36-965b-213b5649f91c" />
 </p>
+
 
 
 ## How to Play

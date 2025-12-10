@@ -2,7 +2,14 @@ import { setupAudioToggle } from "../helper/audioController.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const playButton = document.getElementById("playButton");
+  const tutorialButton = document.getElementById("tutorialButton");
+  const closeTutorialButton = document.getElementById("closeTutorialButton");
+  
+  const mainMenuButtons = document.getElementById("mainMenuButtons");
   const gameModeContainer = document.getElementById("gameModeContainer");
+  const tutorialOverlay = document.getElementById("tutorialOverlay");
+  // Select the scrollable content container
+  const tutorialContent = document.querySelector(".tutorial-content");
   
   const player1Button = document.getElementById("player1Button");
   const player2Button = document.getElementById("player2Button");
@@ -11,25 +18,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const scenarioUrl = "../scenario/scenario.html";
 
-  // When Play is clicked, hide it and show the mode buttons
+  // --- PLAY BUTTON LOGIC ---
   playButton.addEventListener("click", () => {
-    playButton.classList.add("hidden"); // Hide play button
-    gameModeContainer.classList.remove("hidden"); // Show mode buttons container
+    // Hide the main menu buttons container (Play + Tutorial)
+    mainMenuButtons.classList.add("hidden"); 
+    
+    // Show mode buttons container
+    gameModeContainer.classList.remove("hidden"); 
 
-    // Use requestAnimationFrame to ensure the browser renders the container 
-    // as visible BEFORE adding the animation class.
+    // Animation logic
     requestAnimationFrame(() => {
         const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
-        
         modeButtons.forEach((button, index) => {
             button.classList.add("fade-in-up");
-            // Delay increases by 0.1s for each button
             button.style.animationDelay = `${index * 0.1}s`;
         });
     });
   });
 
-  // Event listeners to each button, passing the player count as a URL parameter
+  // --- TUTORIAL LOGIC ---
+  if (tutorialButton) {
+      tutorialButton.addEventListener("click", () => {
+        tutorialOverlay.classList.remove("hidden");
+        // RESET SCROLL POSITION TO TOP
+        if (tutorialContent) {
+            tutorialContent.scrollTop = 0;
+        }
+      });
+  }
+
+  if (closeTutorialButton) {
+      closeTutorialButton.addEventListener("click", () => {
+        tutorialOverlay.classList.add("hidden");
+      });
+  }
+
+  // Allow closing tutorial by clicking outside the content box
+  if (tutorialOverlay) {
+      tutorialOverlay.addEventListener("click", (e) => {
+        if (e.target === tutorialOverlay) {
+            tutorialOverlay.classList.add("hidden");
+        }
+      });
+  }
+
+  // --- GAME MODE SELECTION LOGIC ---
   player1Button.addEventListener("click", () => {
     window.location.href = `${scenarioUrl}?players=1`;
   });
@@ -45,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
   player4Button.addEventListener("click", () => {
     window.location.href = `${scenarioUrl}?players=4`;
   });
-
 
   const audioElement = document.getElementById("bg_music");
   const toggleButton = document.getElementById("musicToggle");

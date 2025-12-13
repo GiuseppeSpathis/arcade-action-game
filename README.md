@@ -44,8 +44,10 @@ Goal: Survive as long as possible to reach higher levels! When you complete a le
 Once all players are connected, the game will start automatically. Use the on-screen D-pads for moving and shooting and the "JUMP" button to jump.
 
 <p align="center">
-  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/20544b09-0785-418e-b2e3-b1993c4385dc" />
+  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/46cebd84-87f7-4789-96d3-68f436ce03d6" />
 </p>
+
+
 
 
 #### Code Overview

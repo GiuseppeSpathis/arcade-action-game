@@ -96,7 +96,8 @@ setupAudioToggle({
     toggleButton: musicToggleButton,
     sliderContainer: musicSliderContainer,
     storageKeyMuted: "retro-arcade-music-muted",
-    storageKeyVolume: "retro-arcade-music-volume"
+    storageKeyVolume: "retro-arcade-music-volume",
+    labelIcon: "🎵" // Music Note Icon
 });
 
 // 2. SFX Control (Controls the group)
@@ -105,7 +106,8 @@ setupAudioToggle({
     toggleButton: sfxToggleButton,
     sliderContainer: sfxSliderContainer,
     storageKeyMuted: "retro-arcade-sfx-muted",
-    storageKeyVolume: "retro-arcade-sfx-volume"
+    storageKeyVolume: "retro-arcade-sfx-volume",
+    labelIcon: "💥" // Explosion/Bang Icon for SFX
 });
 
 
@@ -310,8 +312,8 @@ function ensurePauseUI() {
     }
   }
 
-  // Moved further left to accommodate the new SFX controls (Music: ~1.5-11rem range, SFX: ~12-22rem range)
-  pauseToggle.style.right = "24.5rem";
+  // Moved to 28rem to accommodate Music (Note) and SFX (Bang) sliders
+  pauseToggle.style.right = "28rem";
   pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
 
   if (!pauseOverlay) {

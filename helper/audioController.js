@@ -6,6 +6,7 @@ function createVolumeSlider(
   audioElements,
   container,
   storageKey = DEFAULT_VOLUME_KEY,
+  labelIcon = null // New parameter for the icon
 ) {
   if (!audioElements || !audioElements.length || !container) {
     return null;
@@ -14,8 +15,7 @@ function createVolumeSlider(
   // Normalize audioElements to array
   const targets = Array.isArray(audioElements) ? audioElements : [audioElements];
 
-  // Capture initial "base" volumes (the volume set in code, e.g., 0.75 for hits)
-  // This allows the slider to scale volume without destroying the mix.
+  // Capture initial "base" volumes
   targets.forEach((el) => {
     if (el.dataset.baseVolume === undefined) {
       el.dataset.baseVolume = el.volume;
@@ -65,6 +65,14 @@ function createVolumeSlider(
 
   // Insert into container
   container.innerHTML = ""; // Clear existing
+
+  // Add Label Icon if provided
+  if (labelIcon) {
+    const iconSpan = document.createElement("span");
+    iconSpan.textContent = labelIcon;
+    container.appendChild(iconSpan);
+  }
+
   container.appendChild(slider);
 
   return slider;
@@ -86,14 +94,14 @@ function updateButtonState(toggleButton, isMuted) {
 }
 
 export function setupAudioToggle({
-  audioElements, // Expects array of Audio elements
-  audioElement, // Fallback for single element
+  audioElements,
+  audioElement,
   toggleButton,
-  sliderContainer, // Element where the slider goes
+  sliderContainer,
   storageKeyMuted = "retro-arcade-muted",
   storageKeyVolume = "retro-arcade-volume",
+  labelIcon = null, // Pass this through
 } = {}) {
-  // Normalize targets
   const targets = audioElements || (audioElement ? [audioElement] : []);
   if (!targets.length || !toggleButton) {
     return;
@@ -110,19 +118,16 @@ export function setupAudioToggle({
   applyMute(storedMuted);
 
   toggleButton.addEventListener("click", () => {
-    // Check state of first element to toggle
     const currentMuted = targets[0].muted;
     applyMute(!currentMuted);
   });
 
-  // Setup Volume Slider
-  // If sliderContainer is explicitly passed, use it.
-  // Otherwise, fallback to the legacy relative lookup for backward compatibility.
   const container =
     sliderContainer ||
     toggleButton.parentElement.querySelector("#musicVolumeSliderContainer");
 
   if (container) {
-    createVolumeSlider(targets, container, storageKeyVolume);
+    // Pass labelIcon to the slider creator
+    createVolumeSlider(targets, container, storageKeyVolume, labelIcon);
   }
 }

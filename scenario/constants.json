@@ -145,7 +145,7 @@
     "DEATH_ANIMATION_DURATION_MS": 360,
     "GROUP_SIZE": {
       "MIN": 2,
-      "MAX": 3
+      "MAX": 4
     },
     "SPAWN_DESCENT_SPEED": 120,
     "TRIANGLE": {
@@ -198,12 +198,12 @@
           "MIN": {
             "type": "step",
             "step": 1,
-            "interval": 4
+            "interval": 1
           },
           "MAX": {
             "type": "step",
             "step": 1,
-            "interval": 3
+            "interval": 1
           }
         }
       },

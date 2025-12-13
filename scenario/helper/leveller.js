@@ -89,60 +89,47 @@ export class Leveller {
           result[key] = scaleAllProperties(value, path.concat(key));
         } else if (typeof value === "number") {
           // Try to find a scaling config for this property
-          // Priority: SCALING[path[0]][key] > SCALING[path[0]][path[1]][key] > SCALING[path[0]][path[1]] > SCALING[path[0]] > null
-          // Example: SCALING["ENEMIES"]["HEALTH"], SCALING["TRIANGLE"]["HEALTH"], etc.
           let scalingConfig = null;
-          // path[0] is the top-level key (e.g. "ENEMIES", "TRIANGLE", etc.)
-          // path[1] is the sub-key if present (e.g. "GROUP_SIZE", etc.)
+
+          // --- LOGIC START ---
+          // Because we fixed the initial path, path[0] will correctly be "ENEMIES"
           if (this.SCALING[path[0]]) {
-            // If nested object (e.g. GROUP_SIZE.MIN)
+            // Check 1: Direct child of path[0] (e.g., ENEMIES.SPAWN_INTERVAL_MS)
             if (
+              this.SCALING[path[0]][key] &&
               typeof this.SCALING[path[0]][key] === "object" &&
-              this.SCALING[path[0]][key] !== null &&
               !Array.isArray(this.SCALING[path[0]][key]) &&
-              (Object.prototype.hasOwnProperty.call(
-                this.SCALING[path[0]][key],
-                "type",
-              ) ||
-                Object.prototype.hasOwnProperty.call(
-                  this.SCALING[path[0]][key],
-                  "step",
-                ) ||
-                Object.prototype.hasOwnProperty.call(
-                  this.SCALING[path[0]][key],
-                  "factor",
-                ))
+              (this.SCALING[path[0]][key].type ||
+                this.SCALING[path[0]][key].factor ||
+                this.SCALING[path[0]][key].step)
             ) {
               scalingConfig = this.SCALING[path[0]][key];
-            } else if (
+            }
+            // Check 2: Nested child (e.g., ENEMIES.GROUP_SIZE.MIN)
+            else if (
               path.length > 1 &&
               this.SCALING[path[0]][path[1]] &&
               typeof this.SCALING[path[0]][path[1]] === "object"
             ) {
-              // For nested objects like GROUP_SIZE.MIN
+              // Check if the config exists at the grandchild level (MIN/MAX)
               if (
                 this.SCALING[path[0]][path[1]][key] &&
                 typeof this.SCALING[path[0]][path[1]][key] === "object"
               ) {
                 scalingConfig = this.SCALING[path[0]][path[1]][key];
-              } else if (
-                Object.prototype.hasOwnProperty.call(
-                  this.SCALING[path[0]][path[1]],
-                  "type",
-                ) ||
-                Object.prototype.hasOwnProperty.call(
-                  this.SCALING[path[0]][path[1]],
-                  "step",
-                ) ||
-                Object.prototype.hasOwnProperty.call(
-                  this.SCALING[path[0]][path[1]],
-                  "factor",
-                )
+              }
+              // Check if the config exists at the child level (Fallback)
+              else if (
+                this.SCALING[path[0]][path[1]].type ||
+                this.SCALING[path[0]][path[1]].step ||
+                this.SCALING[path[0]][path[1]].factor
               ) {
                 scalingConfig = this.SCALING[path[0]][path[1]];
               }
             }
           }
+          // --- LOGIC END ---
+
           result[key] = this.scaleValue(value, currentLevel, scalingConfig);
         } else {
           // Non-numeric, just copy
@@ -153,7 +140,9 @@ export class Leveller {
     };
 
     const newStats = {
-      ENEMIES: scaleAllProperties(base),
+      // FIX: Initialize the recursion with the context path ["ENEMIES"]
+      // This ensures path[0] is always "ENEMIES" during lookup.
+      ENEMIES: scaleAllProperties(base, ["ENEMIES"]),
     };
 
     return newStats;

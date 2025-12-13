@@ -1,11 +1,9 @@
 import { setupAudioToggle } from "../helper/audioController.js";
-import { generateMap, isSolidTile } from "./helper/map.js";
+import { generateMap } from "./helper/map.js";
 import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
-import { TriangleEnemy } from "./enemies/triangle.js";
-import { CircleEnemy } from "./enemies/circle.js";
-import { SquareEnemy } from "./enemies/square.js";
 import { Leveller } from "./helper/leveller.js";
+import * as GameLogic from "./utils/logic.js";
 import {
   drawBackground,
   drawTiles,
@@ -17,7 +15,7 @@ import {
   createGameSession,
   listenForRemoteInputs,
   setGameState,
-  deleteGameSession, 
+  deleteGameSession,
 } from "../helper/firebaseRemoteController.js";
 
 // --- Global Game State ---
@@ -33,10 +31,10 @@ let playerBullets = [];
 let enemyBullets = [];
 let lastSpawnTimestamp = -Infinity;
 let mapData;
-let backgroundImage; // The current background image object
-let backgroundImages = []; // Array of all loaded background image objects
-let currentBackgroundIndex = 0; // Tracks which image is currently displayed
-let roomCode; 
+let backgroundImage;
+let backgroundImages = [];
+let currentBackgroundIndex = 0;
+let roomCode;
 let leveller;
 let levelStats = {};
 let GAME_PAUSED = false;
@@ -51,7 +49,9 @@ const playerHUDElements = [];
 // --- Lobby Elements ---
 const connectionOverlay = document.getElementById("connectionOverlay");
 const connectionUrl = document.getElementById("connectionUrl");
-const playerConnectionContainer = document.getElementById("playerConnectionContainer");
+const playerConnectionContainer = document.getElementById(
+  "playerConnectionContainer",
+);
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const roomCodeText = document.getElementById("roomCodeText");
 const lobbyRoomCode = document.getElementById("lobbyRoomCode");
@@ -71,7 +71,9 @@ let quitButton = document.getElementById("quitButton");
 // --- Audio Elements ---
 const musicAudioElement = document.getElementById("bg_music");
 const musicToggleButton = document.getElementById("musicToggle");
-const musicSliderContainer = document.getElementById("musicVolumeSliderContainer");
+const musicSliderContainer = document.getElementById(
+  "musicVolumeSliderContainer",
+);
 
 const sfxToggleButton = document.getElementById("sfxToggle");
 const sfxSliderContainer = document.getElementById("sfxVolumeSliderContainer");
@@ -91,37 +93,33 @@ if (sfxJump) sfxJump.volume = 0.6;
 const sfxElements = [sfxGameOver, sfxHit, sfxShoot, sfxJump].filter(Boolean);
 
 // --- SETUP AUDIO CONTROLS ---
-
-// 1. Music Control
 setupAudioToggle({
-    audioElement: musicAudioElement,
-    toggleButton: musicToggleButton,
-    sliderContainer: musicSliderContainer,
-    storageKeyMuted: "retro-arcade-music-muted",
-    storageKeyVolume: "retro-arcade-music-volume",
-    labelIcon: "🎵" // Music Note Icon
+  audioElement: musicAudioElement,
+  toggleButton: musicToggleButton,
+  sliderContainer: musicSliderContainer,
+  storageKeyMuted: "retro-arcade-music-muted",
+  storageKeyVolume: "retro-arcade-music-volume",
+  labelIcon: "🎵",
 });
 
-// 2. SFX Control (Controls the group)
 setupAudioToggle({
-    audioElements: sfxElements,
-    toggleButton: sfxToggleButton,
-    sliderContainer: sfxSliderContainer,
-    storageKeyMuted: "retro-arcade-sfx-muted",
-    storageKeyVolume: "retro-arcade-sfx-volume",
-    labelIcon: "💥" // Explosion/Bang Icon for SFX
+  audioElements: sfxElements,
+  toggleButton: sfxToggleButton,
+  sliderContainer: sfxSliderContainer,
+  storageKeyMuted: "retro-arcade-sfx-muted",
+  storageKeyVolume: "retro-arcade-sfx-volume",
+  labelIcon: "💥",
 });
-
 
 // --- LOBBY BACK BUTTON LOGIC ---
 if (lobbyBackButton) {
-    lobbyBackButton.addEventListener("click", async () => {
-        if (roomCode) {
-            await deleteGameSession(roomCode);
-        }
-        if (firebaseUnsubscribe) firebaseUnsubscribe();
-        window.location.href = "../menu/menu.html";
-    });
+  lobbyBackButton.addEventListener("click", async () => {
+    if (roomCode) {
+      await deleteGameSession(roomCode);
+    }
+    if (firebaseUnsubscribe) firebaseUnsubscribe();
+    window.location.href = "../menu/menu.html";
+  });
 }
 
 function resizeCanvas() {
@@ -149,31 +147,6 @@ function createPreventDefaultKeys(baseInput, playerData) {
   return keys;
 }
 
-function rectanglesIntersect(a, b) {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.width > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.height > b.y
-  );
-}
-
-function blendColor(hexColor1, hexColor2, factor) {
-  const r1 = parseInt(hexColor1.substring(1, 3), 16);
-  const g1 = parseInt(hexColor1.substring(3, 5), 16);
-  const b1 = parseInt(hexColor1.substring(5, 7), 16);
-
-  const r2 = parseInt(hexColor2.substring(1, 3), 16);
-  const g2 = parseInt(hexColor2.substring(3, 5), 16);
-  const b2 = parseInt(hexColor2.substring(5, 7), 16);
-
-  const r = Math.round(r1 + (r2 - r1) * factor);
-  const g = Math.round(g1 + (g2 - g1) * factor);
-  const b = Math.round(b1 + (b2 - b1) * factor);
-
-  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
-
 function processRemoteInputs(sessionData) {
   if (!players.length || !constants || !sessionData.players) return;
 
@@ -193,10 +166,10 @@ function processRemoteInputs(sessionData) {
     const pConfig = constants.PLAYER_DATA[playerIndex].inputs;
     const pState = remoteInputsState[key] || { j: false, mu: false };
 
-    pInputs.ml 
+    pInputs.ml
       ? pressedKeys.add(pConfig.left[0])
       : pressedKeys.delete(pConfig.left[0]);
-    pInputs.mr 
+    pInputs.mr
       ? pressedKeys.add(pConfig.right[0])
       : pressedKeys.delete(pConfig.right[0]);
 
@@ -204,16 +177,16 @@ function processRemoteInputs(sessionData) {
       players[playerIndex].queueJump();
     }
 
-    pInputs.su 
+    pInputs.su
       ? pressedKeys.add(pConfig.shoot[0])
       : pressedKeys.delete(pConfig.shoot[0]);
-    pInputs.sd 
+    pInputs.sd
       ? pressedKeys.add(pConfig.shoot[1])
       : pressedKeys.delete(pConfig.shoot[1]);
-    pInputs.sl 
+    pInputs.sl
       ? pressedKeys.add(pConfig.shoot[2])
       : pressedKeys.delete(pConfig.shoot[2]);
-    pInputs.sr 
+    pInputs.sr
       ? pressedKeys.add(pConfig.shoot[3])
       : pressedKeys.delete(pConfig.shoot[3]);
 
@@ -251,7 +224,6 @@ async function setupLobby(playerCount) {
     roomCode = await createGameSession(playerCount);
     if (!roomCode) throw new Error("Failed to create room.");
 
-    // Update both room code displays (In-game HUD and Lobby Overlay)
     roomCodeText.textContent = roomCode;
     if (lobbyRoomCode) lobbyRoomCode.textContent = roomCode;
 
@@ -314,7 +286,6 @@ function ensurePauseUI() {
     }
   }
 
-  // Moved to 16rem to align left of the stacked audio controls (Width ~14.5rem)
   pauseToggle.style.right = "16rem";
   pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
 
@@ -339,15 +310,16 @@ async function initializeGame(playerCount) {
     if (!constants) {
       constants = await loadConstants();
     }
-    
-    // --- LOAD ALL BACKGROUND IMAGES ---
+
     if (backgroundImages.length === 0) {
-        const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || [constants.BACKGROUND.BACKGROUND_IMAGE_SRC];
-        // Load all defined backgrounds concurrently
-        backgroundImages = await Promise.all(bgSources.map(src => loadImage(src)));
+      const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || [
+        constants.BACKGROUND.BACKGROUND_IMAGE_SRC,
+      ];
+      backgroundImages = await Promise.all(
+        bgSources.map((src) => loadImage(src)),
+      );
     }
 
-    // --- SET INITIAL BACKGROUND (Always Index 0 / Cloud) ---
     currentBackgroundIndex = 0;
     backgroundImage = backgroundImages[currentBackgroundIndex];
 
@@ -368,10 +340,10 @@ async function initializeGame(playerCount) {
           constants.STATS,
           () => {
             if (sfxJump) {
-                sfxJump.currentTime = 0;
-                sfxJump.play().catch(() => {});
+              sfxJump.currentTime = 0;
+              sfxJump.play().catch(() => {});
             }
-          }
+          },
         );
         players.push(player);
       }
@@ -412,15 +384,12 @@ async function initializeGame(playerCount) {
 
     initializeHUD(players);
 
-    // --- SETUP RETURN MENU BUTTON (Game Over) ---
     if (returnMenuButton) {
-      // Ensure it starts hidden
-      returnMenuButton.classList.add("hidden"); 
-      
-      // Add Click Logic with Deletion
+      returnMenuButton.classList.add("hidden");
+
       returnMenuButton.addEventListener("click", async () => {
         if (roomCode) {
-            await deleteGameSession(roomCode);
+          await deleteGameSession(roomCode);
         }
         if (firebaseUnsubscribe) firebaseUnsubscribe();
         window.location.href = exitDestination;
@@ -535,16 +504,18 @@ function updatePlayerLivesDisplay(playerIndex, lives) {
   );
 }
 
+// Logic delegated to scenario via callbacks, but core UI/State update happens here
 function damagePlayer(player, timestamp) {
-  if (isGameOver || player.isDead) {
-    return;
-  }
+  if (isGameOver || player.isDead) return;
+
+  // Invincibility Logic
   if (
     timestamp - player.lastDamageAt <
     constants.PLAYER.INVINCIBILITY_WINDOW_MS
   ) {
     return;
   }
+
   player.lastDamageAt = timestamp;
   player.triggerDamageFeedback(timestamp);
   player.lives = Math.max(0, player.lives - 1);
@@ -608,84 +579,30 @@ function triggerGameOver() {
     } catch {}
   }
 
-  // --- FORCE SHOW BUTTON ---
   if (returnMenuButton) {
-    returnMenuButton.classList.remove("hidden"); // Remove CSS class
-    returnMenuButton.hidden = false; // Set JS property
-    returnMenuButton.style.display = "block"; // Force display
+    returnMenuButton.classList.remove("hidden");
+    returnMenuButton.hidden = false;
+    returnMenuButton.style.display = "block";
     returnMenuButton.focus({ preventScroll: true });
   }
-}
-
-function spawnEnemyGroup() {
-  const { MIN, MAX } = levelStats.ENEMIES.GROUP_SIZE;
-  const totalEnemies = Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
-  const spawned = [];
-  const fullConstants = constants;
-
-  while (spawned.length < totalEnemies) {
-    const enemyTypes = [TriangleEnemy, CircleEnemy, SquareEnemy];
-
-    const enemyClass =
-      enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
-    if (enemyClass === SquareEnemy) {
-      spawned.push(new SquareEnemy(levelStats, canvas, mapData, fullConstants));
-    } else {
-      spawned.push(new enemyClass(levelStats, canvas));
-    }
-  }
-
-  enemies.push(...spawned);
-}
-
-function getShootingDirectionFromKeys(player, keys) {
-  let directionX = 0;
-  let directionY = 0;
-  let hasInput = false;
-  const shootKeys = player.playerData.inputs.shoot;
-
-  const keyMap = {
-    [shootKeys[0]]: { y: -1 }, 
-    [shootKeys[1]]: { y: 1 }, 
-    [shootKeys[2]]: { x: -1 }, 
-    [shootKeys[3]]: { x: 1 }, 
-  };
-
-  for (const key in keyMap) {
-    if (keys.has(key)) {
-      hasInput = true;
-      directionX += keyMap[key].x || 0;
-      directionY += keyMap[key].y || 0;
-    }
-  }
-
-  if (!hasInput) {
-    return null;
-  }
-
-  if (directionX === 0 && directionY === 0) {
-    return null;
-  }
-
-  return { x: directionX, y: directionY };
 }
 
 function handlePlayerShooting(timestamp) {
   players.forEach((player) => {
     if (player.isDead) return;
 
-    const direction = getShootingDirectionFromKeys(player, pressedKeys);
-    if (!direction) {
-      return;
-    }
+    const direction = GameLogic.getShootingDirectionFromKeys(
+      player,
+      pressedKeys,
+    );
+    if (!direction) return;
+
     const STATS = player.getStats();
-    if (timestamp - player.lastPlayerShot < STATS.COOLDOWN_MS) {
-      return;
-    }
-    
+    if (timestamp - player.lastPlayerShot < STATS.COOLDOWN_MS) return;
+
     if (sfxShoot) {
-        sfxShoot.currentTime = 0;
-        sfxShoot.play().catch(() => {});
+      sfxShoot.currentTime = 0;
+      sfxShoot.play().catch(() => {});
     }
 
     player.lastPlayerShot = timestamp;
@@ -701,123 +618,6 @@ function handlePlayerShooting(timestamp) {
         damage: STATS.DAMAGE,
       }),
     );
-  });
-}
-
-function updateEnemies(deltaTime, timestamp, allPlayers) {
-  const primaryTarget = allPlayers.find((p) => !p.isDead);
-  const targetBounds = primaryTarget
-    ? primaryTarget.getBounds()
-    : allPlayers[0].getBounds();
-
-  enemies.forEach((enemy) => {
-    if (enemy instanceof TriangleEnemy) {
-      enemy.update(deltaTime, targetBounds, timestamp, canvas, enemyBullets);
-    } else {
-      enemy.update(deltaTime, targetBounds, timestamp, canvas);
-    }
-  });
-  enemies = enemies.filter((enemy) => enemy.active);
-}
-
-function bulletHitsTiles(bullet) {
-  if (!bullet.active) {
-    return false;
-  }
-  const samplePoints = [
-    { x: bullet.position.x, y: bullet.position.y },
-    { x: bullet.position.x + bullet.radius, y: bullet.position.y },
-    { x: bullet.position.x - bullet.radius, y: bullet.position.y },
-    { x: bullet.position.x, y: bullet.position.y + bullet.radius },
-    { x: bullet.position.x, y: bullet.position.y - bullet.radius },
-  ];
-
-  return samplePoints.some(({ x, y }) => {
-    const row = Math.floor((y - mapData.verticalOffset) / constants.TILE_SIZE);
-    const col = Math.floor(x / constants.TILE_SIZE);
-    return isSolidTile(mapData.grid, row, col, constants);
-  });
-}
-
-function updatePlayerBullets(deltaTime) {
-  playerBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
-  playerBullets.forEach((bullet) => {
-    if (bulletHitsTiles(bullet)) {
-      bullet.active = false;
-    }
-  });
-  playerBullets.forEach((bullet) => {
-    if (!bullet.active) {
-      return;
-    }
-    for (const enemy of enemies) {
-      if (!enemy.active) {
-        continue;
-      }
-      if (typeof enemy.isDying === "function" && enemy.isDying()) {
-        continue;
-      }
-      if (bullet.intersectsRect(enemy.getBounds())) {
-        bullet.active = false;
-        enemy.takeHit(bullet.damage);
-        
-        if (sfxHit) {
-            sfxHit.currentTime = 0;
-            sfxHit.play().catch(() => {});
-        }
-        
-        break;
-      }
-    }
-  });
-  enemies = enemies.filter((enemy) => enemy.active);
-  playerBullets = playerBullets.filter((bullet) => bullet.active);
-}
-
-function updateEnemyBullets(deltaTime, timestamp) {
-  enemyBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
-  enemyBullets.forEach((bullet) => {
-    if (bulletHitsTiles(bullet)) {
-      bullet.active = false;
-    }
-  });
-  enemyBullets.forEach((bullet) => {
-    if (!bullet.active) {
-      return;
-    }
-
-    for (const player of players) {
-      if (player.isDead) continue;
-
-      if (bullet.intersectsRect(player.getBounds())) {
-        bullet.active = false;
-        damagePlayer(player, timestamp);
-        break;
-      }
-    }
-  });
-  enemyBullets = enemyBullets.filter((bullet) => bullet.active);
-}
-
-function handleEnemyCollisions(timestamp) {
-  enemies.forEach((enemy) => {
-    if (!(enemy instanceof CircleEnemy) && !(enemy instanceof SquareEnemy)) {
-      return;
-    }
-    if (enemy.isSpawning) {
-      return;
-    }
-    if (typeof enemy.isDying === "function" && enemy.isDying()) {
-      return;
-    }
-
-    for (const player of players) {
-      if (player.isDead) continue;
-
-      if (rectanglesIntersect(enemy.getBounds(), player.getBounds())) {
-        damagePlayer(player, timestamp);
-      }
-    }
   });
 }
 
@@ -849,34 +649,37 @@ function applyLevelChangesAndResume(newStats) {
 
   const currentLevel = leveller ? leveller.currentLevel : 1;
   const redFactor = Math.min(1, (currentLevel - 1) * 0.1);
-  
-  // --- CHANGE BACKGROUND (Random non-repeating) ---
+
   if (backgroundImages.length > 1) {
     let newIndex;
     do {
       newIndex = Math.floor(Math.random() * backgroundImages.length);
     } while (newIndex === currentBackgroundIndex);
-    
+
     currentBackgroundIndex = newIndex;
     backgroundImage = backgroundImages[currentBackgroundIndex];
   }
 
   if (constants && constants.TILE) {
-      // --- TILE COLOR LOGIC ---
-      // If Background is Scenario 2 (index 1) or Scenario 4 (index 3), use Blue/Violet Theme
-      if (currentBackgroundIndex === 1 || currentBackgroundIndex === 3) {
-          constants.TILE.GRASS_COLOR = "#8a2be2"; // BlueViolet
-          constants.TILE.SOIL_COLOR = "#240046";  // Dark Indigo
-          constants.TILE.WALL_COLOR = "#240046";
-          // Optional: A brighter highlight for the blue theme
-          constants.TILE.HIGHLIGHT_COLOR = "rgba(180, 180, 255, 0.2)";
-      } else {
-          // Default Theme (Brown/Green) with Level Progression (Red Shift)
-          constants.TILE.GRASS_COLOR = blendColor("#7ac74f", "#660000", redFactor);
-          constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
-          constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
-          constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
-      }
+    if (currentBackgroundIndex === 2 || currentBackgroundIndex === 3) {
+      constants.TILE.GRASS_COLOR = "#8a2be2";
+      constants.TILE.SOIL_COLOR = "#240046";
+      constants.TILE.WALL_COLOR = "#240046";
+      constants.TILE.HIGHLIGHT_COLOR = "rgba(180, 180, 255, 0.2)";
+    } else {
+      constants.TILE.GRASS_COLOR = GameLogic.blendColor(
+        "#7ac74f",
+        "#660000",
+        redFactor,
+      );
+      constants.TILE.SOIL_COLOR = GameLogic.blendColor(
+        "#5f3d24",
+        "#2b0a0a",
+        redFactor,
+      );
+      constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
+      constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
+    }
   }
 
   mapData = generateMap(canvas, constants);
@@ -888,7 +691,7 @@ function applyLevelChangesAndResume(newStats) {
   enemies = [];
   playerBullets = [];
   enemyBullets = [];
-  lastSpawnTimestamp = -Infinity; 
+  lastSpawnTimestamp = -Infinity;
 
   enemies.forEach((enemy) => {
     if (typeof enemy.updateStats === "function") {
@@ -930,9 +733,9 @@ function handleResume() {
 async function handleQuit() {
   const exitDestination =
     constants?.INPUT?.EXIT_DESTINATION || "../menu/menu.html";
-  
+
   if (roomCode) {
-      await deleteGameSession(roomCode);
+    await deleteGameSession(roomCode);
   }
 
   if (firebaseUnsubscribe) firebaseUnsubscribe();
@@ -943,9 +746,9 @@ function handleLevelUp(activePlayers, newStats) {
   console.log(
     `Level Up to ${leveller.currentLevel}! Starting upgrade process.`,
   );
-  GAME_PAUSED = true; 
-  upgradeOverlay.classList.remove("hidden"); 
-  pauseOverlay.classList.add("hidden"); 
+  GAME_PAUSED = true;
+  upgradeOverlay.classList.remove("hidden");
+  pauseOverlay.classList.add("hidden");
 
   playerUpgradeQueue = activePlayers.filter((p) => !p.isDead);
   currentUpgradePlayerIndex = 0;
@@ -960,7 +763,10 @@ function handleLevelUp(activePlayers, newStats) {
 function startUpgradeProcess(newStats) {
   if (currentUpgradePlayerIndex < playerUpgradeQueue.length) {
     const player = playerUpgradeQueue[currentUpgradePlayerIndex];
-    const powers = selectRandomPowers(constants.LEVELING.POWERS.CHOICES);
+    const powers = GameLogic.selectRandomPowers(
+      Object.keys(constants.LEVELING.POWERS.PLAYER),
+      constants.LEVELING.POWERS.CHOICES,
+    );
     showUpgradeScreen(player, powers, newStats);
   } else {
     console.log(
@@ -969,22 +775,6 @@ function startUpgradeProcess(newStats) {
     upgradeOverlay.classList.add("hidden");
     applyLevelChangesAndResume(newStats);
   }
-}
-
-function selectRandomPowers(count) {
-  const allPowers = Object.keys(constants.LEVELING.POWERS.PLAYER);
-  const selectedPowers = new Set();
-
-  if (count >= allPowers.length) {
-    return allPowers;
-  }
-
-  while (selectedPowers.size < count) {
-    const randomIndex = Math.floor(Math.random() * allPowers.length);
-    selectedPowers.add(allPowers[randomIndex]);
-  }
-
-  return Array.from(selectedPowers);
 }
 
 function showUpgradeScreen(player, powers, newStats) {
@@ -1010,7 +800,16 @@ function showUpgradeScreen(player, powers, newStats) {
         .querySelectorAll("button")
         .forEach((btn) => (btn.disabled = true));
 
-      applyPowerUp(player, powerKey);
+      const result = GameLogic.applyPowerUp(
+        player,
+        powerKey,
+        powerData,
+        constants,
+      );
+      if (result && result.type === "LIVES") {
+        initializeHUD(players);
+        updatePlayerLivesDisplay(player.playerIndex, result.newValue);
+      }
 
       currentUpgradePlayerIndex++;
       startUpgradeProcess(newStats);
@@ -1018,66 +817,6 @@ function showUpgradeScreen(player, powers, newStats) {
 
     powerUpContainer.appendChild(button);
   });
-}
-
-function applyPowerUp(player, powerKey) {
-  const power = constants.LEVELING.POWERS.PLAYER[powerKey];
-
-  if (!player || !power) return;
-
-  let statKey = null;
-  const playerStats = player.getStats();
-
-  switch (powerKey) {
-    case "SIZE":
-      statKey = "SIZE";
-      break;
-    case "SPEED":
-      statKey = "MAX_SPEED";
-      break;
-    case "MAX_LIVES":
-      statKey = "MAX_LIVES";
-      break;
-    case "RADIUS":
-      statKey = "RADIUS";
-      break;
-    case "COOLDOWN_MS":
-      statKey = "COOLDOWN_MS";
-      break;
-    case "DAMAGE":
-      statKey = "DAMAGE";
-      break;
-    default:
-      return;
-  }
-
-  if (statKey === "MAX_LIVES") {
-    playerStats.MAX_LIVES += power.MULTIPLIER;
-    player.lives = Math.min(
-      playerStats.MAX_LIVES,
-      player.lives + power.MULTIPLIER,
-    );
-    initializeHUD(players); 
-    updatePlayerLivesDisplay(player.playerIndex, player.lives);
-  } else {
-    const currentValue = playerStats[statKey];
-    let newValue = currentValue * power.MULTIPLIER;
-
-    if (power.CAP && newValue > power.CAP) {
-      newValue = power.CAP;
-    } else if (power.MIN_CAP && newValue < power.MIN_CAP) {
-      newValue = power.MIN_CAP;
-    }
-
-    playerStats[statKey] = newValue;
-
-    if (statKey === "SIZE") {
-      player.state.width = newValue;
-      player.state.height = newValue;
-    } else if (statKey === "MAX_SPEED") {
-      player.maxSpeed = newValue;
-    }
-  }
 }
 
 function gameLoop(timestamp) {
@@ -1088,17 +827,69 @@ function gameLoop(timestamp) {
     if (!GAME_PAUSED) {
       players.forEach((player) => player.update(pressedKeys));
       handlePlayerShooting(timestamp);
+
+      // --- SPAWN LOGIC ---
       if (
         timestamp - lastSpawnTimestamp >=
         levelStats.ENEMIES.SPAWN_INTERVAL_MS
       ) {
-        spawnEnemyGroup();
+        const newEnemies = GameLogic.spawnEnemyGroup(
+          levelStats,
+          canvas,
+          mapData,
+          constants,
+        );
+        enemies.push(...newEnemies);
         lastSpawnTimestamp = timestamp;
       }
-      updateEnemies(deltaTime, timestamp, players);
-      updatePlayerBullets(deltaTime);
-      updateEnemyBullets(deltaTime, timestamp);
-      handleEnemyCollisions(timestamp);
+
+      // --- UPDATE LOGIC ---
+      // Update Enemies
+      enemies = GameLogic.updateEnemies(
+        enemies,
+        deltaTime,
+        timestamp,
+        players,
+        canvas,
+        enemyBullets,
+      );
+
+      // Update Player Bullets
+      playerBullets = GameLogic.updatePlayerBullets(
+        playerBullets,
+        enemies,
+        deltaTime,
+        canvas,
+        mapData,
+        constants,
+        {
+          onHit: () => {
+            if (sfxHit) {
+              sfxHit.currentTime = 0;
+              sfxHit.play().catch(() => {});
+            }
+          },
+        },
+      );
+
+      // Update Enemy Bullets
+      enemyBullets = GameLogic.updateEnemyBullets(
+        enemyBullets,
+        players,
+        deltaTime,
+        timestamp,
+        canvas,
+        mapData,
+        constants,
+        {
+          onPlayerHit: (player, time) => damagePlayer(player, time),
+        },
+      );
+
+      // Handle Body Collisions
+      GameLogic.handleEnemyBodyCollisions(enemies, players, timestamp, {
+        onPlayerHit: (player, time) => damagePlayer(player, time),
+      });
     }
 
     if (leveller && !GAME_PAUSED) {

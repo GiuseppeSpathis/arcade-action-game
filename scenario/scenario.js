@@ -849,13 +849,6 @@ function applyLevelChangesAndResume(newStats) {
 
   const currentLevel = leveller ? leveller.currentLevel : 1;
   const redFactor = Math.min(1, (currentLevel - 1) * 0.1);
-
-  if (constants && constants.TILE) {
-    constants.TILE.GRASS_COLOR = blendColor("#7ac74f", "#660000", redFactor);
-    constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
-    constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
-    constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
-  }
   
   // --- CHANGE BACKGROUND (Random non-repeating) ---
   if (backgroundImages.length > 1) {
@@ -866,6 +859,24 @@ function applyLevelChangesAndResume(newStats) {
     
     currentBackgroundIndex = newIndex;
     backgroundImage = backgroundImages[currentBackgroundIndex];
+  }
+
+  if (constants && constants.TILE) {
+      // --- TILE COLOR LOGIC ---
+      // If Background is Scenario 2 (index 1) or Scenario 4 (index 3), use Blue/Violet Theme
+      if (currentBackgroundIndex === 1 || currentBackgroundIndex === 3) {
+          constants.TILE.GRASS_COLOR = "#8a2be2"; // BlueViolet
+          constants.TILE.SOIL_COLOR = "#240046";  // Dark Indigo
+          constants.TILE.WALL_COLOR = "#240046";
+          // Optional: A brighter highlight for the blue theme
+          constants.TILE.HIGHLIGHT_COLOR = "rgba(180, 180, 255, 0.2)";
+      } else {
+          // Default Theme (Brown/Green) with Level Progression (Red Shift)
+          constants.TILE.GRASS_COLOR = blendColor("#7ac74f", "#660000", redFactor);
+          constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
+          constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
+          constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
+      }
   }
 
   mapData = generateMap(canvas, constants);

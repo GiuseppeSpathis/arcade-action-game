@@ -15,7 +15,7 @@ This game was built with a focus on core web technologies. All graphics are draw
 
 
 <p align="center">
-  <img width="700" height="700" alt="tutorial1" src="https://github.com/user-attachments/assets/dd176603-bfdf-450f-aef2-17f10ac50e42" />
+  <img width="700" height="700" alt="tutorial1" src="https://github.com/user-attachments/assets/c0800e05-5e93-4682-95ff-674b65489200" />
 </p>
 
 
@@ -44,7 +44,7 @@ Goal: Survive as long as possible to reach higher levels! When you complete a le
 Once all players are connected, the game will start automatically. Use the on-screen D-pads for moving and shooting and the "JUMP" button to jump.
 
 <p align="center">
-  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/46cebd84-87f7-4789-96d3-68f436ce03d6" />
+  <img width="700" height="700" alt="image" src="https://github.com/user-attachments/assets/e87b9e3e-ca6a-48b0-9a0a-2a43d653eafc" />
 </p>
 
 

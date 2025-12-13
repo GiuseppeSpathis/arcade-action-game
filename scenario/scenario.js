@@ -312,8 +312,8 @@ function ensurePauseUI() {
     }
   }
 
-  // Moved to 28rem to accommodate Music (Note) and SFX (Bang) sliders
-  pauseToggle.style.right = "28rem";
+  // Moved to 16rem to align left of the stacked audio controls (Width ~14.5rem)
+  pauseToggle.style.right = "16rem";
   pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
 
   if (!pauseOverlay) {

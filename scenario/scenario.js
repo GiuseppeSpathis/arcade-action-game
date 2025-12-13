@@ -63,10 +63,10 @@ const currentPlayerPrompt = document.getElementById("currentPlayerPrompt");
 const powerUpContainer = document.getElementById("powerUpContainer");
 
 // --- Pause Elements ---
-let pauseOverlay = document.getElementById("pauseOverlay");
-let pauseToggle = document.getElementById("pauseToggle");
-let resumeButton = document.getElementById("resumeButton");
-let quitButton = document.getElementById("quitButton");
+const pauseOverlay = document.getElementById("pauseOverlay");
+const pauseToggle = document.getElementById("pauseToggle");
+const resumeButton = document.getElementById("resumeButton");
+const quitButton = document.getElementById("quitButton");
 
 // --- Audio Elements ---
 const musicAudioElement = document.getElementById("bg_music");
@@ -269,40 +269,11 @@ async function setupLobby(playerCount) {
 }
 
 function ensurePauseUI() {
-  if (!pauseToggle) {
-    pauseToggle = document.createElement("button");
-    pauseToggle.id = "pauseToggle";
-    pauseToggle.className = "audio-toggle-button pause-toggle-button";
-    pauseToggle.type = "button";
-    pauseToggle.ariaLabel = "Pause Game";
-
-    const audioControls = document.querySelector(".audio-controls");
-    if (audioControls) {
-      audioControls.insertBefore(pauseToggle, audioControls.firstChild);
-    } else {
-      document.body.appendChild(pauseToggle);
-      pauseToggle.style.position = "absolute";
-      pauseToggle.style.top = "1rem";
-    }
+  // Logic simplified: Elements are now static in HTML.
+  // This function primarily ensures the button state reflects the paused variable.
+  if (pauseToggle) {
+    pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
   }
-
-  pauseToggle.style.right = "16rem";
-  pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
-
-  if (!pauseOverlay) {
-    pauseOverlay = document.createElement("div");
-    pauseOverlay.id = "pauseOverlay";
-    pauseOverlay.className = "pause-overlay hidden";
-    pauseOverlay.innerHTML = `
-        <h1 class="pause-title">GAME PAUSED</h1>
-        <button id="resumeButton" class="game-over-button resume-button" type="button">RESUME</button>
-        <button id="quitButton" class="game-over-button quit-button" type="button">QUIT GAME</button>
-    `;
-    document.body.appendChild(pauseOverlay);
-  }
-
-  resumeButton = document.getElementById("resumeButton");
-  quitButton = document.getElementById("quitButton");
 }
 
 async function initializeGame(playerCount) {

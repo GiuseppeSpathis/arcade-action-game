@@ -28,7 +28,7 @@ function createVolumeSlider(
   slider.max = "1";
   slider.step = "0.01";
   slider.value = localStorage.getItem(storageKey) ?? "1";
-  slider.style.width = "80px";
+  //slider.style.width = "80px";
   slider.setAttribute("aria-label", "Adjust volume");
   slider.title = "Adjust volume";
 

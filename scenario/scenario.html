@@ -7,33 +7,12 @@
         <link rel="stylesheet" href="scenario.css" />
     </head>
     <body>
-        <div class="audio-controls">
-            <button
-                id="musicToggle"
-                class="audio-toggle-button"
-                type="button"
-                aria-label="Disable music"
-                aria-pressed="false"
-            ></button>
-            <span
-                id="musicVolumeSliderContainer"
-                class="audio-slider-container"
-            ></span>
-
-            <button
-                id="sfxToggle"
-                class="audio-toggle-button"
-                type="button"
-                aria-label="Disable SFX"
-                aria-pressed="false"
-                style="top: 5rem;" 
-            ></button>
-            <span
-                id="sfxVolumeSliderContainer"
-                class="audio-slider-container"
-                style="top: 5.25rem;"
-            ></span>
-        </div>
+        <button
+            id="pauseToggle"
+            class="audio-toggle-button pause-toggle-button"
+            type="button"
+            aria-label="Pause Game"
+        >⏸</button>
 
         <div id="hudContainer" class="hud"></div>
 
@@ -73,6 +52,43 @@
             </p>
             <div id="powerUpContainer" class="power-up-container">
                 </div>
+        </div>
+
+        <div id="pauseOverlay" class="pause-overlay hidden">
+            <h1 class="pause-title">GAME PAUSED</h1>
+            
+            <div class="pause-audio-controls">
+                <div class="audio-control-group">
+                    <button
+                        id="musicToggle"
+                        class="audio-toggle-button static-icon"
+                        type="button"
+                        aria-label="Disable music"
+                        aria-pressed="false"
+                    ></button>
+                    <span
+                        id="musicVolumeSliderContainer"
+                        class="audio-slider-container"
+                    ></span>
+                </div>
+
+                <div class="audio-control-group">
+                    <button
+                        id="sfxToggle"
+                        class="audio-toggle-button static-icon"
+                        type="button"
+                        aria-label="Disable SFX"
+                        aria-pressed="false"
+                    ></button>
+                    <span
+                        id="sfxVolumeSliderContainer"
+                        class="audio-slider-container"
+                    ></span>
+                </div>
+            </div>
+
+            <button id="resumeButton" class="game-over-button resume-button" type="button">RESUME</button>
+            <button id="quitButton" class="game-over-button quit-button" type="button">QUIT GAME</button>
         </div>
 
         <button

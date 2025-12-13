@@ -17,7 +17,7 @@ import {
   createGameSession,
   listenForRemoteInputs,
   setGameState,
-  deleteGameSession, // Importante per disconnettere
+  deleteGameSession, 
 } from "../helper/firebaseRemoteController.js";
 
 // --- Global Game State ---
@@ -34,7 +34,7 @@ let enemyBullets = [];
 let lastSpawnTimestamp = -Infinity;
 let mapData;
 let backgroundImage;
-let roomCode; // This holds the current room code
+let roomCode; 
 let leveller;
 let levelStats = {};
 let GAME_PAUSED = false;
@@ -67,33 +67,55 @@ let resumeButton = document.getElementById("resumeButton");
 let quitButton = document.getElementById("quitButton");
 
 // --- Audio Elements ---
-const audioElement = document.getElementById("bg_music");
-const toggleButton = document.getElementById("musicToggle");
+const musicAudioElement = document.getElementById("bg_music");
+const musicToggleButton = document.getElementById("musicToggle");
+const musicSliderContainer = document.getElementById("musicVolumeSliderContainer");
+
+const sfxToggleButton = document.getElementById("sfxToggle");
+const sfxSliderContainer = document.getElementById("sfxVolumeSliderContainer");
+
 const returnMenuButton = document.getElementById("returnMenuButton");
+
+// Collect SFX elements
 const sfxGameOver = document.getElementById("sfx_gameover");
 if (sfxGameOver) sfxGameOver.volume = 0.9;
 const sfxHit = document.getElementById("sfx_hit");
 if (sfxHit) sfxHit.volume = 0.75;
-
 const sfxShoot = document.getElementById("sfx_shoot");
 if (sfxShoot) sfxShoot.volume = 0.6;
 const sfxJump = document.getElementById("sfx_jump");
 if (sfxJump) sfxJump.volume = 0.6;
 
-setupAudioToggle({ audioElement, toggleButton });
+const sfxElements = [sfxGameOver, sfxHit, sfxShoot, sfxJump].filter(Boolean);
+
+// --- SETUP AUDIO CONTROLS ---
+
+// 1. Music Control
+setupAudioToggle({
+    audioElement: musicAudioElement,
+    toggleButton: musicToggleButton,
+    sliderContainer: musicSliderContainer,
+    storageKeyMuted: "retro-arcade-music-muted",
+    storageKeyVolume: "retro-arcade-music-volume"
+});
+
+// 2. SFX Control (Controls the group)
+setupAudioToggle({
+    audioElements: sfxElements,
+    toggleButton: sfxToggleButton,
+    sliderContainer: sfxSliderContainer,
+    storageKeyMuted: "retro-arcade-sfx-muted",
+    storageKeyVolume: "retro-arcade-sfx-volume"
+});
+
 
 // --- LOBBY BACK BUTTON LOGIC ---
 if (lobbyBackButton) {
     lobbyBackButton.addEventListener("click", async () => {
-        // DELETE SESSION FROM FIREBASE TO DISCONNECT PLAYERS
         if (roomCode) {
             await deleteGameSession(roomCode);
         }
-
-        // Stop listening to firebase if we leave
         if (firebaseUnsubscribe) firebaseUnsubscribe();
-        
-        // Return to menu
         window.location.href = "../menu/menu.html";
     });
 }
@@ -288,7 +310,8 @@ function ensurePauseUI() {
     }
   }
 
-  pauseToggle.style.right = "13.3rem";
+  // Moved further left to accommodate the new SFX controls (Music: ~1.5-11rem range, SFX: ~12-22rem range)
+  pauseToggle.style.right = "24.5rem";
   pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
 
   if (!pauseOverlay) {
@@ -550,19 +573,19 @@ function triggerGameOver() {
     firebaseUnsubscribe = null;
   }
 
-  if (audioElement) {
-    const startVol = audioElement.volume ?? 0.35;
+  if (musicAudioElement) {
+    const startVol = musicAudioElement.volume ?? 0.35;
     const duration = 500;
     const step = 40;
     let elapsed = 0;
     const id = setInterval(() => {
       elapsed += step;
       const t = Math.min(1, elapsed / duration);
-      audioElement.volume = startVol * (1 - t);
+      musicAudioElement.volume = startVol * (1 - t);
       if (t >= 1) {
         clearInterval(id);
-        audioElement.pause();
-        audioElement.volume = startVol;
+        musicAudioElement.pause();
+        musicAudioElement.volume = startVol;
       }
     }, step);
   }

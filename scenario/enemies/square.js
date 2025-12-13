@@ -23,10 +23,42 @@ export class SquareEnemy extends BaseEnemy {
     const minX = chosen.colStart * this.tileSize;
     const maxX =
       (chosen.colEnd + 1) * this.tileSize - this.size - this.collisionOffset;
+
+    // --- UPDATED SPAWN LOGIC START ---
+    // Define the map width
+    const mapWidth = mapData.cols * this.tileSize;
+    
+    // Define a "Center Zone" (e.g., middle 60% of the map) to avoid walls
+    const zonePadding = mapWidth * 0.2; 
+    
+    // Intersect the platform bounds with the center zone
+    const centerMin = Math.max(minX, zonePadding);
+    const centerMax = Math.min(maxX, mapWidth - zonePadding - this.size);
+
+    let spawnRangeMin, spawnRangeMax;
+
+    if (centerMin < centerMax) {
+      // Platform overlaps with center zone; spawn there
+      spawnRangeMin = centerMin;
+      spawnRangeMax = centerMax;
+    } else {
+      // Platform is entirely outside the center zone (side platform).
+      // Fallback: use platform bounds but enforce at least 1 tile padding from walls
+      spawnRangeMin = Math.max(minX, this.tileSize);
+      spawnRangeMax = Math.min(maxX, mapWidth - this.tileSize - this.size);
+      
+      // Safety check if platform is too small or inside wall padding
+      if (spawnRangeMin > spawnRangeMax) {
+         spawnRangeMin = minX;
+         spawnRangeMax = maxX;
+      }
+    }
+
     const spawnX = Math.min(
-      Math.max(minX, minX + Math.random() * Math.max(1, maxX - minX)),
-      maxX,
+      Math.max(spawnRangeMin, spawnRangeMin + Math.random() * Math.max(1, spawnRangeMax - spawnRangeMin)),
+      spawnRangeMax,
     );
+    // --- UPDATED SPAWN LOGIC END ---
 
     const spawnY =
       (this.mapOffsetY - (this.mapOffsetY*0.2) +

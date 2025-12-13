@@ -1,7 +1,7 @@
 import { checkCollision } from "./map.js";
 
 export class PlayerController {
-  constructor(constants, mapData, canvas, playerData, playerIndex, stats) {
+  constructor(constants, mapData, canvas, playerData, playerIndex, stats, onJump) {
     this.constants = constants;
     this.canvas = canvas;
     this.map = mapData.grid;
@@ -16,6 +16,7 @@ export class PlayerController {
     this.isDead = false;
     this.lastPlayerShot = 0;
     this.stats = stats;
+    this.onJump = onJump;
 
     // Initialize state structure
     this.state = {
@@ -112,6 +113,8 @@ export class PlayerController {
       this.state.coyoteFrames = 0;
       this.state.jumpBufferFrames = 0;
 
+      if (this.onJump) this.onJump();
+
       const impulse =
         this.stats.MAX_SPEED * this.constants.PLAYER.JUMP_IMPULSE_MULTIPLIER;
       if (this.isMovingLeft(pressedKeys)) {
@@ -130,6 +133,8 @@ export class PlayerController {
       // Set the cooldown (countdown)
       this.state.wallJumpCooldown = this.constants.PLAYER.WALL_JUMP_COOLDOWN_FRAMES || 25;
       
+      if (this.onJump) this.onJump();
+
       const wallImpulse = this.constants.PLAYER.WALL_JUMP_IMPULSE_X || 8;
       
       if (touchingLeft) {

@@ -75,6 +75,11 @@ if (sfxGameOver) sfxGameOver.volume = 0.9;
 const sfxHit = document.getElementById("sfx_hit");
 if (sfxHit) sfxHit.volume = 0.75;
 
+const sfxShoot = document.getElementById("sfx_shoot");
+if (sfxShoot) sfxShoot.volume = 0.6;
+const sfxJump = document.getElementById("sfx_jump");
+if (sfxJump) sfxJump.volume = 0.6;
+
 setupAudioToggle({ audioElement, toggleButton });
 
 // --- LOBBY BACK BUTTON LOGIC ---
@@ -327,6 +332,12 @@ async function initializeGame(playerCount) {
           constants.PLAYER_DATA[i],
           i,
           constants.STATS,
+          () => {
+            if (sfxJump) {
+                sfxJump.currentTime = 0;
+                sfxJump.play().catch(() => {});
+            }
+          }
         );
         players.push(player);
       }
@@ -637,6 +648,12 @@ function handlePlayerShooting(timestamp) {
     if (timestamp - player.lastPlayerShot < STATS.COOLDOWN_MS) {
       return;
     }
+    
+    if (sfxShoot) {
+        sfxShoot.currentTime = 0;
+        sfxShoot.play().catch(() => {});
+    }
+
     player.lastPlayerShot = timestamp;
     const center = player.getCenter();
     playerBullets.push(
@@ -709,6 +726,12 @@ function updatePlayerBullets(deltaTime) {
       if (bullet.intersectsRect(enemy.getBounds())) {
         bullet.active = false;
         enemy.takeHit(bullet.damage);
+        
+        if (sfxHit) {
+            sfxHit.currentTime = 0;
+            sfxHit.play().catch(() => {});
+        }
+        
         break;
       }
     }

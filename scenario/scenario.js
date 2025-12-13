@@ -33,7 +33,9 @@ let playerBullets = [];
 let enemyBullets = [];
 let lastSpawnTimestamp = -Infinity;
 let mapData;
-let backgroundImage;
+let backgroundImage; // The current background image object
+let backgroundImages = []; // Array of all loaded background image objects
+let currentBackgroundIndex = 0; // Tracks which image is currently displayed
 let roomCode; 
 let leveller;
 let levelStats = {};
@@ -337,11 +339,18 @@ async function initializeGame(playerCount) {
     if (!constants) {
       constants = await loadConstants();
     }
-    if (!backgroundImage) {
-      backgroundImage = await loadImage(
-        constants.BACKGROUND.BACKGROUND_IMAGE_SRC,
-      );
+    
+    // --- LOAD ALL BACKGROUND IMAGES ---
+    if (backgroundImages.length === 0) {
+        const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || [constants.BACKGROUND.BACKGROUND_IMAGE_SRC];
+        // Load all defined backgrounds concurrently
+        backgroundImages = await Promise.all(bgSources.map(src => loadImage(src)));
     }
+
+    // --- SET INITIAL BACKGROUND (Always Index 0 / Cloud) ---
+    currentBackgroundIndex = 0;
+    backgroundImage = backgroundImages[currentBackgroundIndex];
+
     if (!mapData) {
       mapData = generateMap(canvas, constants);
     }
@@ -846,6 +855,17 @@ function applyLevelChangesAndResume(newStats) {
     constants.TILE.SOIL_COLOR = blendColor("#5f3d24", "#2b0a0a", redFactor);
     constants.TILE.WALL_COLOR = constants.TILE.SOIL_COLOR;
     constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
+  }
+  
+  // --- CHANGE BACKGROUND (Random non-repeating) ---
+  if (backgroundImages.length > 1) {
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * backgroundImages.length);
+    } while (newIndex === currentBackgroundIndex);
+    
+    currentBackgroundIndex = newIndex;
+    backgroundImage = backgroundImages[currentBackgroundIndex];
   }
 
   mapData = generateMap(canvas, constants);

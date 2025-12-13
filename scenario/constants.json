@@ -121,7 +121,13 @@
     "WALL_COLOR": "#5f3d24"
   },
   "BACKGROUND": {
-    "BACKGROUND_IMAGE_SRC": "../assets/images/backgroundScenario.png"
+    "BACKGROUND_IMAGES": [
+      "../assets/images/backgroundScenario.png",
+      "../assets/images/backgroundScenario2.png",
+      "../assets/images/backgroundScenario3.png",
+      "../assets/images/backgroundScenario4.png",
+      "../assets/images/backgroundScenario5.png"
+    ]
   },
   "INPUT": {
     "PREVENT_DEFAULT_KEYS": [

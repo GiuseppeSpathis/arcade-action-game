@@ -321,7 +321,7 @@ function ensurePauseUI() {
     pauseOverlay.id = "pauseOverlay";
     pauseOverlay.className = "pause-overlay hidden";
     pauseOverlay.innerHTML = `
-        <h1 class="pause-title">GAME PAUSED</h1>
+        <h1 class="pause-title">GAME PAUSED1</h1>
         <button id="resumeButton" class="game-over-button resume-button" type="button">RESUME</button>
         <button id="quitButton" class="game-over-button quit-button" type="button">QUIT GAME</button>
     `;

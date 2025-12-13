@@ -1,7 +1,10 @@
 import { setupAudioToggle } from "../helper/audioController.js";
-import { generateMap } from "./helper/map.js";
+import { generateMap, isSolidTile } from "./helper/map.js";
 import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
+import { TriangleEnemy } from "./enemies/triangle.js";
+import { CircleEnemy } from "./enemies/circle.js";
+import { SquareEnemy } from "./enemies/square.js";
 import { Leveller } from "./helper/leveller.js";
 import * as GameLogic from "./utils/logic.js";
 import {
@@ -63,10 +66,10 @@ const currentPlayerPrompt = document.getElementById("currentPlayerPrompt");
 const powerUpContainer = document.getElementById("powerUpContainer");
 
 // --- Pause Elements ---
-const pauseOverlay = document.getElementById("pauseOverlay");
-const pauseToggle = document.getElementById("pauseToggle");
-const resumeButton = document.getElementById("resumeButton");
-const quitButton = document.getElementById("quitButton");
+let pauseOverlay = document.getElementById("pauseOverlay");
+let pauseToggle = document.getElementById("pauseToggle");
+let resumeButton = document.getElementById("resumeButton");
+let quitButton = document.getElementById("quitButton");
 
 // --- Audio Elements ---
 const musicAudioElement = document.getElementById("bg_music");
@@ -269,11 +272,39 @@ async function setupLobby(playerCount) {
 }
 
 function ensurePauseUI() {
-  // Logic simplified: Elements are now static in HTML.
-  // This function primarily ensures the button state reflects the paused variable.
-  if (pauseToggle) {
-    pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
+  if (!pauseToggle) {
+    pauseToggle = document.createElement("button");
+    pauseToggle.id = "pauseToggle";
+    pauseToggle.className = "audio-toggle-button pause-toggle-button";
+    pauseToggle.type = "button";
+    pauseToggle.ariaLabel = "Pause Game";
+
+    const audioControls = document.querySelector(".audio-controls");
+    if (audioControls) {
+      audioControls.insertBefore(pauseToggle, audioControls.firstChild);
+    } else {
+      document.body.appendChild(pauseToggle);
+      pauseToggle.style.position = "absolute";
+      pauseToggle.style.top = "1rem";
+    }
   }
+
+  pauseToggle.textContent = GAME_PAUSED ? "▶" : "⏸";
+
+  if (!pauseOverlay) {
+    pauseOverlay = document.createElement("div");
+    pauseOverlay.id = "pauseOverlay";
+    pauseOverlay.className = "pause-overlay hidden";
+    pauseOverlay.innerHTML = `
+        <h1 class="pause-title">GAME PAUSED</h1>
+        <button id="resumeButton" class="game-over-button resume-button" type="button">RESUME</button>
+        <button id="quitButton" class="game-over-button quit-button" type="button">QUIT GAME</button>
+    `;
+    document.body.appendChild(pauseOverlay);
+  }
+
+  resumeButton = document.getElementById("resumeButton");
+  quitButton = document.getElementById("quitButton");
 }
 
 async function initializeGame(playerCount) {
@@ -283,16 +314,22 @@ async function initializeGame(playerCount) {
     }
 
     if (backgroundImages.length === 0) {
-      const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || [
-        constants.BACKGROUND.BACKGROUND_IMAGE_SRC,
-      ];
-      backgroundImages = await Promise.all(
-        bgSources.map((src) => loadImage(src)),
-      );
+      const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || 
+          (constants.BACKGROUND.BACKGROUND_IMAGE_SRC ? [constants.BACKGROUND.BACKGROUND_IMAGE_SRC] : []);
+      
+      const validSources = bgSources.filter(src => src);
+
+      if (validSources.length > 0) {
+          backgroundImages = await Promise.all(
+             validSources.map((src) => loadImage(src))
+          );
+      }
     }
 
     currentBackgroundIndex = 0;
-    backgroundImage = backgroundImages[currentBackgroundIndex];
+    if (backgroundImages.length > 0) {
+      backgroundImage = backgroundImages[currentBackgroundIndex];
+    }
 
     if (!mapData) {
       mapData = generateMap(canvas, constants);
@@ -475,11 +512,9 @@ function updatePlayerLivesDisplay(playerIndex, lives) {
   );
 }
 
-// Logic delegated to scenario via callbacks, but core UI/State update happens here
 function damagePlayer(player, timestamp) {
   if (isGameOver || player.isDead) return;
 
-  // Invincibility Logic
   if (
     timestamp - player.lastDamageAt <
     constants.PLAYER.INVINCIBILITY_WINDOW_MS
@@ -632,7 +667,7 @@ function applyLevelChangesAndResume(newStats) {
   }
 
   if (constants && constants.TILE) {
-    if (currentBackgroundIndex === 2 || currentBackgroundIndex === 3) {
+    if (currentBackgroundIndex === 1 || currentBackgroundIndex === 3) {
       constants.TILE.GRASS_COLOR = "#8a2be2";
       constants.TILE.SOIL_COLOR = "#240046";
       constants.TILE.WALL_COLOR = "#240046";
@@ -900,9 +935,18 @@ async function main() {
   } else {
     try {
       constants = await loadConstants();
-      backgroundImage = await loadImage(
-        constants.BACKGROUND.BACKGROUND_IMAGE_SRC,
-      );
+      
+      // --- FIX: Handle array of images safely for Multiplayer too ---
+      // The original code here tried to load constants.BACKGROUND.BACKGROUND_IMAGE_SRC
+      // which is now undefined.
+      const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || 
+          (constants.BACKGROUND.BACKGROUND_IMAGE_SRC ? [constants.BACKGROUND.BACKGROUND_IMAGE_SRC] : []);
+      
+      if (bgSources.length > 0) {
+          backgroundImage = await loadImage(bgSources[0]);
+      }
+      // -------------------------------------------------------------
+
       mapData = generateMap(canvas, constants);
       await setupLobby(playerCount);
     } catch (error) {

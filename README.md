@@ -18,7 +18,10 @@ This game was built with a focus on core web technologies. All graphics are draw
   <img width="700" height="700" alt="tutorial1" src="https://github.com/user-attachments/assets/c0800e05-5e93-4682-95ff-674b65489200" />
 </p>
 
+### Gameplay Demo
 
+
+[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-Click_Here-red?style=for-the-badge)](./demo.webm)
 
 ## How to Play
 Goal: Survive as long as possible to reach higher levels! When you complete a level, you gain a power-up. Keep an eye on your remaining lives (hearts) in the top-left corner and the current level in the bottom-left.

@@ -24,10 +24,8 @@ function drawBackground(ctxInstance, bgImage, canvas, level = 1) {
 
   ctxInstance.drawImage(bgImage, offsetX, offsetY, drawWidth, drawHeight);
 
-  // Apply red tint based on level
   if (level > 1) {
     ctxInstance.save();
-    // Cap opacity at 0.4 so the background remains visible
     const opacity = Math.min(0.4, (level - 1) * 0.05);
     ctxInstance.fillStyle = `rgba(139, 0, 0, ${opacity})`;
     ctxInstance.globalCompositeOperation = 'multiply';
@@ -72,14 +70,10 @@ function drawTiles(map, consts, ctx) {
       } else if (tileValue === consts.MAP.WALL_TILE_VALUE) {
         ctx.fillStyle = consts.TILE.WALL_COLOR;
         
-        // Fill the top gap 
         if (row === 0) {
-          // If this is the top row, draw from the very top of the canvas (y=0)
-          // down to the bottom of this tile.
           const totalHeight = tileSize + offsetY;
           ctx.fillRect(tileX, 0, tileSize, totalHeight);
         } else {
-          // Standard drawing for other rows
           ctx.fillRect(tileX, tileY, tileSize, tileSize);
         }
        

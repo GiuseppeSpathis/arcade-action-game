@@ -1,10 +1,9 @@
 import { TriangleEnemy } from "../enemies/triangle.js";
 import { CircleEnemy } from "../enemies/circle.js";
 import { SquareEnemy } from "../enemies/square.js";
-import { Bullet } from "../helper/bullet.js";
 import { isSolidTile } from "../helper/map.js";
 
-// --- Math & Helper Utils ---
+// Standard AABB (Axis-Aligned Bounding Box) collision check
 export function rectanglesIntersect(a, b) {
   return (
     a.x < b.x + b.width &&
@@ -13,7 +12,7 @@ export function rectanglesIntersect(a, b) {
     a.y + a.height > b.y
   );
 }
-
+// Linearly interpolates between two hex colors
 export function blendColor(hexColor1, hexColor2, factor) {
   const r1 = parseInt(hexColor1.substring(1, 3), 16);
   const g1 = parseInt(hexColor1.substring(3, 5), 16);
@@ -29,7 +28,7 @@ export function blendColor(hexColor1, hexColor2, factor) {
 
   return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
-
+// Picks 'count' unique power-ups from the available list
 export function selectRandomPowers(allPowersKeys, count) {
   const selectedPowers = new Set();
   if (count >= allPowersKeys.length) return allPowersKeys;
@@ -41,8 +40,8 @@ export function selectRandomPowers(allPowersKeys, count) {
   return Array.from(selectedPowers);
 }
 
-// --- Player Logic ---
 
+// Modifies player stats based on the selected upgrade type
 export function applyPowerUp(player, powerKey, powerData, constants) {
   if (!player || !powerData) return null;
 
@@ -100,14 +99,14 @@ export function applyPowerUp(player, powerKey, powerData, constants) {
     return { type: "STAT", stat: statKey, newValue };
   }
 }
-
+// Determines the shooting vector based on currently pressed keys
 export function getShootingDirectionFromKeys(player, keys) {
   let directionX = 0;
   let directionY = 0;
   let hasInput = false;
   const shootKeys = player.playerData.inputs.shoot;
 
-  // shootKeys: [Up, Down, Left, Right]
+  
   const keyMap = {
     [shootKeys[0]]: { y: -1 },
     [shootKeys[1]]: { y: 1 },
@@ -130,8 +129,8 @@ export function getShootingDirectionFromKeys(player, keys) {
   return { x: directionX, y: directionY };
 }
 
-// --- Enemy Logic ---
 
+// Creates a batch of enemies based on the level configuration
 export function spawnEnemyGroup(levelStats, canvas, mapData, constants) {
   const { MIN, MAX } = levelStats.ENEMIES.GROUP_SIZE;
   const totalEnemies = Math.floor(Math.random() * (MAX - MIN + 1)) + MIN;
@@ -150,7 +149,7 @@ export function spawnEnemyGroup(levelStats, canvas, mapData, constants) {
   }
   return newEnemies;
 }
-
+// Runs the update loop for all active enemies
 export function updateEnemies(
   enemies,
   deltaTime,
@@ -177,8 +176,8 @@ export function updateEnemies(
   return enemies.filter((enemy) => enemy.active);
 }
 
-// --- Collision & Bullet Logic ---
 
+// Checks if a bullet has hit a solid wall tile
 function bulletHitsTiles(bullet, mapData, constants) {
   if (!bullet.active) return false;
 
@@ -196,7 +195,7 @@ function bulletHitsTiles(bullet, mapData, constants) {
     return isSolidTile(mapData.grid, row, col, constants);
   });
 }
-
+// Updates bullet positions and handles collisions with enemies/walls
 export function updatePlayerBullets(
   playerBullets,
   enemies,
@@ -206,17 +205,14 @@ export function updatePlayerBullets(
   constants,
   callbacks,
 ) {
-  // Update position
   playerBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
 
-  // Check Wall Collisions
   playerBullets.forEach((bullet) => {
     if (bulletHitsTiles(bullet, mapData, constants)) {
       bullet.active = false;
     }
   });
 
-  // Check Enemy Collisions
   playerBullets.forEach((bullet) => {
     if (!bullet.active) return;
 
@@ -236,7 +232,7 @@ export function updatePlayerBullets(
 
   return playerBullets.filter((bullet) => bullet.active);
 }
-
+// Updates enemy bullets and checks collisions with players
 export function updateEnemyBullets(
   enemyBullets,
   players,
@@ -247,17 +243,14 @@ export function updateEnemyBullets(
   constants,
   callbacks,
 ) {
-  // Update position
   enemyBullets.forEach((bullet) => bullet.update(deltaTime, canvas));
 
-  // Check Wall Collisions
   enemyBullets.forEach((bullet) => {
     if (bulletHitsTiles(bullet, mapData, constants)) {
       bullet.active = false;
     }
   });
 
-  // Check Player Collisions
   enemyBullets.forEach((bullet) => {
     if (!bullet.active) return;
 
@@ -274,7 +267,7 @@ export function updateEnemyBullets(
 
   return enemyBullets.filter((bullet) => bullet.active);
 }
-
+// Checks if players physically touch contact-damage enemies
 export function handleEnemyBodyCollisions(
   enemies,
   players,
@@ -282,7 +275,6 @@ export function handleEnemyBodyCollisions(
   callbacks,
 ) {
   enemies.forEach((enemy) => {
-    // Only Contact damage enemies
     if (!(enemy instanceof CircleEnemy) && !(enemy instanceof SquareEnemy))
       return;
     if (enemy.isSpawning) return;

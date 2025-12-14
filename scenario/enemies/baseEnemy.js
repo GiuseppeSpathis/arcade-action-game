@@ -1,4 +1,5 @@
 // BaseEnemy superclass
+// Base class for all enemy types handling shared logic like health and spawning
 export class BaseEnemy {
   constructor(coreConstants, enemyConstants, canvas) {
     this.core = coreConstants; 
@@ -47,7 +48,7 @@ export class BaseEnemy {
       return performance.now();
     return Date.now();
   }
-
+  // Animates the enemy descending from the top of the screen 
   handleSpawning(deltaTime) {
     this.position.y += this.core.SPAWN_DESCENT_SPEED * deltaTime;
 
@@ -63,7 +64,7 @@ export class BaseEnemy {
       this.active = false;
     }
   }
-
+  // Main update dispatcher
   update(
     deltaTime,
     playerBounds,
@@ -175,7 +176,7 @@ export class BaseEnemy {
       typeof this.damageEffect.shapeDrawer === "function"
     );
   }
-
+  // Handles taking damage, updating health bar timer, and checking for death
   takeHit(damage, shapeDrawer) {
     if (this.deathAnimation.active) return;
     

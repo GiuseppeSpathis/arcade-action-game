@@ -14,7 +14,8 @@ import { firebaseConfig } from "./firebaseConfig.js";
 
 let db;
 
-
+// Connects to Firebase services and performs an anonymous sign-in
+// to allow database reading/writing without a user account.
 export async function initFirebase() {
   try {
     const app = initializeApp(firebaseConfig);
@@ -29,7 +30,7 @@ export async function initFirebase() {
   return { error: null };
 }
 
-
+// Helper to create a random 4-letter room ID (e.g., "ABCD")
 function generateRoomCode() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let code = "";
@@ -39,10 +40,11 @@ function generateRoomCode() {
   return code;
 }
 
-
+// Creates a new document in Firestore to host the game session state.
+// Initializes empty input slots for players 2, 3, and 4.
 export async function createGameSession(playerCount) {
   if (playerCount <= 1) {
-    return null; 
+    return null;  // Local single player doesn't need a DB session
   }
   if (!db) {
     throw new Error("Firebase not initialized. Call initFirebase() first.");
@@ -59,13 +61,13 @@ export async function createGameSession(playerCount) {
   
   const playerTemplate = {
     inputs: { 
-        ml: false, mr: false, mu: false, md: false, 
-        sl: false, sr: false, su: false, sd: false, 
-        j: false 
+        ml: false, mr: false, mu: false, md: false,  // Movement keys
+        sl: false, sr: false, su: false, sd: false,  // Shoot keys
+        j: false  // Jump key
     },
     connected: false,
   };
-
+  // Dynamically create slots only for the requested number of players
   if (playerCount >= 2) {
     initialState.players.p2 = structuredClone(playerTemplate);
   }
@@ -86,7 +88,7 @@ export async function createGameSession(playerCount) {
   }
 }
 
-
+// Updates the session status (e.g., to 'running' or 'gameover') so connected phones react accordingly.
 export async function setGameState(roomCode, newState) {
   if (!db || !roomCode) return;
   const sessionPath = `game_sessions/${roomCode}`;
@@ -98,7 +100,7 @@ export async function setGameState(roomCode, newState) {
   }
 }
 
-
+// Deletes the session document from the database (cleanup).
 export async function deleteGameSession(roomCode) {
     if (!db || !roomCode) return;
     const sessionPath = `game_sessions/${roomCode}`;
@@ -111,7 +113,7 @@ export async function deleteGameSession(roomCode) {
     }
 }
 
-
+// Sets up a real-time listener to receive input updates from remote players (phones).
 export function listenForRemoteInputs(roomCode, callback) {
   if (!db) {
     return null;

@@ -5,17 +5,17 @@ export class TriangleEnemy extends BaseEnemy {
   constructor(constants, canvas) {
     super(constants.ENEMIES, constants.ENEMIES.TRIANGLE, canvas);
 
-    this.facing = 1;
+    this.facing = 1; // 1 = Right, -1 = Left
     this.lastShotAt = 0;
   }
-
+  // Floating enemy behavior that follows player loosely and shoots
   updateEnemy(deltaTime, playerBounds, timestamp, canvas, globalBulletsArray) {
     const playerCenterX = playerBounds.x + playerBounds.width / 2;
     const playerCenterY = playerBounds.y + playerBounds.height / 2;
 
     const enemyCenterX = this.position.x + this.width / 2;
     const enemyCenterY = this.position.y + this.height / 2;
-
+    // Float horizontally towards player
     if (playerCenterX > enemyCenterX + 4) {
       this.position.x += this.constants.MOVE_SPEED * deltaTime;
       this.facing = 1;
@@ -23,7 +23,7 @@ export class TriangleEnemy extends BaseEnemy {
       this.position.x -= this.constants.MOVE_SPEED * deltaTime;
       this.facing = -1;
     }
-
+    // Float vertically to match player height (slowly)
     if (playerCenterY > enemyCenterY + 6) {
       this.position.y += this.constants.VERTICAL_ADJUST_SPEED * deltaTime;
     } else if (playerCenterY < enemyCenterY - 6) {
@@ -38,7 +38,7 @@ export class TriangleEnemy extends BaseEnemy {
       0,
       Math.min(canvas.height - this.height, this.position.y),
     );
-
+    // Check if player is roughly on the same horizontal plane ("layer")
     const sameLayer =
       Math.abs(playerCenterY - (this.position.y + this.height / 2)) <
       this.height / 2;
@@ -55,7 +55,7 @@ export class TriangleEnemy extends BaseEnemy {
   updateStats(newStats) {
     super.updateStats(newStats.ENEMIES, newStats.ENEMIES.TRIANGLE);
   }
-
+  // Spawns a projectile in the direction the enemy is facing
   fireBullet(bulletsArray) {
     const originX =
       this.position.x +
@@ -96,7 +96,7 @@ export class TriangleEnemy extends BaseEnemy {
     ctx.fill();
     ctx.restore();
   }
-
+  // Renders a triangle pointing in the movement direction
   drawEnemy(ctx, progress = 0) {
     const centerX = this.position.x + this.width / 2;
     const centerY = this.position.y + this.height / 2;

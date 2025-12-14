@@ -1,3 +1,4 @@
+// Procedurally generates the tile map, including floor and floating platforms
 export function generateMap(canvas, constants) {
   const tileSize = constants.TILE_SIZE;
   const rows = Math.max(
@@ -16,7 +17,7 @@ export function generateMap(canvas, constants) {
     constants.GENERAL.MIN_VERTICAL_OFFSET,
     canvas.height - rows * tileSize,
   );
-
+  // Fill the floor
   const floorRow = rows - constants.MAP.LAST_ROW_OFFSET;
   for (let col = 0; col < cols; col += 1) {
     grid[floorRow][col] = constants.MAP.SOLID_TILE_VALUE;
@@ -29,7 +30,8 @@ export function generateMap(canvas, constants) {
       colEnd: cols - constants.MAP.COLUMN_END_LIMIT_ADJUSTMENT,
     },
   ];
-
+  // Generate Platforms
+  // Logic ensures platforms are reachable based on jump height physics
   const maxJumpPixels =
     Math.abs(constants.JUMP_FORCE * 0.9) ** constants.GENERAL.SQUARE_EXPONENT /
     (constants.GENERAL.GRAVITY_DIVISOR * constants.GRAVITY);
@@ -126,7 +128,7 @@ export function generateMap(canvas, constants) {
     }
   }
 
-  
+  // Add Side Walls
   for (let r = 0; r < rows; r++) {
     grid[r][0] = constants.MAP.WALL_TILE_VALUE;
     grid[r][cols - 1] = constants.MAP.WALL_TILE_VALUE;
@@ -134,7 +136,7 @@ export function generateMap(canvas, constants) {
 
   return { grid, platforms, floorRow, cols, verticalOffset };
 }
-
+// Checks if a specific tile coordinate is solid or a wall
 export function isSolidTile(map, row, col, constants) {
   if (row < 0 || row >= map.length) {
     return false;
@@ -147,7 +149,7 @@ export function isSolidTile(map, row, col, constants) {
     map[row][col] === constants.MAP.WALL_TILE_VALUE
   );
 }
-
+// Checks if a rectangular area overlaps with any solid tiles
 export function checkCollision(
   map,
   x,
@@ -158,6 +160,7 @@ export function checkCollision(
   offsetY,
   constants,
 ) {
+  // Converts pixel coordinates to grid indices
   const left = Math.floor(x / tileSize);
   const right = Math.floor(
     (x + width - constants.MAP.SEGMENT_END_OFFSET) / tileSize,
@@ -170,7 +173,7 @@ export function checkCollision(
   if (bottom < top) {
     return false;
   }
-
+  // Iterate through potentially overlapping tiles
   for (let row = top; row <= bottom; row += 1) {
     for (let col = left; col <= right; col += 1) {
       if (isSolidTile(map, row, col, constants)) {

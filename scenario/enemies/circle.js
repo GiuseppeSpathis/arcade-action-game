@@ -6,7 +6,7 @@ export class CircleEnemy extends BaseEnemy {
 
     this.velocity = { x: 0, y: 0 };
   }
-
+  // Implements homing behavior: moves towards the player with limited turn rate
   updateEnemy(deltaTime, playerBounds, timestamp, canvas) {
     const speed = this.constants.MOVE_SPEED;
     const verticalSpeed = this.constants.VERTICAL_ADJUST_SPEED;
@@ -16,9 +16,12 @@ export class CircleEnemy extends BaseEnemy {
     const playerCenterY = playerBounds.y + playerBounds.height / 2;
     const enemyCenterX = this.position.x + this.width / 2;
     const enemyCenterY = this.position.y + this.height / 2;
-
+    // Calculate vector to player
     const dx = playerCenterX - enemyCenterX;
     const dy = playerCenterY - enemyCenterY;
+
+    // Smoothly rotate velocity vector towards the player
+    // Dot product and cross product math for rotation
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     const desiredDir =
@@ -65,7 +68,7 @@ export class CircleEnemy extends BaseEnemy {
 
     this.velocity.x = newDir.x * speed;
     this.velocity.y = newDir.y * verticalSpeed;
-
+    // Update position
     this.position.x += this.velocity.x * deltaTime;
     this.position.y += this.velocity.y * deltaTime;
 

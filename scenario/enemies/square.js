@@ -13,13 +13,13 @@ export class SquareEnemy extends BaseEnemy {
     this.collisionOffset = fullConstants.ENEMIES.SQUARE.COLLISION_OFFSET;
 
     this.size = this.constants.SIZE;
-
+    // Find a valid spawn location on a platform
     const platforms = mapData.platforms.length
       ? mapData.platforms
       : [{ row: mapData.floorRow, colStart: 0, colEnd: mapData.cols - 1 }];
 
     const chosen = platforms[Math.floor(Math.random() * platforms.length)];
-
+    // Calculate valid X range on the chosen platform to prevent spawning in air
     const minX = chosen.colStart * this.tileSize;
     const maxX =
       (chosen.colEnd + 1) * this.tileSize - this.size - this.collisionOffset;
@@ -45,7 +45,7 @@ export class SquareEnemy extends BaseEnemy {
          spawnRangeMax = maxX;
       }
     }
-
+    // Logic to prefer spawning towards the edges or center (Zone Padding)
     const spawnX = Math.min(
       Math.max(spawnRangeMin, spawnRangeMin + Math.random() * Math.max(1, spawnRangeMax - spawnRangeMin)),
       spawnRangeMax,
@@ -74,7 +74,7 @@ export class SquareEnemy extends BaseEnemy {
     this.lastJumpAt = -Infinity;
     this.isSpawning = false; 
   }
-
+  // Handles physics-based movement (acceleration, gravity, tile collision)
   updateEnemy(deltaTime, playerBounds, timestamp, canvas) {
     const now = this.getNow(timestamp);
 
@@ -87,7 +87,8 @@ export class SquareEnemy extends BaseEnemy {
         : playerCenterX < enemyCenterX - 4
           ? -1
           : 0;
-
+    // Horizontal Movement AI
+    // Move towards player X
     if (horizontalDirection !== 0) {
       this.state.vx += horizontalDirection * this.constants.MOVE_ACCELERATION;
     } else {
@@ -100,7 +101,8 @@ export class SquareEnemy extends BaseEnemy {
       -this.constants.MAX_SPEED,
       Math.min(this.state.vx, this.constants.MAX_SPEED),
     );
-
+    // Jump AI
+    // Checks if the enemy needs to jump over an obstacle or gap
     if (
       this.state.onGround &&
       now - this.lastJumpAt >= this.constants.JUMP_COOLDOWN_MS &&
@@ -108,7 +110,7 @@ export class SquareEnemy extends BaseEnemy {
     ) {
       this.performJump(now);
     }
-
+    // Gravity & Physics Integration
     this.state.vy += this.fullConstants.GRAVITY;
     if (this.state.vy > this.constants.MAX_FALL_SPEED) {
       this.state.vy = this.constants.MAX_FALL_SPEED;
@@ -118,7 +120,8 @@ export class SquareEnemy extends BaseEnemy {
     let nextY = this.state.y + this.state.vy;
 
     this.state.onGround = false;
-
+    // Collision Resolution (Standard AABB vs TileMap)
+    // X-Axis Collision
     if (
       checkCollision(
         this.map,
@@ -205,10 +208,10 @@ export class SquareEnemy extends BaseEnemy {
   updateStats(newStats) {
     super.updateStats(newStats.ENEMIES, newStats.ENEMIES.SQUARE);
   }
-
+  // AI Decision making for jumping
   shouldAttemptJump(direction, playerBounds) {
     if (direction === 0) return false;
-
+    // Look ahead of the enemy
     const frontX =
       direction > 0
         ? this.state.x + this.state.width + this.collisionOffset
@@ -217,11 +220,12 @@ export class SquareEnemy extends BaseEnemy {
     const midY = this.state.y + this.state.height / 2;
     const footY = this.state.y + this.state.height + this.collisionOffset;
     const gapCheckY = footY + this.tileSize * 0.25;
-
+    // Condition 1: Wall directly in front
     const obstacleAhead =
       this.isSolidAt(frontX, midY) || this.isSolidAt(frontX, footY - 1);
+    // Condition 2: Floor is missing (gap)
     const gapAhead = !this.isSolidAt(frontX, gapCheckY);
-
+    // Condition 3: Player is on a higher platform
     const playerHigher =
       playerBounds.y + playerBounds.height <
       this.state.y + this.state.height - this.tileSize * 0.5;

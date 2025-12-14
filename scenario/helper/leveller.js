@@ -11,14 +11,16 @@ export class Leveller {
   update(deltaTime) {
     return this.updateTimerAndLevel(deltaTime);
   }
-
+  // Tracks survival time and triggers a level up when the threshold is reached
   updateTimerAndLevel(deltaTime) {
     this.timer += deltaTime;
     let newStats = null;
     if (this.timer >= this.LEVEL_UP_SECONDS) {
       this.timer -= this.LEVEL_UP_SECONDS;
       this.currentLevel += 1;
+      // Increase the time required to reach the next level
       this.LEVEL_UP_SECONDS = this.LEVEL_UP_SECONDS * this.TIME_MULTIPLIER;
+      // Calculate new enemy stats for this level
       newStats = this.levelUp(this.currentLevel);
     }
 
@@ -28,12 +30,13 @@ export class Leveller {
       newStats,
     };
   }
-
+  // Applies math formulas (linear, exponential, step) to base values based on level
   scaleValue(base, level, config) {
     if (!config) return base;
     const { type, factor, step, interval } = config;
     switch (type) {
       case "linear":
+        // Increases by 'factor' every level (or every 'interval' levels)
         if (interval && interval > 1) {
           const increments = Math.floor((level - 1) / interval);
           return base + increments * factor;
@@ -55,7 +58,7 @@ export class Leveller {
         return base;
     }
   }
-
+  // Recursively traverses the stats object to apply scaling to numerical values
   levelUp(currentLevel) {
     const base = this.ENEMIES;
 
@@ -74,11 +77,15 @@ export class Leveller {
         const value = obj[key];
 
         if (typeof value === "object" && value !== null) {
+          // Recurse deeper into the object tree
           result[key] = scaleAllProperties(value, path.concat(key));
         } else if (typeof value === "number") {
           let scalingConfig = null;
 
+          // Attempt to find a matching scaling configuration in constants.json
+          // Structure example: SCALING["ENEMIES"]["SQUARE"]["HP"]
           if (this.SCALING[path[0]]) {
+            // Check for direct property scaling
             if (
               this.SCALING[path[0]][key] &&
               typeof this.SCALING[path[0]][key] === "object" &&
@@ -89,6 +96,7 @@ export class Leveller {
             ) {
               scalingConfig = this.SCALING[path[0]][key];
             }
+            // Check for nested property scaling (e.g. within an enemy type)
             else if (
               path.length > 1 &&
               this.SCALING[path[0]][path[1]] &&

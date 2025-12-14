@@ -54,7 +54,7 @@ export class PlayerController {
     this.lives = this.lives + newStats.MAX_LIVES - this.stats.MAX_LIVES;
     this.stats = newStats;
   }
-
+  // Resets player position to the spawn point (useful for new levels)
   respawn(mapData) {
     this.map = mapData.grid;
     this.mapOffsetY = mapData.verticalOffset;
@@ -98,9 +98,10 @@ export class PlayerController {
   queueJump() {
     this.state.jumpBufferFrames = this.constants.JUMP_BUFFER_FRAMES;
   }
-
+  // Handles both standard ground jumps and wall jumps
   executeJump(pressedKeys, touchingLeft, touchingRight) {
     if (this.state.onGround || this.state.coyoteFrames > 0) {
+      // Standard Jump
       this.state.vy = this.constants.JUMP_FORCE;
       this.state.onGround = false;
       this.state.coyoteFrames = 0;
@@ -119,6 +120,7 @@ export class PlayerController {
       }
     } 
     else if ((touchingLeft || touchingRight) && this.state.wallJumpCooldown <= 0) {
+      // Wall Jump
       this.state.vy = this.constants.JUMP_FORCE;
       this.state.jumpBufferFrames = 0;
       
@@ -145,14 +147,15 @@ export class PlayerController {
   isMovingRight(pressedKeys) {
     return this.playerData.inputs.right.some((code) => pressedKeys.has(code));
   }
-
+  // Main physics update: handles movement, gravity, and collision resolution
   update(pressedKeys) {
     if (this.isDead) {
       this.state.vx = 0;
       this.state.vy = 0;
       return;
     }
-
+    // Horizontal Movement & Wall Checks
+    // Calculate touchingLeft/touchingRight
     if (this.state.wallJumpCooldown > 0) {
       this.state.wallJumpCooldown -= 1;
     }
@@ -203,12 +206,13 @@ export class PlayerController {
 
     const maxSpeed = this.stats.MAX_SPEED;
     this.state.vx = Math.max(Math.min(this.state.vx, maxSpeed), -maxSpeed);
-
+    // Vertical Physics (Gravity)
     this.state.vy += this.constants.GRAVITY;
     if (this.state.vy > this.constants.PLAYER.MAX_FALL_SPEED) {
       this.state.vy = this.constants.PLAYER.MAX_FALL_SPEED;
     }
-
+    // Collision Resolution (X Axis first)
+    // We check X collision first to allow sliding against walls without getting stuck
     let nextX = this.state.x + this.state.vx;
     let nextY = this.state.y + this.state.vy;
 
@@ -255,7 +259,7 @@ export class PlayerController {
         this.state.vx = 0;
       }
     }
-
+    // Collision Resolution (Y Axis)
     if (this.state.vy > 0) {
       if (
         checkCollision(
@@ -306,7 +310,7 @@ export class PlayerController {
         this.state.vy = 0;
       }
     }
-
+    // Update Position
     this.state.x = Math.max(
       this.constants.GENERAL.MIN_VERTICAL_OFFSET,
       Math.min(nextX, this.canvas.width - this.state.width),

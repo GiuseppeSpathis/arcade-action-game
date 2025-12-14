@@ -1,6 +1,7 @@
 import { setupAudioToggle } from "../helper/audioController.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  // DOM Elements selection
   const playButton = document.getElementById("playButton");
   const tutorialButton = document.getElementById("tutorialButton");
   const closeTutorialButton = document.getElementById("closeTutorialButton");
@@ -17,11 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const player4Button = document.getElementById("player4Button");
 
   const scenarioUrl = "../scenario/scenario.html";
-
+  // TRANSITION: Main Menu -> Game Mode Selection 
   playButton.addEventListener("click", () => {
     mainMenuButtons.classList.add("hidden"); 
     gameModeContainer.classList.remove("hidden"); 
-
+    // Trigger staggered entry animations for mode buttons
     requestAnimationFrame(() => {
         const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
         modeButtons.forEach((button, index) => {
@@ -30,12 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
   });
-
+  // TRANSITION: Game Mode Selection -> Main Menu
   if (backToMenuButton) {
       backToMenuButton.addEventListener("click", () => {
           gameModeContainer.classList.add("hidden");
           mainMenuButtons.classList.remove("hidden");
-          
+          // Reset animation classes
           const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
           modeButtons.forEach((button) => {
               button.classList.remove("fade-in-up");
@@ -43,22 +44,23 @@ document.addEventListener("DOMContentLoaded", () => {
           });
       });
   }
-
+  // TUTORIAL: Show Overlay
   if (tutorialButton) {
       tutorialButton.addEventListener("click", () => {
         tutorialOverlay.classList.remove("hidden");
+        // Reset scroll position to top
         if (tutorialContent) {
             tutorialContent.scrollTop = 0;
         }
       });
   }
-
+  // TUTORIAL: Hide Overlay (Close Button)
   if (closeTutorialButton) {
       closeTutorialButton.addEventListener("click", () => {
         tutorialOverlay.classList.add("hidden");
       });
   }
-
+  // TUTORIAL: Hide Overlay (Click outside modal)
   if (tutorialOverlay) {
       tutorialOverlay.addEventListener("click", (e) => {
         if (e.target === tutorialOverlay) {
@@ -66,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
   }
-
+  // GAME START: Redirect to scenario with player count
   player1Button.addEventListener("click", () => {
     window.location.href = `${scenarioUrl}?players=1`;
   });
@@ -82,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
   player4Button.addEventListener("click", () => {
     window.location.href = `${scenarioUrl}?players=4`;
   });
-
+  // Initialize Background Music
   const audioElement = document.getElementById("bg_music");
   const toggleButton = document.getElementById("musicToggle");
   setupAudioToggle({ audioElement, toggleButton });

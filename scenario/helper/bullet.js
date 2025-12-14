@@ -9,6 +9,7 @@ export class Bullet {
     fromEnemy = false,
     damage,
   }) {
+    // Normalize direction vector to ensure consistent speed
     const magnitude = Math.hypot(direction.x, direction.y) || 1;
     this.position = { x, y };
     this.velocity = {
@@ -21,7 +22,7 @@ export class Bullet {
     this.fromEnemy = fromEnemy;
     this.active = true;
   }
-
+  // Moves the bullet and marks it inactive if it leaves the screen
   update(deltaTime, canvas) {
     const dt = deltaTime || 0;
     this.position.x += this.velocity.x * dt;
@@ -50,10 +51,12 @@ export class Bullet {
       this.position.y > canvas.height + this.radius
     );
   }
-
+  // Circle vs Rectangle collision detection (Closest Point method)
   intersectsRect({ x, y, width, height }) {
+    // Find the point on the rectangle closest to the center of the circle
     const closestX = Math.max(x, Math.min(this.position.x, x + width));
     const closestY = Math.max(y, Math.min(this.position.y, y + height));
+    // Calculate the distance between the circle's center and this closest point
     const dx = this.position.x - closestX;
     const dy = this.position.y - closestY;
     return dx * dx + dy * dy <= this.radius * this.radius;

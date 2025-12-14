@@ -1,7 +1,7 @@
 const MUTED_ICON = "🔇";
 const UNMUTED_ICON = "🔊";
 const DEFAULT_VOLUME_KEY = "retro-arcade-volume";
-
+// Dynamically creates a range slider input to control the volume of audio elements
 function createVolumeSlider(
   audioElements,
   container,
@@ -13,13 +13,13 @@ function createVolumeSlider(
   }
 
   const targets = Array.isArray(audioElements) ? audioElements : [audioElements];
-
+  // Initialize base volume for all targets to allow relative scaling
   targets.forEach((el) => {
     if (el.dataset.baseVolume === undefined) {
       el.dataset.baseVolume = el.volume;
     }
   });
-
+  // Create the slider DOM element
   const slider = document.createElement("input");
   slider.type = "range";
   slider.min = "0";
@@ -28,22 +28,22 @@ function createVolumeSlider(
   slider.value = localStorage.getItem(storageKey) ?? "1";
   slider.setAttribute("aria-label", "Adjust volume");
   slider.title = "Adjust volume";
-
+  // Applies the slider value (0.0 - 1.0) to all audio targets
   const updateVolumes = (masterVolume) => {
     targets.forEach((el) => {
       const base = parseFloat(el.dataset.baseVolume);
       el.volume = base * masterVolume;
     });
   };
-
+  // Initialize volume immediately
   updateVolumes(parseFloat(slider.value));
-
+  // Handle user input updates
   slider.addEventListener("input", () => {
     const val = parseFloat(slider.value);
     updateVolumes(val);
-    localStorage.setItem(storageKey, slider.value);
+    localStorage.setItem(storageKey, slider.value); // Persist setting
   });
-
+  // Enable keyboard control for the slider (Arrows)
   slider.addEventListener("keydown", (e) => {
     let val = parseFloat(slider.value);
     if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
@@ -56,7 +56,7 @@ function createVolumeSlider(
     slider.value = val.toFixed(2);
     slider.dispatchEvent(new Event("input"));
   });
-
+  // Render the slider into the container
   container.innerHTML = ""; 
 
   if (labelIcon) {
@@ -69,7 +69,7 @@ function createVolumeSlider(
 
   return slider;
 }
-
+// Updates the visual state of the mute button (Icon, Aria labels)
 function updateButtonState(toggleButton, isMuted) {
   if (!toggleButton) {
     return;
@@ -84,7 +84,7 @@ function updateButtonState(toggleButton, isMuted) {
   toggleButton.title = isMuted ? "Unmute" : "Mute";
   toggleButton.textContent = isMuted ? MUTED_ICON : UNMUTED_ICON;
 }
-
+// Main initialization function to hook up a mute button and volume slider
 export function setupAudioToggle({
   audioElements,
   audioElement,
@@ -98,7 +98,7 @@ export function setupAudioToggle({
   if (!targets.length || !toggleButton) {
     return;
   }
-
+  // Load saved mute state
   const storedMuted = localStorage.getItem(storageKeyMuted) === "true";
 
   function applyMute(muted) {
@@ -108,12 +108,12 @@ export function setupAudioToggle({
   }
 
   applyMute(storedMuted);
-
+  // Click handler
   toggleButton.addEventListener("click", () => {
     const currentMuted = targets[0].muted;
     applyMute(!currentMuted);
   });
-
+  // Setup the slider if a container is found/provided
   const container =
     sliderContainer ||
     toggleButton.parentElement.querySelector("#musicVolumeSliderContainer");

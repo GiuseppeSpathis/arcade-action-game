@@ -112,14 +112,14 @@ if (lobbyBackButton) {
     window.location.href = "../menu/menu.html";
   });
 }
-
+// Adjusts the canvas size to fit the browser window
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
-
+// Fetches game configuration and stats from the JSON file
 async function loadConstants() {
   const response = await fetch("./constants.json");
   if (!response.ok) {
@@ -127,7 +127,7 @@ async function loadConstants() {
   }
   return response.json();
 }
-
+// Builds a set of keys that should not trigger default browser actions (like scrolling)
 function createPreventDefaultKeys(baseInput, playerData) {
   const keys = new Set(baseInput.PREVENT_DEFAULT_KEYS);
   playerData.forEach((playerDef) => {
@@ -137,7 +137,7 @@ function createPreventDefaultKeys(baseInput, playerData) {
   });
   return keys;
 }
-
+// Maps input data received from Firebase to the local game state
 function processRemoteInputs(sessionData) {
   if (!players.length || !constants || !sessionData.players) return;
 
@@ -184,7 +184,7 @@ function processRemoteInputs(sessionData) {
     remoteInputsState[key] = pInputs;
   });
 }
-
+// Handles the multiplayer lobby UI and connects to the Firebase session
 async function setupLobby(playerCount) {
   connectionOverlay.classList.remove("hidden");
 
@@ -249,7 +249,7 @@ async function setupLobby(playerCount) {
     if (lobbyRoomCode) lobbyRoomCode.textContent = "ERROR";
   }
 }
-
+// Creates or updates the pause menu DOM elements
 function ensurePauseUI() {
   if (!pauseToggle) {
     pauseToggle = document.createElement("button");
@@ -285,7 +285,7 @@ function ensurePauseUI() {
   resumeButton = document.getElementById("resumeButton");
   quitButton = document.getElementById("quitButton");
 }
-
+// Main entry point: loads assets, generates the map, and starts the game loop
 async function initializeGame(playerCount) {
   try {
     if (!constants) {
@@ -309,7 +309,7 @@ async function initializeGame(playerCount) {
     if (backgroundImages.length > 0) {
       backgroundImage = backgroundImages[currentBackgroundIndex];
     }
-
+    // Generate the initial procedural map
     if (!mapData) {
       mapData = generateMap(canvas, constants);
     }
@@ -403,6 +403,7 @@ async function initializeGame(playerCount) {
 
     connectionOverlay.classList.add("hidden");
     lastFrameTime = performance.now();
+    // Start the game loop
     requestAnimationFrame(gameLoop);
   } catch (error) {
     console.error("Failed to initialize the game:", error);
@@ -412,7 +413,7 @@ async function initializeGame(playerCount) {
     }
   }
 }
-
+// Creates the HUD elements (Lives, Level Bar) for all players
 function initializeHUD(players) {
   hudContainer.innerHTML = "";
   playerHUDElements.length = 0;
@@ -477,7 +478,7 @@ function initializeHUD(players) {
     };
   });
 }
-
+// Updates the heart icons in the HUD for a specific player
 function updatePlayerLivesDisplay(playerIndex, lives) {
   const hud = playerHUDElements[playerIndex];
   if (!hud) return;
@@ -490,10 +491,10 @@ function updatePlayerLivesDisplay(playerIndex, lives) {
     `P${playerIndex + 1} Lives left: ${lives}`,
   );
 }
-
+// Handles damage logic, invincibility frames, and death checks
 function damagePlayer(player, timestamp) {
   if (isGameOver || player.isDead) return;
-
+  // Check for invincibility frame
   if (
     timestamp - player.lastDamageAt <
     constants.PLAYER.INVINCIBILITY_WINDOW_MS
@@ -513,6 +514,7 @@ function damagePlayer(player, timestamp) {
       sfxHit.play().catch(() => {});
     } catch {}
   }
+  // Apply damage and update UI
   if (player.lives <= 0) {
     player.isDead = true;
     checkAllPlayersDead();
@@ -525,7 +527,7 @@ function checkAllPlayersDead() {
     triggerGameOver();
   }
 }
-
+// Sets game over state, stops music, and shows the end screen
 function triggerGameOver() {
   if (isGameOver) return;
   isGameOver = true;
@@ -571,7 +573,7 @@ function triggerGameOver() {
     returnMenuButton.focus({ preventScroll: true });
   }
 }
-
+// Checks shooting cooldowns and spawns bullets based on input direction
 function handlePlayerShooting(timestamp) {
   players.forEach((player) => {
     if (player.isDead) return;
@@ -581,7 +583,7 @@ function handlePlayerShooting(timestamp) {
       pressedKeys,
     );
     if (!direction) return;
-
+    // Check cooldown
     const STATS = player.getStats();
     if (timestamp - player.lastPlayerShot < STATS.COOLDOWN_MS) return;
 
@@ -592,6 +594,7 @@ function handlePlayerShooting(timestamp) {
 
     player.lastPlayerShot = timestamp;
     const center = player.getCenter();
+    // Spawn bullet
     playerBullets.push(
       new Bullet({
         x: center.x,
@@ -605,7 +608,7 @@ function handlePlayerShooting(timestamp) {
     );
   });
 }
-
+// Updates the visual progress bar based on the current level timer
 function updateLevelProgressBar(levelInfo) {
   if (!leveller) return;
 
@@ -628,7 +631,7 @@ function updateLevelProgressBar(levelInfo) {
     innerBar.style.width = `${percent * 100}%`;
   }
 }
-
+// Resets map, enemies, and players for the next level
 function applyLevelChangesAndResume(newStats) {
   levelStats = newStats;
 
@@ -666,7 +669,7 @@ function applyLevelChangesAndResume(newStats) {
       constants.TILE.HIGHLIGHT_COLOR = `rgba(255, ${Math.floor(255 * (1 - redFactor))}, ${Math.floor(255 * (1 - redFactor))}, 0.15)`;
     }
   }
-
+  // Regenerate map for new level
   mapData = generateMap(canvas, constants);
 
   players.forEach((player) => {
@@ -716,7 +719,7 @@ async function handleQuit() {
   if (firebaseUnsubscribe) firebaseUnsubscribe();
   window.location.href = exitDestination;
 }
-
+// Pauses the game loop and shows the upgrade UI
 function handleLevelUp(activePlayers, newStats) {
   GAME_PAUSED = true;
   upgradeOverlay.classList.remove("hidden");
@@ -731,7 +734,7 @@ function handleLevelUp(activePlayers, newStats) {
     applyLevelChangesAndResume(newStats);
   }
 }
-
+// Recursively processes upgrades for all active players
 function startUpgradeProcess(newStats) {
   if (currentUpgradePlayerIndex < playerUpgradeQueue.length) {
     const player = playerUpgradeQueue[currentUpgradePlayerIndex];
@@ -746,7 +749,7 @@ function startUpgradeProcess(newStats) {
     applyLevelChangesAndResume(newStats);
   }
 }
-
+// Renders the upgrade choices buttons for a specific player
 function showUpgradeScreen(player, powers, newStats) {
   const playerConfig = constants.PLAYER_DATA.find((p) => p.id === player.id);
   const playerColor = playerConfig ? playerConfig.color : "#FFFFFF";
@@ -788,16 +791,17 @@ function showUpgradeScreen(player, powers, newStats) {
     powerUpContainer.appendChild(button);
   });
 }
-
+// The main animation loop: updates logic and renders the scene
 function gameLoop(timestamp) {
   const deltaTime = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
   lastFrameTime = timestamp;
 
   if (!isGameOver) {
     if (!GAME_PAUSED) {
+      // Update Entities
       players.forEach((player) => player.update(pressedKeys));
       handlePlayerShooting(timestamp);
-
+      // Spawn Enemies
       if (
         timestamp - lastSpawnTimestamp >=
         levelStats.ENEMIES.SPAWN_INTERVAL_MS
@@ -811,7 +815,7 @@ function gameLoop(timestamp) {
         enemies.push(...newEnemies);
         lastSpawnTimestamp = timestamp;
       }
-
+      // Update Physics & Collisions
       enemies = GameLogic.updateEnemies(
         enemies,
         deltaTime,
@@ -864,7 +868,7 @@ function gameLoop(timestamp) {
       }
     }
   }
-
+  // Render Scene
   const currentLvl = leveller ? leveller.currentLevel : 1;
   drawBackground(ctx, backgroundImage, canvas, currentLvl);
 

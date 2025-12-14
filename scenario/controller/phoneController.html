@@ -63,7 +63,6 @@
                 db = getFirestore(app);
                 const auth = getAuth(app);
                 await signInAnonymously(auth);
-                console.log("Controller Firebase initialized and signed in.");
             } catch (error) {
                 console.error("Firebase init failed:", error);
                 connectionStatus.textContent = "Error: Could not connect to service.";

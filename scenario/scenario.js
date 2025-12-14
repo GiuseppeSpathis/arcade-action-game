@@ -718,9 +718,6 @@ async function handleQuit() {
 }
 
 function handleLevelUp(activePlayers, newStats) {
-  console.log(
-    `Level Up to ${leveller.currentLevel}! Starting upgrade process.`,
-  );
   GAME_PAUSED = true;
   upgradeOverlay.classList.remove("hidden");
   pauseOverlay.classList.add("hidden");
@@ -744,9 +741,7 @@ function startUpgradeProcess(newStats) {
     );
     showUpgradeScreen(player, powers, newStats);
   } else {
-    console.log(
-      "All players upgraded. Applying global changes and resuming game.",
-    );
+    
     upgradeOverlay.classList.add("hidden");
     applyLevelChangesAndResume(newStats);
   }
@@ -865,7 +860,6 @@ function gameLoop(timestamp) {
       let level_update_info = leveller.update(deltaTime);
       updateLevelProgressBar(level_update_info);
       if (level_update_info.newStats) {
-        console.log("Level Up Detected. Triggering upgrade process.");
         handleLevelUp(players, level_update_info.newStats);
       }
     }

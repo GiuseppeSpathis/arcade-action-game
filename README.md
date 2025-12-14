@@ -53,7 +53,7 @@ Once all players are connected, the game will start automatically. Use the on-sc
 #### Code Overview
 The project is structured with a clear separation of concerns. The /menu/ directory handles the main menu and player-count selection. The core of the game resides in /scenario/, where scenario.js acts as the main game engine, controlling the render loop, managing game state, and initializing all objects from the constants.json file. The /scenario/helper/ directory contains the core gameplay classes, including player.js for player logic, map.js for dynamic platform generation, and bullet.js. The different enemy classes (circle.js, triangle.js, square.js) are defined in /scenario/enemies/. The multiplayer functionality is split between /scenario/controller/phoneController.html, which is the mobile controller interface, and /helper/firebaseRemoteController.js, which manages the host-side Firebase connection, session creation, and input listening. Finally, /helper/audioController.js is a simple module for managing sound.
 
-## Development & AI Usage
+#### Development & AI Usage
 This project utilized AI assistance to accelerate early development. The initial project skeleton—including the basic menu structure and a preliminary scenario page—was generated using **Codex**, an OpenAI coding agent. As the project's complexity increased and required specific low-level logic that exceeded the agent's capabilities, the development transitioned to a manual approach. The final implementation was built by the developers with the assistance of **GitHub Copilot** in VS Code, ensuring a deep understanding of the code while leveraging AI for autocompletion and suggestions.
 
 #### External Resources

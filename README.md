@@ -21,7 +21,7 @@ This game was built with a focus on core web technologies. All graphics are draw
 ### Gameplay Demo
 
 
-[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-Click_Here-red?style=for-the-badge)](https://github.com/giuseppespathis/arcade-action-game/raw/main/demo.webm)
+[![Watch Demo](https://img.shields.io/badge/▶_Watch_Demo-Click_Here-red?style=for-the-badge)](https://github.com/giuseppespathis/arcade-action-game/raw/main/demo.mkv)
 
 ## How to Play
 Goal: Survive as long as possible to reach higher levels! When you complete a level, you gain a power-up. Keep an eye on your remaining lives (hearts) in the top-left corner and the current level in the bottom-left.

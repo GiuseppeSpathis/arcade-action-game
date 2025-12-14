@@ -24,30 +24,22 @@ export class SquareEnemy extends BaseEnemy {
     const maxX =
       (chosen.colEnd + 1) * this.tileSize - this.size - this.collisionOffset;
 
-    // --- UPDATED SPAWN LOGIC START ---
-    // Define the map width
     const mapWidth = mapData.cols * this.tileSize;
     
-    // Define a "Center Zone" (e.g., middle 60% of the map) to avoid walls
     const zonePadding = mapWidth * 0.2; 
     
-    // Intersect the platform bounds with the center zone
     const centerMin = Math.max(minX, zonePadding);
     const centerMax = Math.min(maxX, mapWidth - zonePadding - this.size);
 
     let spawnRangeMin, spawnRangeMax;
 
     if (centerMin < centerMax) {
-      // Platform overlaps with center zone; spawn there
       spawnRangeMin = centerMin;
       spawnRangeMax = centerMax;
     } else {
-      // Platform is entirely outside the center zone (side platform).
-      // Fallback: use platform bounds but enforce at least 1 tile padding from walls
       spawnRangeMin = Math.max(minX, this.tileSize);
       spawnRangeMax = Math.min(maxX, mapWidth - this.tileSize - this.size);
       
-      // Safety check if platform is too small or inside wall padding
       if (spawnRangeMin > spawnRangeMax) {
          spawnRangeMin = minX;
          spawnRangeMax = maxX;
@@ -58,7 +50,6 @@ export class SquareEnemy extends BaseEnemy {
       Math.max(spawnRangeMin, spawnRangeMin + Math.random() * Math.max(1, spawnRangeMax - spawnRangeMin)),
       spawnRangeMax,
     );
-    // --- UPDATED SPAWN LOGIC END ---
 
     const spawnY =
       (this.mapOffsetY - (this.mapOffsetY*0.2) +
@@ -77,12 +68,11 @@ export class SquareEnemy extends BaseEnemy {
       onGround: true,
     };
 
-    // Initialize BaseEnemy position to match spawn
     this.position.x = spawnX;
     this.position.y = spawnY;
 
     this.lastJumpAt = -Infinity;
-    this.isSpawning = false; // Square enemies spawn directly onto terrain
+    this.isSpawning = false; 
   }
 
   updateEnemy(deltaTime, playerBounds, timestamp, canvas) {
@@ -98,7 +88,6 @@ export class SquareEnemy extends BaseEnemy {
           ? -1
           : 0;
 
-    // Horizontal acceleration
     if (horizontalDirection !== 0) {
       this.state.vx += horizontalDirection * this.constants.MOVE_ACCELERATION;
     } else {
@@ -107,13 +96,11 @@ export class SquareEnemy extends BaseEnemy {
         this.state.vx = 0;
     }
 
-    // Clamp max speed
     this.state.vx = Math.max(
       -this.constants.MAX_SPEED,
       Math.min(this.state.vx, this.constants.MAX_SPEED),
     );
 
-    // Jump logic
     if (
       this.state.onGround &&
       now - this.lastJumpAt >= this.constants.JUMP_COOLDOWN_MS &&
@@ -122,7 +109,6 @@ export class SquareEnemy extends BaseEnemy {
       this.performJump(now);
     }
 
-    // Gravity
     this.state.vy += this.fullConstants.GRAVITY;
     if (this.state.vy > this.constants.MAX_FALL_SPEED) {
       this.state.vy = this.constants.MAX_FALL_SPEED;
@@ -133,7 +119,6 @@ export class SquareEnemy extends BaseEnemy {
 
     this.state.onGround = false;
 
-    // Collide X
     if (
       checkCollision(
         this.map,
@@ -162,7 +147,6 @@ export class SquareEnemy extends BaseEnemy {
       this.state.vx = 0;
     }
 
-    // Collide Y
     if (
       checkCollision(
         this.map,
@@ -214,7 +198,6 @@ export class SquareEnemy extends BaseEnemy {
       this.state.y = canvas.height - this.state.height - this.collisionOffset;
     }
 
-    // Sync BaseEnemy position so shared effects (health bar, hit flash) follow the square ---
     this.position.x = this.state.x;
     this.position.y = this.state.y;
   }
@@ -280,7 +263,6 @@ export class SquareEnemy extends BaseEnemy {
     ctx.fillRect(x, y, w, h);
     ctx.restore();
 
-    // Call super to draw hit flash and health bar
     super.drawEnemy(ctx, progress);
 
     if (this.deathAnimation.active) {

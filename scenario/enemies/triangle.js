@@ -1,4 +1,3 @@
-// TriangleEnemy.js
 import { BaseEnemy } from "./baseEnemy.js";
 import { Bullet } from "../helper/bullet.js";
 
@@ -17,7 +16,6 @@ export class TriangleEnemy extends BaseEnemy {
     const enemyCenterX = this.position.x + this.width / 2;
     const enemyCenterY = this.position.y + this.height / 2;
 
-    // Horizontal movement
     if (playerCenterX > enemyCenterX + 4) {
       this.position.x += this.constants.MOVE_SPEED * deltaTime;
       this.facing = 1;
@@ -26,14 +24,12 @@ export class TriangleEnemy extends BaseEnemy {
       this.facing = -1;
     }
 
-    // Vertical tracking
     if (playerCenterY > enemyCenterY + 6) {
       this.position.y += this.constants.VERTICAL_ADJUST_SPEED * deltaTime;
     } else if (playerCenterY < enemyCenterY - 6) {
       this.position.y -= this.constants.VERTICAL_ADJUST_SPEED * deltaTime;
     }
 
-    // Clamp inside screen
     this.position.x = Math.max(
       0,
       Math.min(canvas.width - this.width, this.position.x),
@@ -47,7 +43,6 @@ export class TriangleEnemy extends BaseEnemy {
       Math.abs(playerCenterY - (this.position.y + this.height / 2)) <
       this.height / 2;
 
-    // Fire bullet
     if (
       sameLayer &&
       timestamp - this.lastShotAt >= this.constants.FIRE_COOLDOWN_MS
@@ -81,9 +76,7 @@ export class TriangleEnemy extends BaseEnemy {
 
     bulletsArray.push(bullet);
   }
-  // Custom damage effect for TriangleEnemy
   drawDamageShape(ctx, x, y, w, h, progress) {
-    // Flashing triangle overlay
     ctx.save();
     ctx.globalAlpha = 0.7 - progress * 0.5;
     ctx.fillStyle = "rgba(255, 241, 118, 0.85)";
@@ -104,9 +97,7 @@ export class TriangleEnemy extends BaseEnemy {
     ctx.restore();
   }
 
-  // Override drawEnemy to include damage effect
   drawEnemy(ctx, progress = 0) {
-    // Draw base triangle
     const centerX = this.position.x + this.width / 2;
     const centerY = this.position.y + this.height / 2;
 
@@ -140,7 +131,6 @@ export class TriangleEnemy extends BaseEnemy {
     ctx.fill();
     ctx.restore();
 
-    // Damage effect overlay
     if (
       this.isDamageEffectActive &&
       typeof this.isDamageEffectActive === "function" &&

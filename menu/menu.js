@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const scenarioUrl = "../scenario/scenario.html";
 
-  // --- PLAY BUTTON LOGIC ---
   playButton.addEventListener("click", () => {
     mainMenuButtons.classList.add("hidden"); 
     gameModeContainer.classList.remove("hidden"); 
@@ -32,14 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // --- BACK BUTTON LOGIC ---
   if (backToMenuButton) {
       backToMenuButton.addEventListener("click", () => {
-          // Hide mode container, Show main menu
           gameModeContainer.classList.add("hidden");
           mainMenuButtons.classList.remove("hidden");
           
-          // Reset animations
           const modeButtons = gameModeContainer.querySelectorAll(".mode-button");
           modeButtons.forEach((button) => {
               button.classList.remove("fade-in-up");
@@ -48,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // --- TUTORIAL LOGIC ---
   if (tutorialButton) {
       tutorialButton.addEventListener("click", () => {
         tutorialOverlay.classList.remove("hidden");
@@ -72,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // --- GAME MODE SELECTION LOGIC ---
   player1Button.addEventListener("click", () => {
     window.location.href = `${scenarioUrl}?players=1`;
   });

@@ -1,5 +1,3 @@
-// CircleEnemy
-// Follows seek and destroy behavior with smooth turning
 import { BaseEnemy } from "./baseEnemy.js";
 
 export class CircleEnemy extends BaseEnemy {
@@ -59,7 +57,6 @@ export class CircleEnemy extends BaseEnemy {
             };
     }
 
-    // Normalize newDir
     const ndLen = Math.sqrt(newDir.x * newDir.x + newDir.y * newDir.y);
     if (ndLen > 0.01) {
       newDir.x /= ndLen;
@@ -113,7 +110,6 @@ export class CircleEnemy extends BaseEnemy {
 
     ctx.restore();
 
-    // Draw damage effect overlay if active
     if (this.isDamageEffectActive()) {
       const now = this.getNow();
       const elapsed = now - this.damageEffect.startAt;
@@ -121,7 +117,6 @@ export class CircleEnemy extends BaseEnemy {
       const clampedElapsed = Math.min(Math.max(elapsed, 0), duration);
       const effectProgress = clampedElapsed / duration;
 
-      // Custom damage effect for CircleEnemy: a glowing ring flash
       ctx.save();
       ctx.globalAlpha = 0.45 - effectProgress * 0.35;
       ctx.strokeStyle = "rgba(255, 241, 118, 0.85)";
@@ -138,7 +133,6 @@ export class CircleEnemy extends BaseEnemy {
       ctx.restore();
     }
 
-    // Death fragments (unchanged)
     if (this.deathAnimation.active) {
       this.drawDeathEffects(ctx, centerX, centerY, progress);
     }

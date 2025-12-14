@@ -117,12 +117,11 @@
                     return;
                 }
                 
-                // NEW: Update with all 9 inputs
                 await updateDoc(docRef, {
                     [`players.${playerKey}.inputs`]: { 
-                        ml: false, mr: false, mu: false, md: false, // move
-                        sl: false, sr: false, su: false, sd: false, // shoot
-                        j: false // jump
+                        ml: false, mr: false, mu: false, md: false, 
+                        sl: false, sr: false, su: false, sd: false, 
+                        j: false 
                     },
                     [`players.${playerKey}.connected`]: true
                 });
@@ -156,7 +155,6 @@
         });
 
         function setupControls() {
-            // NEW: Get all 9 buttons
             const buttons = [
                 { el: document.getElementById("moveUp"), key: 'mu' },
                 { el: document.getElementById("moveDown"), key: 'md' },
@@ -179,13 +177,10 @@
                 });
             };
 
-            // Add listeners for all 9 buttons
             buttons.forEach(({ el, key }) => {
-                // Touch events
                 el.addEventListener("touchstart", (e) => { e.preventDefault(); updateInput(key, true); }, { passive: false });
                 el.addEventListener("touchend", (e) => { e.preventDefault(); updateInput(key, false); }, { passive: false });
 
-                // Mouse events for testing
                 el.addEventListener("mousedown", () => updateInput(key, true));
                 el.addEventListener("mouseup", () => updateInput(key, false));
                 el.addEventListener("mouseleave", () => updateInput(key, false));

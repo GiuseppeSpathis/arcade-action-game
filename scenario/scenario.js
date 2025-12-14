@@ -2,9 +2,6 @@ import { setupAudioToggle } from "../helper/audioController.js";
 import { generateMap, isSolidTile } from "./helper/map.js";
 import { PlayerController } from "./helper/player.js";
 import { Bullet } from "./helper/bullet.js";
-import { TriangleEnemy } from "./enemies/triangle.js";
-import { CircleEnemy } from "./enemies/circle.js";
-import { SquareEnemy } from "./enemies/square.js";
 import { Leveller } from "./helper/leveller.js";
 import * as GameLogic from "./utils/logic.js";
 import {
@@ -21,7 +18,6 @@ import {
   deleteGameSession,
 } from "../helper/firebaseRemoteController.js";
 
-// --- Global Game State ---
 let constants;
 let players = [];
 let pressedKeys = new Set();
@@ -49,29 +45,24 @@ const ctx = canvas.getContext("2d");
 const hudContainer = document.getElementById("hudContainer");
 const playerHUDElements = [];
 
-// --- Lobby Elements ---
 const connectionOverlay = document.getElementById("connectionOverlay");
 const connectionUrl = document.getElementById("connectionUrl");
 const playerConnectionContainer = document.getElementById(
   "playerConnectionContainer",
 );
-const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const roomCodeText = document.getElementById("roomCodeText");
 const lobbyRoomCode = document.getElementById("lobbyRoomCode");
 const lobbyBackButton = document.getElementById("lobbyBackButton");
 
-// --- DOM Elements ---
 const upgradeOverlay = document.getElementById("upgradeOverlay");
 const currentPlayerPrompt = document.getElementById("currentPlayerPrompt");
 const powerUpContainer = document.getElementById("powerUpContainer");
 
-// --- Pause Elements ---
 let pauseOverlay = document.getElementById("pauseOverlay");
 let pauseToggle = document.getElementById("pauseToggle");
 let resumeButton = document.getElementById("resumeButton");
 let quitButton = document.getElementById("quitButton");
 
-// --- Audio Elements ---
 const musicAudioElement = document.getElementById("bg_music");
 const musicToggleButton = document.getElementById("musicToggle");
 const musicSliderContainer = document.getElementById(
@@ -83,7 +74,6 @@ const sfxSliderContainer = document.getElementById("sfxVolumeSliderContainer");
 
 const returnMenuButton = document.getElementById("returnMenuButton");
 
-// Collect SFX elements
 const sfxGameOver = document.getElementById("sfx_gameover");
 if (sfxGameOver) sfxGameOver.volume = 0.9;
 const sfxHit = document.getElementById("sfx_hit");
@@ -95,7 +85,6 @@ if (sfxJump) sfxJump.volume = 0.6;
 
 const sfxElements = [sfxGameOver, sfxHit, sfxShoot, sfxJump].filter(Boolean);
 
-// --- SETUP AUDIO CONTROLS ---
 setupAudioToggle({
   audioElement: musicAudioElement,
   toggleButton: musicToggleButton,
@@ -114,7 +103,6 @@ setupAudioToggle({
   labelIcon: "💥",
 });
 
-// --- LOBBY BACK BUTTON LOGIC ---
 if (lobbyBackButton) {
   lobbyBackButton.addEventListener("click", async () => {
     if (roomCode) {
@@ -199,15 +187,6 @@ function processRemoteInputs(sessionData) {
 
 async function setupLobby(playerCount) {
   connectionOverlay.classList.remove("hidden");
-
-  const ip = window.location.hostname;
-  const port = window.location.port;
-  const displayIp = ip === "127.0.0.1" ? "YOUR_LAPTOP_IP" : ip;
-  connectionUrl.textContent = `http://${displayIp}:${port}/scenario/controller/phoneController.html`;
-  if (displayIp === "YOUR_LAPTOP_IP") {
-    connectionUrl.previousElementSibling.innerHTML =
-      "Connect your phone to the same Wi-Fi and (after finding your IP) go to:";
-  }
 
   const requiredPlayers = [];
   for (let i = 2; i <= playerCount; i++) {
@@ -719,16 +698,6 @@ function toggleGamePause(pauseState) {
   }
 }
 
-function handlePause() {
-  if (
-    !isGameOver &&
-    !GAME_PAUSED &&
-    !upgradeOverlay.classList.contains("hidden")
-  ) {
-    toggleGamePause(true);
-    upgradeOverlay.classList.add("hidden");
-  }
-}
 
 function handleResume() {
   if (GAME_PAUSED) {
@@ -834,7 +803,6 @@ function gameLoop(timestamp) {
       players.forEach((player) => player.update(pressedKeys));
       handlePlayerShooting(timestamp);
 
-      // --- SPAWN LOGIC ---
       if (
         timestamp - lastSpawnTimestamp >=
         levelStats.ENEMIES.SPAWN_INTERVAL_MS
@@ -849,8 +817,6 @@ function gameLoop(timestamp) {
         lastSpawnTimestamp = timestamp;
       }
 
-      // --- UPDATE LOGIC ---
-      // Update Enemies
       enemies = GameLogic.updateEnemies(
         enemies,
         deltaTime,
@@ -860,7 +826,6 @@ function gameLoop(timestamp) {
         enemyBullets,
       );
 
-      // Update Player Bullets
       playerBullets = GameLogic.updatePlayerBullets(
         playerBullets,
         enemies,
@@ -878,7 +843,6 @@ function gameLoop(timestamp) {
         },
       );
 
-      // Update Enemy Bullets
       enemyBullets = GameLogic.updateEnemyBullets(
         enemyBullets,
         players,
@@ -892,7 +856,6 @@ function gameLoop(timestamp) {
         },
       );
 
-      // Handle Body Collisions
       GameLogic.handleEnemyBodyCollisions(enemies, players, timestamp, {
         onPlayerHit: (player, time) => damagePlayer(player, time),
       });
@@ -936,16 +899,12 @@ async function main() {
     try {
       constants = await loadConstants();
       
-      // --- FIX: Handle array of images safely for Multiplayer too ---
-      // The original code here tried to load constants.BACKGROUND.BACKGROUND_IMAGE_SRC
-      // which is now undefined.
       const bgSources = constants.BACKGROUND.BACKGROUND_IMAGES || 
           (constants.BACKGROUND.BACKGROUND_IMAGE_SRC ? [constants.BACKGROUND.BACKGROUND_IMAGE_SRC] : []);
       
       if (bgSources.length > 0) {
           backgroundImage = await loadImage(bgSources[0]);
       }
-      // -------------------------------------------------------------
 
       mapData = generateMap(canvas, constants);
       await setupLobby(playerCount);

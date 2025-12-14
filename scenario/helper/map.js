@@ -43,7 +43,6 @@ export function generateMap(canvas, constants) {
     constants.MAP.MAX_VERTICAL_GAP_TILES,
   );
 
-  // Use the constant LAYER_COUNT + 1 (for the floor)
   const targetLayers = constants.MAP.LAYER_COUNT + 1;
   const layerRows = [floorRow];
   let lastRow = floorRow;
@@ -128,7 +127,6 @@ export function generateMap(canvas, constants) {
   }
 
   
-  // Iterating from 0 (top) to rows (bottom) covers the entire height
   for (let r = 0; r < rows; r++) {
     grid[r][0] = constants.MAP.WALL_TILE_VALUE;
     grid[r][cols - 1] = constants.MAP.WALL_TILE_VALUE;

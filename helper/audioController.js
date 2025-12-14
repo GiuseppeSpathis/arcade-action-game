@@ -6,16 +6,14 @@ function createVolumeSlider(
   audioElements,
   container,
   storageKey = DEFAULT_VOLUME_KEY,
-  labelIcon = null // New parameter for the icon
+  labelIcon = null 
 ) {
   if (!audioElements || !audioElements.length || !container) {
     return null;
   }
 
-  // Normalize audioElements to array
   const targets = Array.isArray(audioElements) ? audioElements : [audioElements];
 
-  // Capture initial "base" volumes
   targets.forEach((el) => {
     if (el.dataset.baseVolume === undefined) {
       el.dataset.baseVolume = el.volume;
@@ -28,7 +26,6 @@ function createVolumeSlider(
   slider.max = "1";
   slider.step = "0.01";
   slider.value = localStorage.getItem(storageKey) ?? "1";
-  //slider.style.width = "80px";
   slider.setAttribute("aria-label", "Adjust volume");
   slider.title = "Adjust volume";
 
@@ -39,17 +36,14 @@ function createVolumeSlider(
     });
   };
 
-  // Set initial state
   updateVolumes(parseFloat(slider.value));
 
-  // Update volume on slider change
   slider.addEventListener("input", () => {
     const val = parseFloat(slider.value);
     updateVolumes(val);
     localStorage.setItem(storageKey, slider.value);
   });
 
-  // Keyboard accessibility
   slider.addEventListener("keydown", (e) => {
     let val = parseFloat(slider.value);
     if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
@@ -63,10 +57,8 @@ function createVolumeSlider(
     slider.dispatchEvent(new Event("input"));
   });
 
-  // Insert into container
-  container.innerHTML = ""; // Clear existing
+  container.innerHTML = ""; 
 
-  // Add Label Icon if provided
   if (labelIcon) {
     const iconSpan = document.createElement("span");
     iconSpan.textContent = labelIcon;
@@ -100,7 +92,7 @@ export function setupAudioToggle({
   sliderContainer,
   storageKeyMuted = "retro-arcade-muted",
   storageKeyVolume = "retro-arcade-volume",
-  labelIcon = null, // Pass this through
+  labelIcon = null, 
 } = {}) {
   const targets = audioElements || (audioElement ? [audioElement] : []);
   if (!targets.length || !toggleButton) {
@@ -127,7 +119,6 @@ export function setupAudioToggle({
     toggleButton.parentElement.querySelector("#musicVolumeSliderContainer");
 
   if (container) {
-    // Pass labelIcon to the slider creator
     createVolumeSlider(targets, container, storageKeyVolume, labelIcon);
   }
 }

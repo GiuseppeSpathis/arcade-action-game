@@ -21,9 +21,7 @@ body {
     display: none !important;
 }
 
-/* --- HUD & Audio --- */
 
-/* Updated: Pause Toggle Button (Top Right) */
 .pause-toggle-button {
     position: absolute;
     top: 1rem;
@@ -49,7 +47,6 @@ body {
     background: rgba(111, 183, 255, 0.85);
 }
 
-/* Updated: Audio Controls inside Pause Menu */
 .pause-audio-controls {
     display: flex;
     flex-direction: column;
@@ -70,7 +67,6 @@ body {
     border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Audio buttons inside the group (static, not absolute) */
 .audio-toggle-button.static-icon {
     position: static;
     width: 3rem;
@@ -87,7 +83,6 @@ body {
     flex-shrink: 0;
 }
 
-/* Slider Container (static, not absolute) */
 .audio-slider-container {
     position: static;
     display: flex;
@@ -103,12 +98,11 @@ body {
 .audio-slider-container input[type="range"] {
     accent-color: #ff4df6;
     background: transparent;
-    width: 100%; /* Fill available space */
+    width: 100%; 
     height: 4em;
     cursor: pointer;
 }
 
-/* --- HUD Elements --- */
 
 .hud {
     position: absolute;
@@ -218,7 +212,6 @@ body {
     z-index: 31;
 }
 
-/* --- Game Area --- */
 
 .game-wrapper {
     position: relative;
@@ -236,7 +229,6 @@ canvas {
     background: linear-gradient(#9ce5ff, #6fb7ff);
 }
 
-/* --- Overlays --- */
 
 .connection-overlay,
 .upgrade-overlay,
@@ -253,10 +245,10 @@ canvas {
     text-align: center;
     padding: 1rem;
     background: rgba(5, 8, 19, 0.95);
-    z-index: 35; /* Higher Z-Index than HUD */
+    z-index: 35; 
 }
 
-.connection-overlay { z-index: 40; } /* Topmost */
+.connection-overlay { z-index: 40; } 
 
 .connection-title {
     font-size: 2.5rem;
@@ -327,7 +319,6 @@ canvas {
     margin-bottom: 1rem;
 }
 
-/* --- Buttons --- */
 
 .play-button, .game-over-button, .power-up-button {
     font-family: inherit;

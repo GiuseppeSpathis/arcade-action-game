@@ -8,7 +8,6 @@ export class PlayerController {
     this.tileSize = constants.TILE_SIZE;
     this.mapOffsetY = mapData.verticalOffset;
 
-    // Assign player-specific data
     this.playerData = playerData;
     this.playerIndex = playerIndex;
     this.lives = stats.MAX_LIVES;
@@ -18,7 +17,6 @@ export class PlayerController {
     this.stats = stats;
     this.onJump = onJump;
 
-    // Initialize state structure
     this.state = {
       width: stats.SIZE,
       height: stats.SIZE,
@@ -34,7 +32,6 @@ export class PlayerController {
       wallJumpCooldown: 0 
     };
 
-    // Calculate initial position and physics state
     this.respawn(mapData);
 
     this.damageEffect = {
@@ -58,7 +55,6 @@ export class PlayerController {
     this.stats = newStats;
   }
 
-  // Resets player position and physics for a new map for the new level
   respawn(mapData) {
     this.map = mapData.grid;
     this.mapOffsetY = mapData.verticalOffset;
@@ -66,7 +62,6 @@ export class PlayerController {
     const baseSpawnCol = Math.floor(
       mapData.cols / this.constants.MAP.FALLBACK_PLATFORM_DIVISOR,
     );
-    // Offset spawn position based on player index
     const spawnCol = baseSpawnCol + this.playerIndex * 2;
     const spawnRow = mapData.floorRow;
     const horizontalPadding =
@@ -80,7 +75,6 @@ export class PlayerController {
       this.stats.SIZE -
       this.constants.PLAYER.COLLISION_OFFSET;
 
-    // Reset physics
     this.state.vx = 0;
     this.state.vy = 0;
     this.state.onGround = true;
@@ -106,7 +100,6 @@ export class PlayerController {
   }
 
   executeJump(pressedKeys, touchingLeft, touchingRight) {
-    // Normal Jump
     if (this.state.onGround || this.state.coyoteFrames > 0) {
       this.state.vy = this.constants.JUMP_FORCE;
       this.state.onGround = false;
@@ -125,12 +118,10 @@ export class PlayerController {
         this.state.vx = Math.min(this.state.vx, impulse);
       }
     } 
-    // Wall Jump with Cooldown Check
     else if ((touchingLeft || touchingRight) && this.state.wallJumpCooldown <= 0) {
       this.state.vy = this.constants.JUMP_FORCE;
       this.state.jumpBufferFrames = 0;
       
-      // Set the cooldown (countdown)
       this.state.wallJumpCooldown = this.constants.PLAYER.WALL_JUMP_COOLDOWN_FRAMES || 25;
       
       if (this.onJump) this.onJump();
@@ -147,12 +138,10 @@ export class PlayerController {
     }
   }
 
-  // Use player-specific input keys
   isMovingLeft(pressedKeys) {
     return this.playerData.inputs.left.some((code) => pressedKeys.has(code));
   }
 
-  // Use player-specific input keys
   isMovingRight(pressedKeys) {
     return this.playerData.inputs.right.some((code) => pressedKeys.has(code));
   }
@@ -164,12 +153,10 @@ export class PlayerController {
       return;
     }
 
-    // Decrement Wall Jump Cooldown
     if (this.state.wallJumpCooldown > 0) {
       this.state.wallJumpCooldown -= 1;
     }
 
-    // Check for wall contacts (slightly padded check)
     const checkOffset = 2;
     const wallCheckHeight = this.state.height - 4; 
     const wallCheckY = this.state.y + 2;

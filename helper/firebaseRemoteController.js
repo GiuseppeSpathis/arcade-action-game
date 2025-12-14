@@ -6,7 +6,7 @@ import {
   setDoc,
   onSnapshot,
   updateDoc,
-  deleteDoc, // <--- ADDED THIS IMPORT
+  deleteDoc, 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 
@@ -14,9 +14,7 @@ import { firebaseConfig } from "./firebaseConfig.js";
 
 let db;
 
-/**
- * Initializes the Firebase app and signs in the user anonymously.
- */
+
 export async function initFirebase() {
   try {
     const app = initializeApp(firebaseConfig);
@@ -31,9 +29,7 @@ export async function initFirebase() {
   return { error: null };
 }
 
-/**
- * Generates a random 4-letter room code.
- */
+
 function generateRoomCode() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let code = "";
@@ -43,11 +39,7 @@ function generateRoomCode() {
   return code;
 }
 
-/**
- * Creates a new game session document in Firestore.
- * @param {number} playerCount - The number of players in the game.
- * @returns {Promise<string>} The 4-letter room code.
- */
+
 export async function createGameSession(playerCount) {
   if (playerCount <= 1) {
     return null; 
@@ -65,12 +57,11 @@ export async function createGameSession(playerCount) {
     players: {},
   };
   
-  // 9 input keys
   const playerTemplate = {
     inputs: { 
-        ml: false, mr: false, mu: false, md: false, // move
-        sl: false, sr: false, su: false, sd: false, // shoot
-        j: false // jump
+        ml: false, mr: false, mu: false, md: false, 
+        sl: false, sr: false, su: false, sd: false, 
+        j: false 
     },
     connected: false,
   };
@@ -95,11 +86,7 @@ export async function createGameSession(playerCount) {
   }
 }
 
-/**
- * Updates the state of the game.
- * @param {string} roomCode
- * @param {"lobby" | "running" | "gameover"} newState
- */
+
 export async function setGameState(roomCode, newState) {
   if (!db || !roomCode) return;
   const sessionPath = `game_sessions/${roomCode}`;
@@ -111,11 +98,7 @@ export async function setGameState(roomCode, newState) {
   }
 }
 
-/**
- * Deletes the game session document from Firestore.
- * This effectively disconnects all players listening to this room.
- * @param {string} roomCode 
- */
+
 export async function deleteGameSession(roomCode) {
     if (!db || !roomCode) return;
     const sessionPath = `game_sessions/${roomCode}`;
@@ -128,12 +111,7 @@ export async function deleteGameSession(roomCode) {
     }
 }
 
-/**
- * Listens for real-time changes to the session document.
- * @param {string} roomCode - The room code for the session.
- * @param {function} callback - Function to call with the new session data.
- * @returns {function} An unsubscribe function to stop listening.
- */
+
 export function listenForRemoteInputs(roomCode, callback) {
   if (!db) {
     return null;

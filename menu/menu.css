@@ -17,7 +17,6 @@
         );
 }
 
-/* Animation Definitions */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -35,7 +34,6 @@
     letter-spacing: 0.2rem;
     text-shadow: 0 0 12px rgba(255, 73, 246, 0.7);
     
-    /* Animation settings */
     opacity: 0; 
     animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     animation-delay: 0.2s;
@@ -154,21 +152,18 @@ body {
     width: min(90%, 28rem);
 }
 
-/* BASE STYLE FOR ALL BUTTONS (Play & Tutorial) */
-/* Restored original filled gradient style */
 .play-button {
     font: inherit;
     padding: 1.2rem 2.4rem;
     border-radius: 12px;
     border: 3px solid #ff4df6;
-    background: linear-gradient(135deg, #ff4df6, #ffb347); /* Filled by default */
-    color: #050813; /* Dark text by default */
+    background: linear-gradient(135deg, #ff4df6, #ffb347); 
+    color: #050813; 
     cursor: pointer;
     text-transform: uppercase;
     width: 100%; 
     margin-bottom: 1rem;
     
-    /* Color and text-shadow to transition for smooth effect */
     transition:
         transform 0.2s ease,
         box-shadow 0.2s ease,
@@ -176,20 +171,14 @@ body {
         text-shadow 0.2s ease;
 }
 
-/* HOVER STATE FOR ALL BUTTONS */
-/* Restored original hover effect */
 .play-button:hover,
 .play-button:focus {
-    /* Moves up AND scales up (making text bigger) */
     transform: translateY(-4px) scale(1.05); 
     
-    /* Existing box shadow */
     box-shadow: 0 12px 22px rgba(255, 77, 246, 0.45);
     
-    /* Text becomes white */
     color: #ffffff;
     
-    /* Text gets a white glow/highlight */
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
 }
 
@@ -209,7 +198,6 @@ body {
     display: none !important;
 }
 
-/* --- TUTORIAL OVERLAY STYLES --- */
 
 .tutorial-overlay {
     position: fixed;
@@ -240,7 +228,7 @@ body {
     padding: 2rem 3rem;
     width: min(95%, 50rem);
     max-height: 90vh;
-    overflow-y: auto; /* Scrollable content */
+    overflow-y: auto; 
     text-align: left;
     box-shadow: 0 0 40px rgba(255, 77, 246, 0.3);
     color: #fff;
@@ -297,7 +285,6 @@ body {
     display: inline-block;
 }
 
-/* Scrollbar styling for tutorial */
 .tutorial-content::-webkit-scrollbar {
     width: 10px;
 }
